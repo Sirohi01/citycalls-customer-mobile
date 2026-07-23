@@ -1,31 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
+import 'otp_verify_screen.dart';
 
-// Per docs/rohit/05-customer-app-screen-list.md "Onboarding". Functional
-// skeleton — visual design is Rohit's pass per docs/rohit/02-design-system.md.
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+// Per docs/rohit/05-customer-app-screen-list.md "Onboarding" — mobile-number
+// entry step of the mobile+OTP login flow (no password for customers).
+class OtpRequestScreen extends ConsumerStatefulWidget {
+  const OtpRequestScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<OtpRequestScreen> createState() => _OtpRequestScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _identifierController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _mobileController = TextEditingController();
 
   @override
   void dispose() {
-    _identifierController.dispose();
-    _passwordController.dispose();
+    _mobileController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+
+    ref.listen(authProvider, (previous, next) {
+      if (previous?.step != AuthStep.otpSent && next.step == AuthStep.otpSent) {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OtpVerifyScreen()));
+      }
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -38,18 +43,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text('CityCalls', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Enter your mobile number to get started', style: TextStyle(color: Colors.black54)),
                 const SizedBox(height: 24),
                 TextFormField(
-                  controller: _identifierController,
-                  decoration: const InputDecoration(labelText: 'Mobile number or email'),
-                  validator: (value) => (value == null || value.length < 3) ? 'Enter a valid mobile or email' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                  obscureText: true,
-                  validator: (value) => (value == null || value.isEmpty) ? 'Password is required' : null,
+                  controller: _mobileController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Mobile number', prefixText: '+91 '),
+                  validator: (value) => (value == null || value.trim().length < 10) ? 'Enter a valid 10-digit mobile number' : null,
                 ),
                 const SizedBox(height: 20),
                 if (authState.errorMessage != null)
@@ -61,7 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onPressed: authState.isLoading ? null : _submit,
                   child: authState.isLoading
                       ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Sign in'),
+                      : const Text('Send OTP'),
                 ),
               ],
             ),
@@ -73,7 +74,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      ref.read(authProvider.notifier).login(_identifierController.text, _passwordController.text);
+      ref.read(authProvider.notifier).requestOtp(_mobileController.text.trim());
     }
   }
 }

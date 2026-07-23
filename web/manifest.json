@@ -1,6 +1,6 @@
 {
-    "name": "citycalls_customer",
-    "short_name": "citycalls_customer",
+    "name": "CityCalls",
+    "short_name": "CityCalls",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

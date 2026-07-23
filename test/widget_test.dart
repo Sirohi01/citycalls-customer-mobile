@@ -5,22 +5,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:citycalls_customer/main.dart';
 
 void main() {
-  testWidgets('App boots to the login screen with required fields', (WidgetTester tester) async {
+  testWidgets('App boots to the mobile-number entry screen', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: CityCallsCustomerApp()));
 
     expect(find.text('CityCalls'), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, 'Mobile number or email'), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'Sign in'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Mobile number'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Send OTP'), findsOneWidget);
   });
 
-  testWidgets('Shows validation errors when submitting an empty form', (WidgetTester tester) async {
+  testWidgets('Shows a validation error for an invalid mobile number', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: CityCallsCustomerApp()));
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Send OTP'));
     await tester.pump();
 
-    expect(find.text('Enter a valid mobile or email'), findsOneWidget);
-    expect(find.text('Password is required'), findsOneWidget);
+    expect(find.text('Enter a valid 10-digit mobile number'), findsOneWidget);
   });
 }
