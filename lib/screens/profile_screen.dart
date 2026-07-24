@@ -5,6 +5,7 @@ import '../providers/auth_providers.dart';
 import '../providers/customer_providers.dart';
 import '../providers/realtime_providers.dart';
 import '../providers/push_providers.dart';
+import '../providers/theme_providers.dart';
 import '../theme/app_theme.dart';
 import 'otp_request_screen.dart';
 import 'saved_products_screen.dart';
@@ -19,6 +20,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(myProfileProvider);
+    final beautyMode = ref.watch(beautyModeProvider);
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -99,6 +101,35 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: 28),
             const Text('More', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.beautyAccent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.beautyPrimary.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.spa_outlined, color: AppColors.beautyPrimary),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Beauty Mode', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.beautyAccentForeground)),
+                        Text('Switch the app to our Bliss & Salon look', style: TextStyle(color: AppColors.beautyAccentForeground, fontSize: 11.5)),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: beautyMode,
+                    activeColor: AppColors.beautyPrimary,
+                    onChanged: (_) => ref.read(beautyModeProvider.notifier).toggle(),
+                  ),
+                ],
+              ),
+            ),
             _MenuTile(
               icon: Icons.build_outlined,
               label: 'Saved Appliances',

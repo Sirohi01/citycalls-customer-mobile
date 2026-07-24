@@ -28,6 +28,22 @@ class AppColors {
   static const beautyAccentForeground = Color(0xFFB23A56);
 }
 
+// Overrides Android's Material 3 default (ZoomPageTransitionsBuilder, which
+// animates the incoming page via Transform.scale) with the same slide-based
+// builder Cupertino uses on every platform. Repeatedly reproduced RenderBox
+// "hasSize" crashes traced back to a `Transform` ancestor on screens whose
+// content resizes asynchronously mid-push (service_detail_screen.dart's
+// media gallery) — a known class of conflict between ZoomPageTransitionsBuilder
+// and dynamically-sized content. FractionalTranslation-based slide
+// transitions don't hit it. Shared by both themes below so switching Beauty
+// Mode on/off never silently reintroduces the bug.
+const _pageTransitionsTheme = PageTransitionsTheme(
+  builders: {
+    TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+    TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+  },
+);
+
 class AppTheme {
   AppTheme._();
 
@@ -50,20 +66,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
-      // Overrides Android's Material 3 default (ZoomPageTransitionsBuilder,
-      // which animates the incoming page via Transform.scale) with the same
-      // slide-based builder Cupertino uses on every platform. Repeatedly
-      // reproduced RenderBox "hasSize" crashes traced back to a `Transform`
-      // ancestor on screens whose content resizes asynchronously mid-push
-      // (service_detail_screen.dart's media gallery) — a known class of
-      // conflict between ZoomPageTransitionsBuilder and dynamically-sized
-      // content. FractionalTranslation-based slide transitions don't hit it.
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        },
-      ),
+      pageTransitionsTheme: _pageTransitionsTheme,
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.black,
@@ -76,6 +79,53 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.neutral100,
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      ),
+    );
+  }
+
+  // "Beauty Mode" — the mobile counterpart of citycalls-admin-web's existing
+  // pink Beauty & Salon toggle (useBeautyMode.ts). Same structural shape as
+  // light() so anything relying on default component theming (AppBar,
+  // FilledButton, input fields — which is most of the app, screens were
+  // deliberately built without inline color overrides on buttons for
+  // exactly this reason) re-colors automatically on toggle; only a handful
+  // of screens with custom-painted brand chrome (Home dashboard's header)
+  // need their own explicit Beauty Mode branch.
+  static ThemeData beauty() {
+    return ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: AppColors.white,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.beautyPrimary,
+        brightness: Brightness.light,
+        primary: AppColors.beautyPrimary,
+        onPrimary: AppColors.white,
+        surface: AppColors.white,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.beautyPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      pageTransitionsTheme: _pageTransitionsTheme,
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.beautyPrimary,
+          foregroundColor: AppColors.white,
+          minimumSize: const Size.fromHeight(48),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.beautyAccent,
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none),
