@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
+import '../theme/app_theme.dart';
+import '../widgets/auth_background.dart';
 import 'otp_verify_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Onboarding" — mobile-number
@@ -32,41 +34,67 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
       }
     });
 
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text('CityCalls', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text('Enter your mobile number to get started', style: TextStyle(color: Colors.black54)),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _mobileController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Mobile number', prefixText: '+91 '),
-                  validator: (value) => (value == null || value.trim().length < 10) ? 'Enter a valid 10-digit mobile number' : null,
+    return AuthBackground(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Get things fixed, fast',
+              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Enter your mobile number to get started',
+              style: TextStyle(color: AppColors.slate400, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: _mobileController,
+              style: const TextStyle(color: Colors.white),
+              keyboardType: TextInputType.phone,
+              decoration: authFieldDecoration(label: 'Mobile number', icon: Icons.phone_iphone, prefixText: '+91  '),
+              validator: (value) => (value == null || value.trim().length < 10) ? 'Enter a valid 10-digit mobile number' : null,
+            ),
+            const SizedBox(height: 20),
+            if (authState.errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: AppColors.red400, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(authState.errorMessage!, style: const TextStyle(color: AppColors.red400, fontSize: 13))),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                if (authState.errorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(authState.errorMessage!, style: const TextStyle(color: Colors.red)),
+              ),
+            FilledButton(
+              style: authButtonStyle(),
+              onPressed: authState.isLoading ? null : _submit,
+              child: authState.isLoading
+                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.slate950))
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [Text('Send OTP'), SizedBox(width: 6), Icon(Icons.arrow_forward, size: 18)],
+                    ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.shield_outlined, color: AppColors.lime500, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Your number is used only for OTP verification and service updates.',
+                    style: TextStyle(color: AppColors.slate400.withValues(alpha: 0.9), fontSize: 11.5, height: 1.4),
                   ),
-                FilledButton(
-                  onPressed: authState.isLoading ? null : _submit,
-                  child: authState.isLoading
-                      ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Send OTP'),
                 ),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );

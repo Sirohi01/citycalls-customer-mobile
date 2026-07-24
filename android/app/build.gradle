@@ -3,10 +3,17 @@ plugins {
     id "kotlin-android"
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
+    // Reads android/app/google-services.json at build time. No manual
+    // `dependencies { implementation("com.google.firebase:...") }` block
+    // needed here — unlike a plain native Android app, firebase_core/
+    // firebase_messaging (declared in pubspec.yaml) already pull in the
+    // correct native Firebase SDK versions themselves via the Flutter
+    // Gradle plugin.
+    id "com.google.gms.google-services"
 }
 
 android {
-    namespace = "com.citycalls.citycalls_customer"
+    namespace = "com.citycalls.customer"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +28,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.citycalls.citycalls_customer"
+        applicationId = "com.citycalls.customer"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 23

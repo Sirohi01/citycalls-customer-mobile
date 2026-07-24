@@ -32,6 +32,7 @@ class ServicePricing {
 class Service {
   final String id;
   final String name;
+  final String? description;
   final String categoryId;
   final ServicePricing pricing;
   final int expectedDurationMinutes;
@@ -40,6 +41,7 @@ class Service {
   Service({
     required this.id,
     required this.name,
+    this.description,
     required this.categoryId,
     required this.pricing,
     required this.expectedDurationMinutes,
@@ -50,6 +52,7 @@ class Service {
     return Service(
       id: json['_id'] as String,
       name: json['name'] as String,
+      description: json['description'] as String?,
       categoryId: json['categoryId'] as String,
       pricing: ServicePricing.fromJson(
           json['pricing'] as Map<String, dynamic>? ?? {}),

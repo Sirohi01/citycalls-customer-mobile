@@ -1,4 +1,4 @@
-package com.citycalls.citycalls_customer
+package com.citycalls.customer
 
 import io.flutter.embedding.android.FlutterActivity
 

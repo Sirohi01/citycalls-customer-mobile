@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/customer_providers.dart';
-import 'home_screen.dart';
+import 'main_shell.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Onboarding" — Registration/
 // Profile Setup, shown once after a customer's very first OTP login (their
@@ -37,7 +37,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     ref.listen(profileSetupProvider, (previous, next) {
       if (next != null && next.hasValue && !next.isLoading) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const MainShell()),
           (route) => false,
         );
       }

@@ -42,6 +42,7 @@ class Customer {
   final String? email;
   final List<CustomerAddress> addresses;
   final Map<String, String> consent;
+  final String? mobile;
 
   Customer({
     required this.id,
@@ -49,9 +50,14 @@ class Customer {
     this.email,
     required this.addresses,
     required this.consent,
+    this.mobile,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
+    final contacts = (json['contacts'] as List? ?? []).cast<Map<String, dynamic>>();
+    final primaryContact = contacts.isEmpty
+        ? null
+        : (contacts.firstWhere((c) => c['isPrimary'] == true, orElse: () => contacts.first));
     return Customer(
       id: json['_id'] as String,
       name: json['name'] as String,
@@ -60,6 +66,7 @@ class Customer {
           .map((a) => CustomerAddress.fromJson(a as Map<String, dynamic>))
           .toList(),
       consent: Map<String, String>.from(json['consent'] as Map? ?? {}),
+      mobile: primaryContact?['mobile'] as String?,
     );
   }
   bool get needsProfileSetup => name == 'Customer';

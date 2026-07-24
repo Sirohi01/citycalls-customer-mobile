@@ -4,9 +4,15 @@ import '../data/auth_repository.dart';
 import '../data/customer_repository.dart';
 import '../models/auth_models.dart';
 
-// Compile-time override for staging/prod: flutter run/build
-// --dart-define=API_BASE_URL=https://api.citycalls.example/api/v1
-const _apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:4000/api/v1');
+// Compile-time override: flutter run/build --dart-define=API_BASE_URL=...
+// Defaults to the current ngrok tunnel for on-device testing — ngrok's free
+// tier issues a NEW random URL every time it restarts, so this will need
+// updating again whenever that happens (or switch to a paid reserved domain
+// so it stops changing).
+const _apiBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'https://nenita-untoured-nonhesitantly.ngrok-free.dev/api/v1',
+);
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(baseUrl: _apiBaseUrl);
