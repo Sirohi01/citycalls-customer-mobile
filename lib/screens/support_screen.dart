@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'my_complaints_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Support" — Contact Support /
-// Raise Complaint, FAQ/Help. No complaint-ticketing backend exists (no model,
-// no endpoint, no spec in docs/) — building a full ticket system without one
-// would mean inventing workflow/routing rules unilaterally, so this offers
-// direct contact (phone/email/WhatsApp) instead of a fake ticket form.
+// Raise Complaint, FAQ/Help. Raise Complaint is now a real ticket (see
+// my_complaints_screen.dart / raise_complaint_screen.dart, backed by
+// citycalls-api's src/modules/complaints); this screen still offers direct
+// contact as an alternative, not a replacement.
 // NOTE: the contact details below are placeholders — swap in the real
 // support phone/email/WhatsApp number before shipping.
 const _supportPhone = '+91-00000-00000';
@@ -45,6 +46,31 @@ class SupportScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyComplaintsScreen())),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: AppColors.black, borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                children: [
+                  const Icon(Icons.forum_outlined, color: Colors.white),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Raise a Complaint', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text('Track your complaints and their responses', style: TextStyle(color: AppColors.slate400, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: Colors.white),
+                ],
+              ),
+            ),
+          ),
           const Text('Contact Us', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 12),
           _ContactTile(icon: Icons.call_outlined, label: 'Call Support', value: _supportPhone),
