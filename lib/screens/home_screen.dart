@@ -4,25 +4,24 @@ import '../providers/customer_providers.dart';
 import '../providers/service_request_providers.dart';
 import '../providers/catalog_providers.dart';
 import '../providers/theme_providers.dart';
-import '../models/service_request_models.dart';
 import '../models/catalog_models.dart';
 import '../models/customer_models.dart';
 import '../theme/app_theme.dart';
-import '../widgets/status_badge.dart';
 import '../widgets/glow_blob.dart';
 import 'service_browse_screen.dart';
-import 'service_request_detail_screen.dart';
 import 'service_detail_screen.dart';
-import 'my_services_screen.dart';
 import 'profile_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Home" — Home/Dashboard.
 // Modeled after the quick-commerce/home-services dashboard pattern (Blinkit,
 // Urban Company): location bar, floating quick-book CTA, trust strip,
-// prominent category grid, a real "Popular Services" rail, then active
-// requests — every section backed by real catalog/profile data, nothing
-// invented. Header/CTA re-theme via beautyModeProvider (Profile screen's
-// "Beauty Mode" toggle, mirroring admin-web's pink Beauty & Salon mode).
+// a compact category grid for quick jumps, then one real services rail per
+// category (not a single mixed "Popular Services" list) — every section
+// backed by real catalog/profile data, nothing invented. Active Requests
+// deliberately isn't duplicated here — that's what the My Services tab is
+// for; the header's "Active" stat chip is enough of a signal on this screen.
+// Header/CTA re-theme via beautyModeProvider (Profile screen's "Beauty Mode"
+// toggle, mirroring admin-web's pink Beauty & Salon mode).
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -38,7 +37,6 @@ class HomeScreen extends ConsumerWidget {
     final profile = ref.watch(myProfileProvider);
     final requests = ref.watch(myServiceRequestsProvider);
     final categories = ref.watch(serviceCategoriesProvider);
-    final popularServices = ref.watch(servicesByCategoryProvider(null));
     final activeCount = requests.maybeWhen(data: (items) => items.where((r) => r.isActive).length, orElse: () => 0);
     final completedCount = requests.maybeWhen(
       data: (items) => items.where((r) => !r.isActive && r.status != 'CANCELLED').length,
@@ -82,20 +80,20 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 56),
+            const SizedBox(height: 52),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _LocationBar(profile: profile, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()))),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 16),
             const _TrustStrip(),
-            const SizedBox(height: 26),
+            const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Categories', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.black)),
+                  const Text('Categories', style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.bold, color: AppColors.black)),
                   TextButton(
                     onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ServiceBrowseScreen())),
                     style: TextButton.styleFrom(foregroundColor: AppColors.neutral500, padding: EdgeInsets.zero, minimumSize: Size.zero),
@@ -104,7 +102,7 @@ class HomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: categories.when(
@@ -116,97 +114,33 @@ class HomeScreen extends ConsumerWidget {
                         itemCount: cats.length,
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 14,
-                          childAspectRatio: 1.7,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 2.5,
                         ),
                         itemBuilder: (context, i) => _CategoryCard(category: cats[i], colorIndex: i),
                       ),
-                loading: () => const SizedBox(height: 160, child: Center(child: CircularProgressIndicator())),
+                loading: () => const SizedBox(height: 120, child: Center(child: CircularProgressIndicator())),
                 error: (_, __) => const SizedBox.shrink(),
               ),
             ),
-            const SizedBox(height: 28),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Popular Services', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.black)),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ServiceBrowseScreen())),
-                    style: TextButton.styleFrom(foregroundColor: AppColors.neutral500, padding: EdgeInsets.zero, minimumSize: Size.zero),
-                    child: const Text('See all', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            popularServices.when(
-              data: (items) => items.isEmpty
+            const SizedBox(height: 2),
+            // One real rail per category (Home Appliances / Pest Control /
+            // Home Cleaning / Bliss & Salon) instead of a single flat
+            // "Popular Services" list mixed across all of them — this is
+            // what actually makes the dashboard showcase the catalog, per
+            // Manish's ask to see "categories ke andar ka bhi" here, not
+            // just a category-picker row.
+            categories.when(
+              data: (cats) => cats.isEmpty
                   ? const SizedBox.shrink()
-                  : SizedBox(
-                      height: 190,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: items.length > 8 ? 8 : items.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 14),
-                        itemBuilder: (context, i) => _PopularServiceCard(service: items[i]),
-                      ),
-                    ),
-              loading: () => const SizedBox(height: 190, child: Center(child: CircularProgressIndicator())),
+                  : Column(children: [for (final c in cats) _CategoryServiceRail(category: c)]),
+              loading: () => const SizedBox.shrink(),
               error: (_, __) => const SizedBox.shrink(),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Active Requests', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.black)),
-                      if (activeCount > 0)
-                        TextButton(
-                          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyServicesScreen())),
-                          style: TextButton.styleFrom(foregroundColor: AppColors.neutral500, padding: EdgeInsets.zero, minimumSize: Size.zero),
-                          child: const Text('See all', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  requests.when(
-                    data: (items) {
-                      final active = items.where((r) => r.isActive).toList();
-                      if (active.isEmpty) {
-                        return _emptyCard('No active service requests right now.');
-                      }
-                      return Column(children: active.map((r) => _RequestCard(request: r)).toList());
-                    },
-                    loading: () => const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator())),
-                    error: (err, _) => _emptyCard('Failed to load your requests: $err'),
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 8),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _emptyCard(String message) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        children: [
-          Icon(Icons.checklist_rtl, color: AppColors.neutral200, size: 36),
-          const SizedBox(height: 10),
-          Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.neutral500)),
-        ],
       ),
     );
   }
@@ -526,29 +460,29 @@ class _CategoryCard extends StatelessWidget {
     final iconColor = _categoryIconColors[colorIndex % _categoryIconColors.length];
     return Material(
       color: AppColors.white,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(14),
       elevation: 1,
       shadowColor: Colors.black.withValues(alpha: 0.05),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ServiceBrowseScreen(initialCategoryId: category.id))),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Row(
             children: [
               Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(14)),
-                child: Icon(_iconForCategory(category.label), color: iconColor, size: 22),
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(10)),
+                child: Icon(_iconForCategory(category.label), color: iconColor, size: 17),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 9),
               Expanded(
                 child: Text(
                   category.label,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, color: AppColors.black, fontWeight: FontWeight.w700, height: 1.2),
+                  style: const TextStyle(fontSize: 12, color: AppColors.black, fontWeight: FontWeight.w700, height: 1.15),
                 ),
               ),
             ],
@@ -559,10 +493,62 @@ class _CategoryCard extends StatelessWidget {
   }
 }
 
-// Real catalog data (same servicesByCategoryProvider(null) + serviceMediaProvider
-// thumbnail-resolution used on the Browse screen), just laid out as a
-// horizontal image-card rail instead of a list row — the "showcase" section
-// a plain category-icon row doesn't give you.
+// One horizontal rail of real services per category — this is what actually
+// makes the dashboard "bigger"/richer with real content instead of a single
+// generic list. Skips itself (SizedBox.shrink) when a category has no
+// active services yet, rather than showing an empty titled section.
+class _CategoryServiceRail extends ConsumerWidget {
+  final ServiceCategory category;
+  const _CategoryServiceRail({required this.category});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final services = ref.watch(servicesByCategoryProvider(category.id));
+    return services.when(
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(category.label, style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.bold, color: AppColors.black)),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ServiceBrowseScreen(initialCategoryId: category.id))),
+                      style: TextButton.styleFrom(foregroundColor: AppColors.neutral500, padding: EdgeInsets.zero, minimumSize: Size.zero),
+                      child: const Text('See all', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 190,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: items.length > 6 ? 6 : items.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, i) => _PopularServiceCard(service: items[i]),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox(height: 190, child: Center(child: CircularProgressIndicator())),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+// Real catalog data, laid out as a horizontal image-card rail — used by
+// _CategoryServiceRail above (per-category) via servicesByCategoryProvider.
 class _PopularServiceCard extends ConsumerWidget {
   final Service service;
   const _PopularServiceCard({required this.service});
@@ -638,72 +624,3 @@ class _ServiceCardPlaceholder extends StatelessWidget {
   }
 }
 
-class _RequestCard extends StatelessWidget {
-  final ServiceRequestSummary request;
-  const _RequestCard({required this.request});
-
-  IconData _statusIcon(Color color) {
-    if (color == Colors.red) return Icons.cancel_outlined;
-    if (color == Colors.green) return Icons.check_circle_outline;
-    if (color == Colors.orange) return Icons.hourglass_top;
-    return Icons.build_circle_outlined;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = StatusBadge.colorFor(request.status);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ServiceRequestDetailScreen(requestId: request.id))),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                  child: Icon(_statusIcon(color), color: color, size: 22),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(child: Text(request.number, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5), overflow: TextOverflow.ellipsis)),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        request.serviceName ?? '${request.priority} priority',
-                        style: const TextStyle(color: AppColors.neutral500, fontSize: 12),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(customerStatusLabel(request.status), style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                const Icon(Icons.chevron_right, color: AppColors.neutral200),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

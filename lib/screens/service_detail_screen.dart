@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/catalog_providers.dart';
+import '../providers/customer_providers.dart';
 import '../models/catalog_models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/media_gallery.dart';
@@ -26,6 +27,34 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
   CoverageResult? _coverage;
   bool _checking = false;
   String? _checkError;
+  bool _pinFromSavedAddress = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillFromSavedAddress();
+  }
+
+  // A customer who already has a saved address shouldn't have to type its
+  // PIN code in by hand — that's also what avoids the mismatch where
+  // coverage gets checked for one PIN but the booking flow's Address Select
+  // screen (next step) ends up using a different saved address entirely.
+  // Best-effort: if this fails or there's no saved address, the field just
+  // stays empty and manual entry still works exactly as before.
+  Future<void> _prefillFromSavedAddress() async {
+    try {
+      final customer = await ref.read(myProfileProvider.future);
+      if (customer.addresses.isEmpty || !mounted) return;
+      final primary = customer.addresses.firstWhere((a) => a.isDefault, orElse: () => customer.addresses.first);
+      setState(() {
+        _pinCodeController.text = primary.pinCode;
+        _pinFromSavedAddress = true;
+      });
+      _checkCoverage();
+    } catch (_) {
+      // Best-effort — profile fetch failing here shouldn't block the page.
+    }
+  }
 
   @override
   void dispose() {
@@ -187,6 +216,9 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                               controller: _pinCodeController,
                               keyboardType: TextInputType.number,
                               maxLength: 6,
+                              onChanged: (_) {
+                                if (_pinFromSavedAddress) setState(() => _pinFromSavedAddress = false);
+                              },
                               decoration: const InputDecoration(
                                   labelText: 'PIN code', counterText: ''),
                             ),
@@ -205,6 +237,14 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                           ),
                         ],
                       ),
+                      if (_pinFromSavedAddress)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 6),
+                          child: Text(
+                            'Using your saved address — edit above to check a different area.',
+                            style: TextStyle(color: AppColors.neutral500, fontSize: 11.5),
+                          ),
+                        ),
                       if (_checkError != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
@@ -236,7 +276,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                                 child: Text(
                                   _coverage!.serviceable
                                       ? 'Great news — this service is available in your area!'
-                                      : 'Sorry, this service isn\'t available in your area yet (${_coverage!.reason}).',
+                                      : 'Sorry, this service isn\'t available in your area yet — ${_coverageReasonLabel(_coverage!.reason)}.',
                                   style: TextStyle(
                                       color: _coverage!.serviceable
                                           ? Colors.green.shade800
@@ -304,5 +344,19 @@ class _StatTile extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// Mirrors catalog.service.ts's checkCoverage() reason codes — shown raw
+// before this (e.g. "PIN_CODE_NOT_SERVICEABLE") reads as a bug, not a real
+// coverage message.
+String _coverageReasonLabel(String? reason) {
+  switch (reason) {
+    case 'PIN_CODE_NOT_SERVICEABLE':
+      return 'we don\'t currently service this area';
+    case 'SERVICE_NOT_ACTIVE':
+      return 'this service isn\'t currently available';
+    default:
+      return 'please try a different PIN code';
   }
 }
