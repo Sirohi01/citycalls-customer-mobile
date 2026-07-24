@@ -20,8 +20,8 @@ class InvoiceViewScreen extends ConsumerWidget {
     final invoice = ref.watch(invoiceForRequestProvider(requestId));
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Invoice'), centerTitle: false),
+      backgroundColor: AppColors.neutral100,
+      appBar: AppBar(title: const Text('Invoice'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
       body: invoice.when(
         data: (inv) {
           if (inv == null) return const Center(child: Text('No invoice found for this request yet.', style: TextStyle(color: AppColors.neutral500)));
@@ -34,21 +34,39 @@ class InvoiceViewScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(inv.number, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    StatusBadge(status: inv.status),
-                  ],
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                        child: Icon(Icons.receipt_outlined, color: Theme.of(context).colorScheme.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(inv.number, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+                      StatusBadge(status: inv.status),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(border: Border.all(color: AppColors.neutral200), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                  ),
                   child: Column(
                     children: [
                       _row('Total Amount', '₹${inv.total.toStringAsFixed(0)}'),
                       _row('Amount Paid', '₹${inv.amountPaid.toStringAsFixed(0)}'),
+                      const Divider(color: AppColors.neutral200),
                       _row('Outstanding', '₹${inv.outstanding.toStringAsFixed(0)}', bold: true),
                     ],
                   ),
@@ -66,15 +84,36 @@ class InvoiceViewScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 payments.when(
                   data: (items) => items.isEmpty
-                      ? const Text('No payments recorded yet.', style: TextStyle(color: AppColors.neutral500))
+                      ? Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(14)),
+                          child: const Column(
+                            children: [
+                              Icon(Icons.receipt_long_outlined, color: AppColors.neutral200, size: 32),
+                              SizedBox(height: 8),
+                              Text('No payments recorded yet.', style: TextStyle(color: AppColors.neutral500)),
+                            ],
+                          ),
+                        )
                       : Column(
                           children: items
                               .map((p) => Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(10)),
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                                    ),
                                     child: Row(
                                       children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                                          child: const Icon(Icons.check_circle_outline, color: Colors.green, size: 18),
+                                        ),
+                                        const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,

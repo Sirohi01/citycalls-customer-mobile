@@ -23,18 +23,22 @@ class ProfileScreen extends ConsumerWidget {
     final beautyMode = ref.watch(beautyModeProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Profile'), centerTitle: false),
+      backgroundColor: AppColors.neutral100,
+      appBar: AppBar(title: const Text('Profile'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
       body: profile.when(
         data: (customer) => ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: AppColors.neutral100,
-              child: Text(
-                customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.black),
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2)),
+              child: CircleAvatar(
+                radius: 32,
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                child: Text(
+                  customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -42,9 +46,10 @@ class ProfileScreen extends ConsumerWidget {
             if (customer.mobile != null) Text('+91 ${customer.mobile}', style: const TextStyle(color: AppColors.neutral500)),
             if (customer.email != null) Text(customer.email!, style: const TextStyle(color: AppColors.neutral500)),
             const SizedBox(height: 16),
-            OutlinedButton(
+            OutlinedButton.icon(
               onPressed: () => _showEditProfileSheet(context, ref, customer),
-              child: const Text('Edit Profile'),
+              icon: const Icon(Icons.edit_outlined, size: 16),
+              label: const Text('Edit Profile'),
             ),
             const SizedBox(height: 28),
             Row(
@@ -58,11 +63,11 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             if (customer.addresses.isEmpty)
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(14)),
                 child: const Text('No saved addresses yet.', style: TextStyle(color: AppColors.neutral500)),
               )
             else
@@ -70,11 +75,19 @@ class ProfileScreen extends ConsumerWidget {
                 (a) => Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(border: Border.all(color: AppColors.neutral200), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, size: 20, color: AppColors.neutral500),
-                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                        child: Icon(Icons.location_on_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           [a.label, a.line1, a.city, a.state, a.pinCode].where((s) => s != null && s.isNotEmpty).join(', '),
@@ -404,20 +417,29 @@ class _MenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(border: Border.all(color: AppColors.neutral200), borderRadius: BorderRadius.circular(12)),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.neutral500, size: 20),
-            const SizedBox(width: 12),
-            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
-            const Icon(Icons.chevron_right, color: AppColors.neutral500),
-          ],
+    return Material(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(14),
+      elevation: 1,
+      shadowColor: Colors.black.withValues(alpha: 0.03),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, color: AppColors.neutral500, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
+              const Icon(Icons.chevron_right, color: AppColors.neutral200),
+            ],
+          ),
         ),
       ),
     );

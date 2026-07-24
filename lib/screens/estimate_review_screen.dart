@@ -45,8 +45,8 @@ class _EstimateReviewScreenState extends ConsumerState<EstimateReviewScreen> {
     final estimate = ref.watch(estimateForRequestProvider(widget.requestId));
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Review Estimate'), centerTitle: false),
+      backgroundColor: AppColors.neutral100,
+      appBar: AppBar(title: const Text('Review Estimate'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
       body: estimate.when(
         data: (e) {
           if (e == null) return const Center(child: Text('No estimate found for this request yet.', style: TextStyle(color: AppColors.neutral500)));
@@ -56,59 +56,95 @@ class _EstimateReviewScreenState extends ConsumerState<EstimateReviewScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(e.number, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    StatusBadge(status: e.status),
-                  ],
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                        child: Icon(Icons.receipt_long_outlined, color: Theme.of(context).colorScheme.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(e.number, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+                      StatusBadge(status: e.status),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: ListView.separated(
-                    itemCount: e.items.length,
-                    separatorBuilder: (_, __) => const Divider(height: 20, color: AppColors.neutral200),
-                    itemBuilder: (context, i) {
-                      final item = e.items[i];
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(item.description, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                Text('${item.qty.toStringAsFixed(0)} x ₹${item.unitPrice.toStringAsFixed(0)}', style: const TextStyle(color: AppColors.neutral500, fontSize: 12)),
-                              ],
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                    ),
+                    child: ListView.separated(
+                      itemCount: e.items.length,
+                      separatorBuilder: (_, __) => const Divider(height: 20, color: AppColors.neutral200),
+                      itemBuilder: (context, i) {
+                        final item = e.items[i];
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.description, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                  Text('${item.qty.toStringAsFixed(0)} x ₹${item.unitPrice.toStringAsFixed(0)}', style: const TextStyle(color: AppColors.neutral500, fontSize: 12)),
+                                ],
+                              ),
                             ),
-                          ),
-                          Text('₹${item.lineTotal.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                        ],
-                      );
-                    },
+                            Text('₹${item.lineTotal.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
-                const Divider(color: AppColors.neutral200),
-                _totalRow('Subtotal', e.subtotal),
-                if (e.discount > 0) _totalRow('Discount', -e.discount),
-                _totalRow('Total', e.total, bold: true),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                  ),
+                  child: Column(
+                    children: [
+                      _totalRow('Subtotal', e.subtotal),
+                      if (e.discount > 0) _totalRow('Discount', -e.discount),
+                      const Divider(color: AppColors.neutral200),
+                      _totalRow('Total', e.total, bold: true),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 20),
                 if (canRespond)
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), minimumSize: const Size.fromHeight(48)),
                           onPressed: _submitting ? null : () => _respond(false),
-                          child: const Text('Reject'),
+                          icon: const Icon(Icons.close, size: 18),
+                          label: const Text('Reject'),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: FilledButton(
+                        child: FilledButton.icon(
                           onPressed: _submitting ? null : () => _respond(true),
-                          child: _submitting
-                              ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : const Text('Approve'),
+                          icon: _submitting
+                              ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.check, size: 18),
+                          label: Text(_submitting ? 'Submitting...' : 'Approve'),
                         ),
                       ),
                     ],

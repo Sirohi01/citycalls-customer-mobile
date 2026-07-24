@@ -13,8 +13,8 @@ class SavedProductsScreen extends ConsumerWidget {
     final products = ref.watch(customerProductsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Saved Appliances'), centerTitle: false),
+      backgroundColor: AppColors.neutral100,
+      appBar: AppBar(title: const Text('Saved Appliances'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
       body: products.when(
         data: (items) => Padding(
           padding: const EdgeInsets.all(20),
@@ -37,7 +37,18 @@ class SavedProductsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
               if (items.isEmpty)
-                const Text('No saved appliances yet.', style: TextStyle(color: AppColors.neutral500))
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.build_outlined, color: AppColors.neutral200, size: 44),
+                        const SizedBox(height: 12),
+                        const Text('No saved appliances yet.', style: TextStyle(color: AppColors.neutral500)),
+                      ],
+                    ),
+                  ),
+                )
               else
                 Expanded(
                   child: ListView.separated(
@@ -47,10 +58,18 @@ class SavedProductsScreen extends ConsumerWidget {
                       final p = items[i];
                       return Container(
                         padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(border: Border.all(color: AppColors.neutral200), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                        ),
                         child: Row(
                           children: [
-                            const Icon(Icons.build_outlined, color: AppColors.neutral500),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                              child: Icon(Icons.build_outlined, color: Theme.of(context).colorScheme.primary, size: 20),
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(

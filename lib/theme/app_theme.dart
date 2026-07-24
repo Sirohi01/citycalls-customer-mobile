@@ -44,6 +44,16 @@ const _pageTransitionsTheme = PageTransitionsTheme(
   },
 );
 
+// Applied to every showModalBottomSheet() call in the app automatically
+// (Flutter reads this from Theme.of(context) whenever a call site doesn't
+// pass its own `shape:`) — rounded top corners without having to touch each
+// of the ~6 bottom-sheet call sites individually.
+final _bottomSheetTheme = BottomSheetThemeData(
+  backgroundColor: AppColors.white,
+  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+  showDragHandle: true,
+);
+
 class AppTheme {
   AppTheme._();
 
@@ -67,6 +77,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
       ),
       pageTransitionsTheme: _pageTransitionsTheme,
+      bottomSheetTheme: _bottomSheetTheme,
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.black,
@@ -114,6 +125,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
       ),
       pageTransitionsTheme: _pageTransitionsTheme,
+      bottomSheetTheme: _bottomSheetTheme,
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.beautyPrimary,

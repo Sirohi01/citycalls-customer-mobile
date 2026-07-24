@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/booking_models.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/booking_step_header.dart';
 import 'booking_review_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Booking" — Slot Selection.
@@ -36,6 +37,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const BookingStepHeader(step: 4, totalSteps: 5, title: 'Select a time'),
             const Text('Preferred date', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
             const SizedBox(height: 12),
             SizedBox(
@@ -50,6 +52,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                       _selectedDate!.year == day.year &&
                       _selectedDate!.month == day.month &&
                       _selectedDate!.day == day.day;
+                  final primary = Theme.of(context).colorScheme.primary;
                   const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
                   return InkWell(
                     borderRadius: BorderRadius.circular(12),
@@ -57,8 +60,9 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                     child: Container(
                       width: 56,
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.black : AppColors.neutral100,
+                        color: selected ? primary : AppColors.neutral100,
                         borderRadius: BorderRadius.circular(12),
+                        boxShadow: selected ? [BoxShadow(color: primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 3))] : null,
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -76,29 +80,39 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             const SizedBox(height: 24),
             const Text('Preferred time slot', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
             const SizedBox(height: 12),
-            ...kTimeSlots.map((slot) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+            ...kTimeSlots.map((slot) {
+              final primary = Theme.of(context).colorScheme.primary;
+              final selected = _selectedSlot == slot;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Material(
+                  color: selected ? primary.withValues(alpha: 0.05) : AppColors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  elevation: selected ? 0 : 1,
+                  shadowColor: Colors.black.withValues(alpha: 0.04),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     onTap: () => setState(() => _selectedSlot = slot),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        border: Border.all(color: _selectedSlot == slot ? AppColors.black : AppColors.neutral200, width: _selectedSlot == slot ? 1.5 : 1),
-                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.schedule, color: AppColors.neutral500, size: 18),
+                          Icon(Icons.schedule, color: selected ? primary : AppColors.neutral500, size: 18),
                           const SizedBox(width: 10),
                           Expanded(child: Text(slot)),
-                          if (_selectedSlot == slot) const Icon(Icons.check_circle, color: AppColors.black, size: 20),
+                          if (selected) Icon(Icons.check_circle, color: primary, size: 20),
                         ],
                       ),
                     ),
                   ),
-                )),
+                ),
+              );
+            }),
             const Spacer(),
             FilledButton(
               onPressed: (_selectedDate == null || _selectedSlot == null)

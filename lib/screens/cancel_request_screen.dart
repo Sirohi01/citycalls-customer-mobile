@@ -60,10 +60,19 @@ class _CancelRequestScreenState extends ConsumerState<CancelRequestScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
-              child: const Text(
-                'Are you sure you want to cancel this service request? This action can\'t be undone.',
-                style: TextStyle(color: Colors.red),
+              decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(14)),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 20),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Are you sure you want to cancel this service request? This action can\'t be undone.',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),

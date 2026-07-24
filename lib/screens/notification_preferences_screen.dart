@@ -16,8 +16,8 @@ class NotificationPreferencesScreen extends ConsumerWidget {
     final profile = ref.watch(myProfileProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Notification Preferences'), centerTitle: false),
+      backgroundColor: AppColors.neutral100,
+      appBar: AppBar(title: const Text('Notification Preferences'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
       body: profile.when(
         data: (customer) => ListView(
           padding: const EdgeInsets.all(20),
@@ -86,19 +86,28 @@ class _ConsentTileState extends ConsumerState<_ConsentTile> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(border: Border.all(color: AppColors.neutral200), borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
       child: Row(
         children: [
-          Icon(widget.icon, color: AppColors.neutral500),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: widget.granted ? primary.withValues(alpha: 0.1) : AppColors.neutral100, borderRadius: BorderRadius.circular(10)),
+            child: Icon(widget.icon, color: widget.granted ? primary : AppColors.neutral500, size: 20),
+          ),
           const SizedBox(width: 12),
           Expanded(child: Text(widget.label, style: const TextStyle(fontWeight: FontWeight.w600))),
           if (_saving)
             const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
           else
-            Switch(value: widget.granted, onChanged: _toggle, activeTrackColor: AppColors.black),
+            Switch(value: widget.granted, onChanged: _toggle, activeColor: primary),
         ],
       ),
     );

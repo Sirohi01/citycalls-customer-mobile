@@ -56,10 +56,19 @@ class _ReopenRequestScreenState extends ConsumerState<ReopenRequestScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(12)),
-              child: const Text(
-                'Still facing the same issue? Reopening lets our team follow up without booking a fresh request.',
-                style: TextStyle(color: AppColors.neutral500),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(14)),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.replay, color: Theme.of(context).colorScheme.primary, size: 20),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Still facing the same issue? Reopening lets our team follow up without booking a fresh request.',
+                      style: TextStyle(color: AppColors.neutral900),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),

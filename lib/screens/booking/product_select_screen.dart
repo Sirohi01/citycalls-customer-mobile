@@ -4,6 +4,7 @@ import '../../models/booking_models.dart';
 import '../../providers/booking_providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/add_product_sheet.dart';
+import '../../widgets/booking_step_header.dart';
 import 'address_select_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Booking" — Product Select/Add,
@@ -38,8 +39,7 @@ class _ProductSelectScreenState extends ConsumerState<ProductSelectScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Which appliance needs ${widget.draft.serviceName}?', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-              const SizedBox(height: 16),
+              BookingStepHeader(step: 1, totalSteps: 5, title: 'Which appliance needs ${widget.draft.serviceName}?'),
               Expanded(
                 child: ListView(
                   children: [
@@ -108,31 +108,42 @@ class _ProductTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          border: Border.all(color: selected ? AppColors.black : AppColors.neutral200, width: selected ? 1.5 : 1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(icon ?? Icons.build_outlined, color: AppColors.neutral500),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  if (subtitle != null && subtitle!.isNotEmpty) Text(subtitle!, style: const TextStyle(color: AppColors.neutral500, fontSize: 12)),
-                ],
+    final primary = Theme.of(context).colorScheme.primary;
+    return Material(
+      color: selected ? primary.withValues(alpha: 0.05) : AppColors.white,
+      borderRadius: BorderRadius.circular(14),
+      elevation: selected ? 0 : 1,
+      shadowColor: Colors.black.withValues(alpha: 0.04),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon ?? Icons.build_outlined, color: AppColors.neutral500, size: 20),
               ),
-            ),
-            if (selected) const Icon(Icons.check_circle, color: AppColors.black, size: 20),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    if (subtitle != null && subtitle!.isNotEmpty) Text(subtitle!, style: const TextStyle(color: AppColors.neutral500, fontSize: 12)),
+                  ],
+                ),
+              ),
+              if (selected) Icon(Icons.check_circle, color: primary, size: 20),
+            ],
+          ),
         ),
       ),
     );

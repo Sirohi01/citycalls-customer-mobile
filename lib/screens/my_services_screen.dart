@@ -8,7 +8,7 @@ import 'service_request_detail_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Tracking" — Service Request
 // List (active + history tabs). Detail drill-down (status timeline, live map,
-// technician info) is a separate, larger screen not built yet.
+// technician info) lives in service_request_detail_screen.dart.
 class MyServicesScreen extends ConsumerWidget {
   const MyServicesScreen({super.key});
 
@@ -19,15 +19,18 @@ class MyServicesScreen extends ConsumerWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.neutral100,
         appBar: AppBar(
           title: const Text('My Services'),
           centerTitle: false,
-          bottom: const TabBar(
+          backgroundColor: AppColors.neutral100,
+          surfaceTintColor: AppColors.neutral100,
+          bottom: TabBar(
             labelColor: AppColors.black,
             unselectedLabelColor: AppColors.neutral500,
-            indicatorColor: AppColors.black,
-            tabs: [Tab(text: 'Active'), Tab(text: 'History')],
+            indicatorColor: Theme.of(context).colorScheme.primary,
+            indicatorWeight: 3,
+            tabs: const [Tab(text: 'Active'), Tab(text: 'History')],
           ),
         ),
         body: requests.when(
@@ -36,7 +39,7 @@ class MyServicesScreen extends ConsumerWidget {
             final history = items.where((r) => !r.isActive).toList();
             return TabBarView(
               children: [
-                _RequestList(items: active, emptyMessage: 'No active service requests.'),
+                _RequestList(items: active, emptyMessage: 'No active service requests right now.'),
                 _RequestList(items: history, emptyMessage: 'No past service requests yet.'),
               ],
             );
@@ -57,37 +60,67 @@ class _RequestList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return Center(child: Text(emptyMessage, style: const TextStyle(color: AppColors.neutral500)));
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.checklist_rtl, color: AppColors.neutral200, size: 44),
+            const SizedBox(height: 12),
+            Text(emptyMessage, style: const TextStyle(color: AppColors.neutral500)),
+          ],
+        ),
+      );
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final r = items[index];
-        return InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ServiceRequestDetailScreen(requestId: r.id))),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(border: Border.all(color: AppColors.neutral200), borderRadius: BorderRadius.circular(12)),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(r.number, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${r.priority} priority · ${DateTime.tryParse(r.createdAt)?.toLocal().toString().split(' ').first ?? ''}',
-                        style: const TextStyle(color: AppColors.neutral500, fontSize: 12),
-                      ),
-                    ],
+        final color = StatusBadge.colorFor(r.status);
+        return Material(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(14),
+          elevation: 1,
+          shadowColor: Colors.black.withValues(alpha: 0.05),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ServiceRequestDetailScreen(requestId: r.id))),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                    child: Icon(Icons.build_circle_outlined, color: color, size: 22),
                   ),
-                ),
-                StatusBadge(status: r.status),
-              ],
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(r.number, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                        const SizedBox(height: 3),
+                        Text(
+                          r.serviceName ?? '${r.priority} priority',
+                          style: const TextStyle(color: AppColors.neutral500, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          DateTime.tryParse(r.createdAt)?.toLocal().toString().split(' ').first ?? '',
+                          style: const TextStyle(color: AppColors.neutral500, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  StatusBadge(status: r.status),
+                ],
+              ),
             ),
           ),
         );

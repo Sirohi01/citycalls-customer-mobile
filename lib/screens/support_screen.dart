@@ -40,34 +40,44 @@ class SupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Help & Support'), centerTitle: false),
+      backgroundColor: AppColors.neutral100,
+      appBar: AppBar(title: const Text('Help & Support'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyComplaintsScreen())),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 20),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: AppColors.black, borderRadius: BorderRadius.circular(12)),
-              child: Row(
-                children: [
-                  const Icon(Icons.forum_outlined, color: Colors.white),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Raise a Complaint', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
-                        Text('Track your complaints and their responses', style: TextStyle(color: AppColors.slate400, fontSize: 12)),
-                      ],
+          Material(
+            color: primary,
+            borderRadius: BorderRadius.circular(16),
+            elevation: 3,
+            shadowColor: primary.withValues(alpha: 0.3),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyComplaintsScreen())),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), shape: BoxShape.circle),
+                      child: const Icon(Icons.forum_outlined, color: Colors.white),
                     ),
-                  ),
-                  const Icon(Icons.chevron_right, color: Colors.white),
-                ],
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Raise a Complaint', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 15)),
+                          Text('Track your complaints and their responses', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: Colors.white),
+                  ],
+                ),
               ),
             ),
           ),
@@ -77,14 +87,32 @@ class SupportScreen extends StatelessWidget {
           _ContactTile(icon: Icons.mail_outline, label: 'Email Support', value: _supportEmail),
           const SizedBox(height: 28),
           const Text('Frequently Asked Questions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 8),
-          ..._faqs.map((faq) => ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: Text(faq.$1, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                childrenPadding: const EdgeInsets.only(bottom: 12),
-                expandedAlignment: Alignment.centerLeft,
-                children: [Text(faq.$2, style: const TextStyle(color: AppColors.neutral500, height: 1.4))],
-              )),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+            ),
+            child: Column(
+              children: [
+                for (var i = 0; i < _faqs.length; i++)
+                  Column(
+                    children: [
+                      ExpansionTile(
+                        tilePadding: EdgeInsets.zero,
+                        title: Text(_faqs[i].$1, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+                        childrenPadding: const EdgeInsets.only(bottom: 14),
+                        expandedAlignment: Alignment.centerLeft,
+                        children: [Text(_faqs[i].$2, style: const TextStyle(color: AppColors.neutral500, height: 1.4, fontSize: 13))],
+                      ),
+                      if (i != _faqs.length - 1) const Divider(height: 1, color: AppColors.neutral200),
+                    ],
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -102,10 +130,18 @@ class _ContactTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.black),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
+          ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

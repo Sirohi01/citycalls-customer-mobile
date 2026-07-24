@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/customer_providers.dart';
+import '../theme/app_theme.dart';
 import 'main_shell.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Onboarding" — Registration/
@@ -44,6 +45,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     });
 
     return Scaffold(
+      backgroundColor: AppColors.neutral100,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -51,35 +53,52 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             key: _formKey,
             child: ListView(
               children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: Icon(Icons.waving_hand_rounded, color: Theme.of(context).colorScheme.primary, size: 32),
+                ),
+                const SizedBox(height: 20),
                 const Text('Tell us about you', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                const Text('Just a couple of details before you start booking services.', style: TextStyle(color: Colors.black54)),
-                const SizedBox(height: 24),
+                const Text('Just a couple of details before you start booking services.', style: TextStyle(color: AppColors.neutral500)),
+                const SizedBox(height: 28),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Full name'),
+                  decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.person_outline)),
                   validator: (value) => (value == null || value.trim().length < 2) ? 'Enter your name' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email (optional)'),
+                  decoration: const InputDecoration(labelText: 'Email (optional)', prefixIcon: Icon(Icons.mail_outline)),
                 ),
                 const SizedBox(height: 20),
                 // Consent must be captured explicitly, never pre-checked —
                 // docs/17-security-and-audit.md §8.
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _whatsappConsent,
-                  onChanged: (v) => setState(() => _whatsappConsent = v ?? false),
-                  title: const Text('Send me booking updates on WhatsApp'),
-                ),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _emailConsent,
-                  onChanged: (v) => setState(() => _emailConsent = v ?? false),
-                  title: const Text('Send me updates by email'),
+                Container(
+                  decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(14)),
+                  child: Column(
+                    children: [
+                      CheckboxListTile(
+                        value: _whatsappConsent,
+                        onChanged: (v) => setState(() => _whatsappConsent = v ?? false),
+                        title: const Text('Send me booking updates on WhatsApp', style: TextStyle(fontSize: 13.5)),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        dense: true,
+                      ),
+                      CheckboxListTile(
+                        value: _emailConsent,
+                        onChanged: (v) => setState(() => _emailConsent = v ?? false),
+                        title: const Text('Send me updates by email', style: TextStyle(fontSize: 13.5)),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        dense: true,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 if (error != null)
@@ -87,11 +106,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text('$error', style: const TextStyle(color: Colors.red)),
                   ),
-                FilledButton(
+                FilledButton.icon(
                   onPressed: isLoading ? null : _submit,
-                  child: isLoading
-                      ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Continue'),
+                  icon: isLoading
+                      ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.arrow_forward, size: 18),
+                  label: Text(isLoading ? 'Saving...' : 'Continue'),
                 ),
               ],
             ),

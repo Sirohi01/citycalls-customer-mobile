@@ -5,6 +5,7 @@ import '../../models/customer_models.dart';
 import '../../providers/booking_providers.dart';
 import '../../providers/customer_providers.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/booking_step_header.dart';
 import 'issue_description_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Booking" — Address Select/Add.
@@ -38,8 +39,7 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Where should the technician visit?', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-              const SizedBox(height: 16),
+              const BookingStepHeader(step: 2, totalSteps: 5, title: 'Where should the technician visit?'),
               Expanded(
                 child: ListView(
                   children: [
@@ -48,19 +48,28 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                           selected: _selectedAddressId == a.id,
                           onTap: () => setState(() => _selectedAddressId = a.id),
                         )),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => _showAddAddressSheet(context, customer.id),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(border: Border.all(color: AppColors.neutral200), borderRadius: BorderRadius.circular(12)),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.add, color: AppColors.neutral500),
-                            SizedBox(width: 12),
-                            Text('Add a new address', style: TextStyle(fontWeight: FontWeight.w600)),
-                          ],
+                    Material(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      elevation: 1,
+                      shadowColor: Colors.black.withValues(alpha: 0.04),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => _showAddAddressSheet(context, customer.id),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                                child: Icon(Icons.add, color: Theme.of(context).colorScheme.primary, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text('Add a new address', style: TextStyle(fontWeight: FontWeight.w600)),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -226,27 +235,38 @@ class _AddressTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          border: Border.all(color: selected ? AppColors.black : AppColors.neutral200, width: selected ? 1.5 : 1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.location_on_outlined, color: AppColors.neutral500),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                [address.label, address.line1, address.city, address.state, address.pinCode].where((s) => s != null && s.isNotEmpty).join(', '),
+    final primary = Theme.of(context).colorScheme.primary;
+    return Material(
+      color: selected ? primary.withValues(alpha: 0.05) : AppColors.white,
+      borderRadius: BorderRadius.circular(14),
+      elevation: selected ? 0 : 1,
+      shadowColor: Colors.black.withValues(alpha: 0.04),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.location_on_outlined, color: AppColors.neutral500, size: 20),
               ),
-            ),
-            if (selected) const Icon(Icons.check_circle, color: AppColors.black, size: 20),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  [address.label, address.line1, address.city, address.state, address.pinCode].where((s) => s != null && s.isNotEmpty).join(', '),
+                ),
+              ),
+              if (selected) Icon(Icons.check_circle, color: primary, size: 20),
+            ],
+          ),
         ),
       ),
     );

@@ -95,85 +95,163 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                     error: (_, __) => const SizedBox.shrink(),
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(s.name,
                     style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold)),
+                        fontSize: 22, fontWeight: FontWeight.bold, height: 1.2)),
                 if (s.description != null && s.description!.trim().isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(s.description!,
                       style: const TextStyle(
                           color: AppColors.neutral500, fontSize: 14, height: 1.4)),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                        child: _StatTile(
+                            icon: Icons.currency_rupee,
+                            label: 'Starting at',
+                            value: '₹${s.pricing.basePrice.toStringAsFixed(0)}')),
+                    const SizedBox(width: 10),
+                    Expanded(
+                        child: _StatTile(
+                            icon: Icons.schedule,
+                            label: 'Duration',
+                            value: '~${s.expectedDurationMinutes} min')),
+                    if (s.warrantyPeriodDays > 0) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                          child: _StatTile(
+                              icon: Icons.verified_user_outlined,
+                              label: 'Warranty',
+                              value: '${s.warrantyPeriodDays}d')),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.neutral200),
+                      color: AppColors.neutral100,
                       borderRadius: BorderRadius.circular(12)),
-                  child: Column(
+                  child: Row(
                     children: [
-                      _detailRow('Starting price',
-                          '₹${s.pricing.basePrice.toStringAsFixed(0)}'),
-                      _detailRow('Visiting charge',
-                          '₹${s.pricing.visitingCharge.toStringAsFixed(0)}'),
-                      _detailRow('Estimated duration',
-                          '~${s.expectedDurationMinutes} minutes'),
-                      if (s.warrantyPeriodDays > 0)
-                        _detailRow('Warranty', '${s.warrantyPeriodDays} days'),
+                      const Icon(Icons.directions_car_filled_outlined,
+                          size: 16, color: AppColors.neutral500),
+                      const SizedBox(width: 8),
+                      Text('Visiting charge: ₹${s.pricing.visitingCharge.toStringAsFixed(0)}',
+                          style: const TextStyle(color: AppColors.neutral500, fontSize: 12.5)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4)),
+                    ],
+                    border: Border.all(color: AppColors.neutral200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10)),
+                            child: Icon(Icons.location_on_outlined,
+                                size: 18, color: Theme.of(context).colorScheme.primary),
+                          ),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text('Check availability in your area',
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _pinCodeController,
+                              keyboardType: TextInputType.number,
+                              maxLength: 6,
+                              decoration: const InputDecoration(
+                                  labelText: 'PIN code', counterText: ''),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          FilledButton(
+                            onPressed: _checking ? null : _checkCoverage,
+                            style: FilledButton.styleFrom(minimumSize: const Size(88, 48)),
+                            child: _checking
+                                ? const SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white))
+                                : const Text('Check'),
+                          ),
+                        ],
+                      ),
+                      if (_checkError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(_checkError!, style: const TextStyle(color: Colors.red)),
+                        ),
+                      if (_coverage != null)
+                        Container(
+                          margin: const EdgeInsets.only(top: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: _coverage!.serviceable
+                                ? Colors.green.shade50
+                                : Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _coverage!.serviceable
+                                    ? Icons.check_circle
+                                    : Icons.info_outline,
+                                color: _coverage!.serviceable
+                                    ? Colors.green.shade700
+                                    : Colors.red.shade700,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _coverage!.serviceable
+                                      ? 'Great news — this service is available in your area!'
+                                      : 'Sorry, this service isn\'t available in your area yet (${_coverage!.reason}).',
+                                  style: TextStyle(
+                                      color: _coverage!.serviceable
+                                          ? Colors.green.shade800
+                                          : Colors.red.shade800,
+                                      fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text('Check availability in your area',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _pinCodeController,
-                        keyboardType: TextInputType.number,
-                        maxLength: 6,
-                        decoration: const InputDecoration(
-                            labelText: 'PIN code', counterText: ''),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    FilledButton(
-                      onPressed: _checking ? null : _checkCoverage,
-                      child: _checking
-                          ? const SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('Check'),
-                    ),
-                  ],
-                ),
-                if (_checkError != null)
-                  Text(_checkError!, style: const TextStyle(color: Colors.red)),
-                if (_coverage != null)
-                  Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _coverage!.serviceable
-                          ? Colors.green.shade50
-                          : Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _coverage!.serviceable
-                          ? 'Great news — this service is available in your area!'
-                          : 'Sorry, this service isn\'t available in your area yet (${_coverage!.reason}).',
-                      style: TextStyle(
-                          color: _coverage!.serviceable
-                              ? Colors.green.shade800
-                              : Colors.red.shade800),
-                    ),
-                  ),
-                const SizedBox(height: 24),
-                FilledButton(
+                FilledButton.icon(
                   onPressed: _coverage?.serviceable == true
                       ? () => Navigator.of(context).push(MaterialPageRoute(
                             builder: (_) => ProductSelectScreen(
@@ -184,8 +262,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                             ),
                           ))
                       : null,
-                  child: const Text('Book Now'),
+                  icon: const Icon(Icons.calendar_month_outlined, size: 18),
+                  label: const Text('Book Now'),
                 ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -195,15 +275,32 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
       ),
     );
   }
+}
 
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+class _StatTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _StatTile({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.neutral100,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.neutral500)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(height: 8),
+          Text(value,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+          Text(label, style: const TextStyle(color: AppColors.neutral500, fontSize: 10.5)),
         ],
       ),
     );

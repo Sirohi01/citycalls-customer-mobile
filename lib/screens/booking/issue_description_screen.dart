@@ -6,6 +6,7 @@ import '../../models/booking_models.dart';
 import '../../providers/booking_providers.dart';
 import '../../providers/customer_providers.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/booking_step_header.dart';
 import 'slot_selection_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Booking" — Issue Description
@@ -77,6 +78,7 @@ class _IssueDescriptionScreenState extends ConsumerState<IssueDescriptionScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const BookingStepHeader(step: 3, totalSteps: 5, title: 'Describe the issue'),
             const Text('What symptoms are you seeing? (optional)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
             const SizedBox(height: 12),
             symptoms.when(
@@ -88,7 +90,7 @@ class _IssueDescriptionScreenState extends ConsumerState<IssueDescriptionScreen>
                           label: Text(s.label),
                           selected: _selectedSymptoms.contains(s.label),
                           onSelected: (v) => setState(() => v ? _selectedSymptoms.add(s.label) : _selectedSymptoms.remove(s.label)),
-                          selectedColor: AppColors.black,
+                          selectedColor: Theme.of(context).colorScheme.primary,
                           labelStyle: TextStyle(color: _selectedSymptoms.contains(s.label) ? Colors.white : AppColors.black),
                           backgroundColor: AppColors.neutral100,
                           side: BorderSide.none,
@@ -140,8 +142,12 @@ class _IssueDescriptionScreenState extends ConsumerState<IssueDescriptionScreen>
                     child: Container(
                       width: 84,
                       height: 84,
-                      decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.add_a_photo_outlined, color: AppColors.neutral500),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25), style: BorderStyle.solid),
+                      ),
+                      child: Icon(Icons.add_a_photo_outlined, color: Theme.of(context).colorScheme.primary),
                     ),
                   ),
                 ],
