@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../theme/app_theme.dart';
@@ -55,7 +56,12 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
               controller: _mobileController,
               style: const TextStyle(color: Colors.white),
               keyboardType: TextInputType.phone,
-              decoration: authFieldDecoration(label: 'Mobile number', icon: Icons.phone_iphone, prefixText: '+91  '),
+              maxLength: 10,
+              maxLengthEnforcement: MaxLengthEnforcement.enforced,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              decoration: authFieldDecoration(label: 'Mobile number', icon: Icons.phone_iphone, prefixText: '+91  ').copyWith(counterText: ''),
               validator: (value) => (value == null || value.trim().length < 10) ? 'Enter a valid 10-digit mobile number' : null,
             ),
             const SizedBox(height: 20),

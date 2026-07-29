@@ -5,13 +5,10 @@ import '../data/customer_repository.dart';
 import '../models/auth_models.dart';
 
 // Compile-time override: flutter run/build --dart-define=API_BASE_URL=...
-// Defaults to the current ngrok tunnel for on-device testing — ngrok's free
-// tier issues a NEW random URL every time it restarts, so this will need
-// updating again whenever that happens (or switch to a paid reserved domain
-// so it stops changing).
-const _apiBaseUrl = String.fromEnvironment(
+// For real physical device testing, use the Mac's real WiFi IP address.
+const String _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'https://nenita-untoured-nonhesitantly.ngrok-free.dev/api/v1',
+  defaultValue: 'http://192.168.0.164:4000/api/v1',
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -26,10 +23,6 @@ final customerRepositoryProvider = Provider<CustomerRepository>((ref) {
   return CustomerRepository(ref.watch(apiClientProvider));
 });
 
-// docs/rohit/05-customer-app-screen-list.md "Onboarding": mobile+OTP is the
-// only login method for customers (no password) — the flow is
-// enterMobile -> otpSent (verify screen) -> loggedIn, optionally routing
-// through profile setup if the account was just progressively registered.
 enum AuthStep { enterMobile, otpSent, loggedIn }
 
 class AuthState {
@@ -75,6 +68,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false, step: AuthStep.otpSent);
     } on AuthException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: "Failed to connect to backend server");
     }
   }
 
@@ -87,6 +82,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false, step: AuthStep.loggedIn, user: result.user);
     } on AuthException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: "Failed to connect to backend server");
     }
   }
 

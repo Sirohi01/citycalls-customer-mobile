@@ -54,17 +54,62 @@ class _MainShellState extends ConsumerState<MainShell> {
 
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        backgroundColor: AppColors.white,
-        indicatorColor: AppColors.neutral100,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build), label: 'My Services'),
-          NavigationDestination(icon: Icon(Icons.notifications_outlined), selectedIcon: Icon(Icons.notifications), label: 'Notifications'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: BottomNavigationBar(
+            currentIndex: _index,
+            onTap: (i) => setState(() => _index = i),
+            backgroundColor: AppColors.white,
+            elevation: 0,
+            type: BottomNavigationBarType.fixed,
+            // The exact green color from the image
+            selectedItemColor: const Color(0xFF16A34A),
+            unselectedItemColor: const Color(0xFF9CA3AF),
+            selectedLabelStyle: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            iconSize: 24,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Padding(padding: EdgeInsets.only(bottom: 4, top: 8), child: Icon(Icons.home_outlined)),
+                activeIcon: Padding(padding: EdgeInsets.only(bottom: 4, top: 8), child: Icon(Icons.home)),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                // The image uses a 4-square grid for Services
+                icon: Padding(padding: EdgeInsets.only(bottom: 4, top: 8), child: Icon(Icons.grid_view_outlined)),
+                activeIcon: Padding(padding: EdgeInsets.only(bottom: 4, top: 8), child: Icon(Icons.grid_view_rounded)),
+                label: 'Services',
+              ),
+              BottomNavigationBarItem(
+                // The image uses a bell for Alerts
+                icon: Padding(padding: EdgeInsets.only(bottom: 4, top: 8), child: Icon(Icons.notifications_none)),
+                activeIcon: Padding(padding: EdgeInsets.only(bottom: 4, top: 8), child: Icon(Icons.notifications)),
+                label: 'Alerts',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(padding: EdgeInsets.only(bottom: 4, top: 8), child: Icon(Icons.person_outline)),
+                activeIcon: Padding(padding: EdgeInsets.only(bottom: 4, top: 8), child: Icon(Icons.person)),
+                label: 'Profile',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
