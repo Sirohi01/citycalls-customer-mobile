@@ -4,11 +4,14 @@ import '../data/auth_repository.dart';
 import '../data/customer_repository.dart';
 import '../models/auth_models.dart';
 
-// Compile-time override: flutter run/build --dart-define=API_BASE_URL=...
-// For real physical device testing, use the Mac's real WiFi IP address.
+// const String _apiBaseUrl = String.fromEnvironment(
+//   'API_BASE_URL',
+//   defaultValue: 'http://192.168.0.164:4000/api/v1',
+// );
+
 const String _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://192.168.0.164:4000/api/v1',
+  defaultValue: 'https://nenita-untoured-nonhesitantly.ngrok-free.dev/api/v1',
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -69,7 +72,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } on AuthException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: "Failed to connect to backend server");
+      state = state.copyWith(
+          isLoading: false,
+          errorMessage: "Failed to connect to backend server");
     }
   }
 
@@ -79,11 +84,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final result = await _repository.verifyOtp(mobile, otp);
-      state = state.copyWith(isLoading: false, step: AuthStep.loggedIn, user: result.user);
+      state = state.copyWith(
+          isLoading: false, step: AuthStep.loggedIn, user: result.user);
     } on AuthException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: "Failed to connect to backend server");
+      state = state.copyWith(
+          isLoading: false,
+          errorMessage: "Failed to connect to backend server");
     }
   }
 

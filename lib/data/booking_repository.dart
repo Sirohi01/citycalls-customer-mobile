@@ -79,6 +79,17 @@ class BookingRepository {
     return res.data['data']['url'] as String;
   }
 
+  Future<AppointmentSlotsResult> getAppointmentSlots(String branchId, DateTime date) async {
+    final res = await _client.dio.get('/appointment-slots', queryParameters: {
+      'branchId': branchId,
+      // Date-only on the wire — the backend buckets by calendar day, sending
+      // a full local timestamp risks the UTC-converted date landing on the
+      // wrong side of midnight for the branch's day boundary.
+      'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+    });
+    return AppointmentSlotsResult.fromJson(res.data['data'] as Map<String, dynamic>);
+  }
+
   Future<Map<String, dynamic>> createServiceRequest(BookingDraft draft, String customerId) async {
     final res = await _client.dio.post('/service-requests', data: {
       'customerId': customerId,

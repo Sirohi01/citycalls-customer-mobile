@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/booking_models.dart';
+import '../providers/booking_providers.dart';
 import '../providers/service_request_providers.dart';
 import '../theme/app_theme.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Reschedule/Cancel" —
 // Reschedule screen. Mirrors booking/slot_selection_screen.dart's date+slot
-// picker UI, now backed by a real PATCH /service-requests/:id/reschedule
-// endpoint (serviceRequests.routes.ts) that persists scheduledDate/
-// scheduledSlot — not just a reason-only status flip.
+// picker UI, backed by the same real GET /appointment-slots capacity check —
+// branchId comes from the existing Service Request (already assigned to a
+// branch by this point), not a fresh coverage check.
 class RescheduleScreen extends ConsumerStatefulWidget {
   final String requestId;
   const RescheduleScreen({super.key, required this.requestId});
@@ -20,7 +21,7 @@ class RescheduleScreen extends ConsumerStatefulWidget {
 class _RescheduleScreenState extends ConsumerState<RescheduleScreen> {
   final _reasonController = TextEditingController();
   DateTime? _selectedDate;
-  String? _selectedSlot;
+  AppointmentSlot? _selectedSlot;
   bool _submitting = false;
   String? _error;
 
@@ -43,7 +44,7 @@ class _RescheduleScreenState extends ConsumerState<RescheduleScreen> {
       await ref.read(serviceRequestRepositoryProvider).requestReschedule(
             widget.requestId,
             scheduledDate: _selectedDate!,
-            scheduledSlot: _selectedSlot!,
+            scheduledSlot: _selectedSlot!.label,
             reason: _reasonController.text.trim(),
           );
       ref.invalidate(myServiceRequestsProvider);
@@ -61,6 +62,7 @@ class _RescheduleScreenState extends ConsumerState<RescheduleScreen> {
     final today = DateTime.now();
     final days = List.generate(10, (i) => DateTime(today.year, today.month, today.day + i));
     const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final detail = ref.watch(serviceRequestDetailProvider(widget.requestId));
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -100,7 +102,10 @@ class _RescheduleScreenState extends ConsumerState<RescheduleScreen> {
                 final primary = Theme.of(context).colorScheme.primary;
                 return InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () => setState(() => _selectedDate = day),
+                  onTap: () => setState(() {
+                    _selectedDate = day;
+                    _selectedSlot = null;
+                  }),
                   child: Container(
                     width: 56,
                     decoration: BoxDecoration(
@@ -124,39 +129,33 @@ class _RescheduleScreenState extends ConsumerState<RescheduleScreen> {
           const SizedBox(height: 24),
           const Text('New time slot', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
           const SizedBox(height: 12),
-          ...kTimeSlots.map((slot) {
-            final primary = Theme.of(context).colorScheme.primary;
-            final selected = _selectedSlot == slot;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Material(
-                color: selected ? primary.withValues(alpha: 0.05) : AppColors.white,
-                borderRadius: BorderRadius.circular(14),
-                elevation: selected ? 0 : 1,
-                shadowColor: Colors.black.withValues(alpha: 0.04),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () => setState(() => _selectedSlot = slot),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.schedule, color: selected ? primary : AppColors.neutral500, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(slot)),
-                        if (selected) Icon(Icons.check_circle, color: primary, size: 20),
-                      ],
-                    ),
-                  ),
-                ),
+          if (_selectedDate == null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text('Pick a date to see available time slots.', style: TextStyle(color: AppColors.neutral500)),
+            )
+          else
+            detail.when(
+              data: (d) {
+                if (d.branchId == null) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text('This request isn\'t assigned to a branch yet, so slots can\'t be checked. Please contact support.', style: TextStyle(color: AppColors.neutral500)),
+                  );
+                }
+                return _RescheduleSlotList(
+                  branchId: d.branchId!,
+                  date: _selectedDate!,
+                  selectedSlot: _selectedSlot,
+                  onSelect: (slot) => setState(() => _selectedSlot = slot),
+                );
+              },
+              loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: CircularProgressIndicator())),
+              error: (_, __) => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text('Could not load this request. Please try again.', style: TextStyle(color: AppColors.neutral500)),
               ),
-            );
-          }),
+            ),
           const SizedBox(height: 12),
           const Text('Reason (optional)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
           const SizedBox(height: 8),
@@ -170,6 +169,78 @@ class _RescheduleScreenState extends ConsumerState<RescheduleScreen> {
                 : const Text('Confirm Reschedule'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RescheduleSlotList extends ConsumerWidget {
+  final String branchId;
+  final DateTime date;
+  final AppointmentSlot? selectedSlot;
+  final ValueChanged<AppointmentSlot> onSelect;
+  const _RescheduleSlotList({required this.branchId, required this.date, required this.selectedSlot, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final result = ref.watch(appointmentSlotsProvider((branchId: branchId, date: date)));
+    return result.when(
+      data: (r) {
+        if (r.dayClosed) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Text('Your branch is closed on the selected date. Please pick another day.', style: TextStyle(color: AppColors.neutral500)),
+          );
+        }
+        if (r.slots.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Text('No time slots are configured yet. Please pick another day.', style: TextStyle(color: AppColors.neutral500)),
+          );
+        }
+        return Column(
+          children: r.slots.map((slot) {
+            final primary = Theme.of(context).colorScheme.primary;
+            final selected = selectedSlot?.key == slot.key;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Material(
+                color: !slot.available ? AppColors.neutral100 : (selected ? primary.withValues(alpha: 0.05) : AppColors.white),
+                borderRadius: BorderRadius.circular(14),
+                elevation: selected ? 0 : 1,
+                shadowColor: Colors.black.withValues(alpha: 0.04),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: slot.available ? () => onSelect(slot) : null,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.schedule, color: !slot.available ? AppColors.neutral500 : (selected ? primary : AppColors.neutral500), size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(slot.label, style: TextStyle(color: slot.available ? AppColors.black : AppColors.neutral500))),
+                        if (!slot.available)
+                          const Text('Full', style: TextStyle(color: AppColors.neutral500, fontSize: 12, fontWeight: FontWeight.w600))
+                        else if (selected)
+                          Icon(Icons.check_circle, color: primary, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+      loading: () => const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: CircularProgressIndicator())),
+      error: (_, __) => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Text('Could not check slot availability. Please try again.', style: TextStyle(color: AppColors.neutral500)),
       ),
     );
   }

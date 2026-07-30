@@ -4,6 +4,7 @@ import '../models/booking_models.dart';
 import '../models/catalog_models.dart';
 import 'auth_providers.dart';
 import 'customer_providers.dart';
+import 'catalog_providers.dart';
 
 final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
   return BookingRepository(ref.watch(apiClientProvider));
@@ -24,4 +25,18 @@ final productTypesProvider = FutureProvider<List<ServiceCategory>>((ref) {
 
 final symptomsProvider = FutureProvider<List<ServiceCategory>>((ref) {
   return ref.watch(bookingRepositoryProvider).listMasters('SYMPTOM');
+});
+
+// Re-resolves branch coverage using the booking address actually chosen in
+// the wizard (not the earlier Service Detail screen's PIN, which may belong
+// to a different saved address) — mirrors exactly what
+// serviceRequests.service.ts's resolveBranch() does at submit time, so the
+// slots shown here are for the same branch that will actually get the
+// request.
+final bookingBranchProvider = FutureProvider.family<CoverageResult, ({String serviceId, String pinCode})>((ref, args) {
+  return ref.watch(catalogRepositoryProvider).checkCoverage(args.serviceId, args.pinCode);
+});
+
+final appointmentSlotsProvider = FutureProvider.family<AppointmentSlotsResult, ({String branchId, DateTime date})>((ref, args) {
+  return ref.watch(bookingRepositoryProvider).getAppointmentSlots(args.branchId, args.date);
 });

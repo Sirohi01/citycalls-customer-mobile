@@ -112,4 +112,51 @@ class BookingDraft {
   }
 }
 
-const kTimeSlots = ['Morning (9 AM - 12 PM)', 'Afternoon (12 PM - 4 PM)', 'Evening (4 PM - 8 PM)'];
+// Real per-branch capacity-checked slots — GET /appointment-slots, per
+// docs/manish/08-customer-app-functional-plan.md §2. `label` is what gets
+// submitted/persisted as ServiceRequest.scheduledSlot (a free string on the
+// backend, same convention as symptoms: label text, not a Master _id).
+class AppointmentSlot {
+  final String key;
+  final String label;
+  final String? startTime;
+  final String? endTime;
+  final int remaining;
+  final bool available;
+
+  AppointmentSlot({
+    required this.key,
+    required this.label,
+    this.startTime,
+    this.endTime,
+    required this.remaining,
+    required this.available,
+  });
+
+  factory AppointmentSlot.fromJson(Map<String, dynamic> json) {
+    return AppointmentSlot(
+      key: json['key'] as String,
+      label: json['label'] as String,
+      startTime: json['startTime'] as String?,
+      endTime: json['endTime'] as String?,
+      remaining: (json['remaining'] as num?)?.toInt() ?? 0,
+      available: json['available'] as bool? ?? false,
+    );
+  }
+}
+
+class AppointmentSlotsResult {
+  final bool dayClosed;
+  final List<AppointmentSlot> slots;
+
+  AppointmentSlotsResult({required this.dayClosed, required this.slots});
+
+  factory AppointmentSlotsResult.fromJson(Map<String, dynamic> json) {
+    return AppointmentSlotsResult(
+      dayClosed: json['dayClosed'] as bool? ?? false,
+      slots: (json['slots'] as List? ?? [])
+          .map((s) => AppointmentSlot.fromJson(s as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}

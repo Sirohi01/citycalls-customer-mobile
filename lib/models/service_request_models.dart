@@ -118,6 +118,7 @@ class ServiceRequestDetail {
   final String? notes;
   final String addressLine;
   final ServiceRequestAssignee? assignee;
+  final String? branchId;
 
   ServiceRequestDetail({
     required this.id,
@@ -132,6 +133,7 @@ class ServiceRequestDetail {
     this.notes,
     required this.addressLine,
     this.assignee,
+    this.branchId,
   });
 
   bool get isActive => status != 'CLOSED' && status != 'CANCELLED';
@@ -155,6 +157,7 @@ class ServiceRequestDetail {
       notes: json['notes'] as String?,
       addressLine: addressParts,
       assignee: assigneeJson == null ? null : ServiceRequestAssignee.fromJson(assigneeJson),
+      branchId: json['branchId'] as String?,
     );
   }
 }

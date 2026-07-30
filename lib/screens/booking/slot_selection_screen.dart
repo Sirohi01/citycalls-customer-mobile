@@ -1,33 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/booking_models.dart';
+import '../../providers/booking_providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/booking_step_header.dart';
 import 'booking_review_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Booking" — Slot Selection.
-// docs/manish/08-customer-app-functional-plan.md §2 calls for a real
-// GET /appointment-slots?branchId=&date= availability check, but that
-// endpoint doesn't exist in the backend yet — createServiceRequestSchema's
-// scheduledDate/scheduledSlot are plain optional fields with no capacity
-// validation behind them either. This is a simple date + generic time-of-day
-// picker, not real slot-capacity checking; flagged as a known gap, not
-// silently faked.
-class SlotSelectionScreen extends StatefulWidget {
+// Real GET /appointment-slots?branchId=&date= availability check per
+// docs/manish/08-customer-app-functional-plan.md §2 — branch is re-resolved
+// from the address actually chosen in this booking (draft.address), not the
+// earlier Service Detail screen's PIN, via bookingBranchProvider. Full slots
+// are shown but disabled rather than hidden, so the customer understands why
+// an option isn't tappable instead of it silently not being there.
+class SlotSelectionScreen extends ConsumerStatefulWidget {
   final BookingDraft draft;
   const SlotSelectionScreen({super.key, required this.draft});
 
   @override
-  State<SlotSelectionScreen> createState() => _SlotSelectionScreenState();
+  ConsumerState<SlotSelectionScreen> createState() => _SlotSelectionScreenState();
 }
 
-class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
+class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
   DateTime? _selectedDate;
-  String? _selectedSlot;
+  AppointmentSlot? _selectedSlot;
 
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
     final days = List.generate(7, (i) => DateTime(today.year, today.month, today.day + i));
+    final pinCode = widget.draft.address?.pinCode ?? widget.draft.pinCode;
+    final branch = ref.watch(bookingBranchProvider((serviceId: widget.draft.serviceId, pinCode: pinCode)));
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -56,7 +59,10 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                   const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
                   return InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: () => setState(() => _selectedDate = day),
+                    onTap: () => setState(() {
+                      _selectedDate = day;
+                      _selectedSlot = null;
+                    }),
                     child: Container(
                       width: 56,
                       decoration: BoxDecoration(
@@ -80,46 +86,33 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             const SizedBox(height: 24),
             const Text('Preferred time slot', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
             const SizedBox(height: 12),
-            ...kTimeSlots.map((slot) {
-              final primary = Theme.of(context).colorScheme.primary;
-              final selected = _selectedSlot == slot;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Material(
-                  color: selected ? primary.withValues(alpha: 0.05) : AppColors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  elevation: selected ? 0 : 1,
-                  shadowColor: Colors.black.withValues(alpha: 0.04),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: () => setState(() => _selectedSlot = slot),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.schedule, color: selected ? primary : AppColors.neutral500, size: 18),
-                          const SizedBox(width: 10),
-                          Expanded(child: Text(slot)),
-                          if (selected) Icon(Icons.check_circle, color: primary, size: 20),
-                        ],
-                      ),
+            Expanded(
+              child: _selectedDate == null
+                  ? const Center(child: Text('Pick a date to see available time slots.', style: TextStyle(color: AppColors.neutral500)))
+                  : branch.when(
+                      data: (coverage) {
+                        if (coverage.branchId == null) {
+                          return const Center(
+                            child: Text('We couldn\'t match this address to a service branch. Please go back and check your address.', style: TextStyle(color: AppColors.neutral500)),
+                          );
+                        }
+                        return _SlotList(
+                          branchId: coverage.branchId!,
+                          date: _selectedDate!,
+                          selectedSlot: _selectedSlot,
+                          onSelect: (slot) => setState(() => _selectedSlot = slot),
+                        );
+                      },
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (_, __) => const Center(child: Text('Could not check slot availability. Please try again.', style: TextStyle(color: AppColors.neutral500))),
                     ),
-                  ),
-                ),
-              );
-            }),
-            const Spacer(),
+            ),
             FilledButton(
               onPressed: (_selectedDate == null || _selectedSlot == null)
                   ? null
                   : () => Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => BookingReviewScreen(
-                          draft: widget.draft.copyWith(scheduledDate: _selectedDate, scheduledSlot: _selectedSlot),
+                          draft: widget.draft.copyWith(scheduledDate: _selectedDate, scheduledSlot: _selectedSlot!.label),
                         ),
                       )),
               child: const Text('Continue'),
@@ -127,6 +120,71 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SlotList extends ConsumerWidget {
+  final String branchId;
+  final DateTime date;
+  final AppointmentSlot? selectedSlot;
+  final ValueChanged<AppointmentSlot> onSelect;
+  const _SlotList({required this.branchId, required this.date, required this.selectedSlot, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final result = ref.watch(appointmentSlotsProvider((branchId: branchId, date: date)));
+    return result.when(
+      data: (r) {
+        if (r.dayClosed) {
+          return const Center(child: Text('This branch is closed on the selected date. Please pick another day.', style: TextStyle(color: AppColors.neutral500)));
+        }
+        if (r.slots.isEmpty) {
+          return const Center(child: Text('No time slots are configured yet. Please pick another day.', style: TextStyle(color: AppColors.neutral500)));
+        }
+        return ListView(
+          children: r.slots.map((slot) {
+            final primary = Theme.of(context).colorScheme.primary;
+            final selected = selectedSlot?.key == slot.key;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Material(
+                color: !slot.available ? AppColors.neutral100 : (selected ? primary.withValues(alpha: 0.05) : AppColors.white),
+                borderRadius: BorderRadius.circular(14),
+                elevation: selected ? 0 : 1,
+                shadowColor: Colors.black.withValues(alpha: 0.04),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: slot.available ? () => onSelect(slot) : null,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.schedule, color: !slot.available ? AppColors.neutral500 : (selected ? primary : AppColors.neutral500), size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(slot.label, style: TextStyle(color: slot.available ? AppColors.black : AppColors.neutral500)),
+                        ),
+                        if (!slot.available)
+                          const Text('Full', style: TextStyle(color: AppColors.neutral500, fontSize: 12, fontWeight: FontWeight.w600))
+                        else if (selected)
+                          Icon(Icons.check_circle, color: primary, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const Center(child: Text('Could not check slot availability. Please try again.', style: TextStyle(color: AppColors.neutral500))),
     );
   }
 }

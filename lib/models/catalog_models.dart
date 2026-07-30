@@ -66,12 +66,14 @@ class Service {
 class CoverageResult {
   final bool serviceable;
   final String? reason;
+  final String? branchId;
 
-  CoverageResult({required this.serviceable, this.reason});
+  CoverageResult({required this.serviceable, this.reason, this.branchId});
 
   factory CoverageResult.fromJson(Map<String, dynamic> json) {
     return CoverageResult(
         serviceable: json['serviceable'] as bool,
-        reason: json['reason'] as String?);
+        reason: json['reason'] as String?,
+        branchId: json['branchId'] as String?);
   }
 }
