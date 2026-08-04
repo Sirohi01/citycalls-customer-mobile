@@ -61,7 +61,7 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
               ],
-              decoration: authFieldDecoration(label: 'Mobile number', icon: Icons.phone_iphone, prefixText: '+91  ').copyWith(counterText: ''),
+                decoration: authFieldDecoration(label: 'Mobile number', icon: Icons.phone_iphone, prefixText: '+91  ').copyWith(counterText: ''),
               validator: (value) => (value == null || value.trim().length < 10) ? 'Enter a valid 10-digit mobile number' : null,
             ),
             const SizedBox(height: 20),
