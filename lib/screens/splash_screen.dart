@@ -7,14 +7,6 @@ import 'otp_request_screen.dart';
 import 'profile_setup_screen.dart';
 import 'main_shell.dart';
 
-// App entry point (set as MaterialApp's `home` in main.dart). Decides where
-// to land the user — MainShell if a saved access token still resolves to a
-// customer profile, ProfileSetupScreen if that profile is still the
-// progressively-registered default ("Customer", see Customer.needsProfileSetup),
-// or OtpRequestScreen if there's no token / it's expired. ApiClient's
-// interceptor silently omits the Authorization header when no token is
-// stored, so a plain GET /customers/me call (via getMyProfile) doubles as
-// the "is this device logged in" check without a separate token-presence API.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -32,9 +24,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
+        vsync: this, duration: const Duration(milliseconds: 1000));
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: 0.9, end: 1.0).animate(
+    _scale = Tween<double>(begin: 0.95, end: 1.0).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
     _controller.forward();
     _resolveDestination();
@@ -59,10 +51,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       destination = const OtpRequestScreen();
     }
 
-    // Keep the splash on screen for at least this long so the brand moment
-    // registers even when the profile check resolves near-instantly (e.g.
-    // no token stored, so no network round trip at all).
-    const minDisplay = Duration(milliseconds: 900);
+    const minDisplay = Duration(milliseconds: 1500);
     final remaining = minDisplay - stopwatch.elapsed;
     if (remaining > Duration.zero) await Future.delayed(remaining);
 
@@ -79,27 +68,29 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       backgroundColor: AppColors.slate950,
       body: Stack(
         children: [
+          // Premium deep background
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.slate950,
-                  AppColors.slate900,
-                  AppColors.slate950
+                  Color(0xFF020617), // slate-950
+                  Color(0xFF0F172A), // slate-900
+                  Color(0xFF020617), // slate-950
                 ],
               ),
             ),
           ),
+          // Subtle ambient glow
           const Positioned(
-              left: -80,
-              top: 220,
-              child: GlowBlob(color: AppColors.lime500, size: 320)),
+              left: -120,
+              top: 200,
+              child: GlowBlob(color: Color(0x1A84CC16), size: 400)), // Lime glow
           const Positioned(
-              right: -100,
-              top: 40,
-              child: GlowBlob(color: AppColors.indigo500, size: 260)),
+              right: -150,
+              top: 50,
+              child: GlowBlob(color: Color(0x1A6366F1), size: 350)), // Indigo glow
           Center(
             child: FadeTransition(
               opacity: _fade,
@@ -108,32 +99,48 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset('assets/images/logo.png',
-                          height: 104, fit: BoxFit.contain),
+                    // Logo Box with subtle glassmorphism
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 24,
+                            offset: const Offset(0, 10),
+                          )
+                        ]
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Image.asset('assets/images/logo.png',
+                            height: 110, fit: BoxFit.contain),
+                      ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 28),
                     const Text(
                       'CityCalls',
                       style: TextStyle(
                           color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
                           letterSpacing: 0.5),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     const Text(
                       'Home services, sorted.',
                       style:
-                          TextStyle(color: AppColors.slate400, fontSize: 13.5),
+                          TextStyle(color: AppColors.slate400, fontSize: 15, fontWeight: FontWeight.w500),
                     ),
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 48),
                     const SizedBox(
-                      height: 22,
-                      width: 22,
+                      height: 24,
+                      width: 24,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2.4, color: AppColors.lime400),
+                          strokeWidth: 2.5, color: AppColors.lime400),
                     ),
                   ],
                 ),

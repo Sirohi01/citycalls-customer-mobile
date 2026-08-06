@@ -6,7 +6,6 @@ import '../widgets/auth_background.dart';
 import 'profile_setup_screen.dart';
 import 'main_shell.dart';
 
-// Per docs/rohit/05-customer-app-screen-list.md "Onboarding" — OTP Verify step.
 class OtpVerifyScreen extends ConsumerStatefulWidget {
   const OtpVerifyScreen({super.key});
 
@@ -46,53 +45,98 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 ref.read(authProvider.notifier).backToMobileEntry();
                 Navigator.of(context).pop();
               },
-              child: const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: Icon(Icons.arrow_back, color: AppColors.slate300, size: 20),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1))
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.arrow_back_rounded, color: AppColors.slate300, size: 18),
+                    SizedBox(width: 8),
+                    Text('Back', style: TextStyle(color: AppColors.slate300, fontWeight: FontWeight.w500, fontSize: 13)),
+                  ],
+                ),
               ),
             ),
-            const Text('Verify OTP', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            Text(
-              'Enter the 6-digit code sent to +91 ${authState.mobile ?? ''}',
-              style: const TextStyle(color: AppColors.slate400, fontSize: 14),
-            ),
             const SizedBox(height: 24),
+            const Text(
+              'Secure Verification',
+              style: TextStyle(
+                  color: Colors.white, 
+                  fontSize: 28, 
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Enter the 6-digit authentication code we sent to\n+91 ${authState.mobile ?? ''}',
+              style: TextStyle(
+                  color: AppColors.slate300.withValues(alpha: 0.9), 
+                  fontSize: 15,
+                  height: 1.5),
+            ),
+            const SizedBox(height: 32),
             TextFormField(
               controller: _otpController,
-              style: const TextStyle(color: Colors.white, letterSpacing: 4),
+              style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: 8),
               keyboardType: TextInputType.number,
               maxLength: 6,
-              decoration: authFieldDecoration(label: '6-digit OTP', icon: Icons.lock_outline).copyWith(counterText: ''),
-              validator: (value) => (value == null || value.length != 6) ? 'Enter the 6-digit OTP' : null,
+              textAlign: TextAlign.center,
+              decoration: authFieldDecoration(
+                label: 'Authentication Code', 
+                icon: null,
+              ).copyWith(
+                counterText: '',
+                contentPadding: const EdgeInsets.symmetric(vertical: 20),
+              ),
+              validator: (value) => (value == null || value.length != 6) 
+                  ? 'Please enter the complete 6-digit code' 
+                  : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
             if (authState.errorMessage != null)
               Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline, color: AppColors.red400, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(authState.errorMessage!, style: const TextStyle(color: AppColors.red400, fontSize: 13))),
-                  ],
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.red400.withValues(alpha: 0.1),
+                    border: Border.all(color: AppColors.red400.withValues(alpha: 0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline_rounded, color: AppColors.red400, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(authState.errorMessage!, style: const TextStyle(color: AppColors.red400, fontSize: 13, fontWeight: FontWeight.w500))),
+                    ],
+                  ),
                 ),
               ),
             FilledButton(
               style: authButtonStyle(),
               onPressed: authState.isLoading ? null : _submit,
               child: authState.isLoading
-                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.slate950))
-                  : const Text('Verify'),
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.slate950))
+                  : const Text('Verify Identity'),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 16),
             Center(
               child: TextButton(
                 onPressed: authState.isLoading || authState.mobile == null
                     ? null
                     : () => ref.read(authProvider.notifier).requestOtp(authState.mobile!),
-                style: TextButton.styleFrom(foregroundColor: AppColors.lime400),
-                child: const Text('Resend OTP'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.lime400,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                child: const Text('Resend Code'),
               ),
             ),
           ],
@@ -107,12 +151,6 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     }
   }
 
-  // Whether Profile Setup is needed must be decided from the Customer
-  // record's name (GET /customers/me), NOT the User record's name from the
-  // login response — Profile Setup only ever updates the Customer document
-  // (customer_repository.dart's updateProfile), so checking the login
-  // response's name here re-triggered Profile Setup on every single login
-  // with the same number, since that field never changes.
   Future<void> _routeAfterLogin(BuildContext context, WidgetRef ref) async {
     final needsSetup = await ref.read(customerRepositoryProvider).getMyProfile().then(
           (customer) => customer.needsProfileSetup,

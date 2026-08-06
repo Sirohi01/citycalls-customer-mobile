@@ -3,11 +3,6 @@ import 'dart:ui';
 import '../theme/app_theme.dart';
 import 'glow_blob.dart';
 
-// Shared chrome for the Onboarding flow's screens (OTP request/verify) —
-// mirrors citycalls-admin-web's /login page: dark slate gradient, two soft
-// brand-tinted glow blobs, the wordmark top-left, and a frosted glass card
-// for the actual form. Kept as one shared widget rather than duplicated
-// per-screen so the two screens can't visually drift apart.
 class AuthBackground extends StatelessWidget {
   final Widget child;
   const AuthBackground({super.key, required this.child});
@@ -18,41 +13,59 @@ class AuthBackground extends StatelessWidget {
       backgroundColor: AppColors.slate950,
       body: Stack(
         children: [
+          // Deep rich background gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.slate950,
-                  AppColors.slate900,
-                  AppColors.slate950
+                  Color(0xFF020617), // slate-950
+                  Color(0xFF0F172A), // slate-900
+                  Color(0xFF020617), // slate-950
                 ],
               ),
             ),
           ),
+          // Subtle ambient glow
           const Positioned(
-              left: -80,
-              top: 220,
-              child: GlowBlob(color: AppColors.lime500, size: 320)),
+              left: -120,
+              top: 200,
+              child: GlowBlob(color: Color(0x1A84CC16), size: 400)), // Lime glow, reduced opacity
           const Positioned(
-              right: -100,
-              top: 40,
-              child: GlowBlob(color: AppColors.indigo500, size: 260)),
+              right: -150,
+              top: 50,
+              child: GlowBlob(color: Color(0x1A6366F1), size: 350)), // Indigo glow, reduced opacity
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.asset('assets/images/logo.png',
-                          height: 96, fit: BoxFit.contain),
+                    // Sleek Logo Presentation
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          )
+                        ]
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset('assets/images/logo.png',
+                            height: 72, fit: BoxFit.contain),
+                      ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 36),
                     _GlassCard(child: child),
                   ],
                 ),
@@ -72,17 +85,31 @@ class _GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(32),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
         child: Container(
           width: double.infinity,
           constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.1),
+                Colors.white.withValues(alpha: 0.03),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              )
+            ]
           ),
           child: child,
         ),
@@ -91,8 +118,6 @@ class _GlassCard extends StatelessWidget {
   }
 }
 
-// Shared field styling for the dark glass card — outlined, translucent,
-// lime focus ring, matching the Input classes in admin-web's login page.
 InputDecoration authFieldDecoration(
     {required String label,
     IconData? icon,
@@ -100,30 +125,35 @@ InputDecoration authFieldDecoration(
     String? errorText}) {
   return InputDecoration(
     labelText: label,
-    labelStyle: const TextStyle(color: AppColors.slate300),
-    prefixIcon:
-        icon != null ? Icon(icon, color: AppColors.slate400, size: 20) : null,
+    labelStyle: TextStyle(color: AppColors.slate300.withValues(alpha: 0.8), fontSize: 14),
+    prefixIcon: icon != null 
+        ? Padding(
+            padding: const EdgeInsets.only(left: 16, right: 12),
+            child: Icon(icon, color: AppColors.slate400, size: 22),
+          ) 
+        : null,
     prefixText: prefixText,
-    prefixStyle: const TextStyle(color: AppColors.slate200),
+    prefixStyle: const TextStyle(color: AppColors.white, fontWeight: FontWeight.w600, fontSize: 15),
     errorText: errorText,
-    errorStyle: const TextStyle(color: AppColors.red400),
+    errorStyle: const TextStyle(color: AppColors.red400, fontWeight: FontWeight.w500),
     filled: true,
-    fillColor: Colors.white.withValues(alpha: 0.05),
+    fillColor: Colors.black.withValues(alpha: 0.2),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 1.5),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 1.5),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: AppColors.lime400, width: 1.5),
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: AppColors.lime400, width: 2),
     ),
     errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(10),
-      borderSide: const BorderSide(color: AppColors.red400),
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: AppColors.red400, width: 1.5),
     ),
   );
 }
@@ -132,8 +162,10 @@ ButtonStyle authButtonStyle() {
   return FilledButton.styleFrom(
     backgroundColor: AppColors.lime500,
     foregroundColor: AppColors.slate950,
-    minimumSize: const Size.fromHeight(48),
-    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    elevation: 4,
+    shadowColor: AppColors.lime500.withValues(alpha: 0.4),
+    padding: const EdgeInsets.symmetric(vertical: 16),
+    textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: 0.5),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
   );
 }
