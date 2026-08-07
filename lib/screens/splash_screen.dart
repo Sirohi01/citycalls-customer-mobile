@@ -26,7 +26,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _controller = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 1000));
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: 0.95, end: 1.0).animate(
+    _scale = Tween<double>(begin: 0.85, end: 1.0).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
     _controller.forward();
     _resolveDestination();
@@ -51,7 +51,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       destination = const OtpRequestScreen();
     }
 
-    const minDisplay = Duration(milliseconds: 1500);
+    const minDisplay = Duration(minutes: 10);
     final remaining = minDisplay - stopwatch.elapsed;
     if (remaining > Duration.zero) await Future.delayed(remaining);
 
@@ -65,89 +65,44 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.slate950,
-      body: Stack(
-        children: [
-          // Premium deep background
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF020617), // slate-950
-                  Color(0xFF0F172A), // slate-900
-                  Color(0xFF020617), // slate-950
+      backgroundColor: Colors.black,
+      body: FadeTransition(
+        opacity: _fade,
+        child: Stack(
+          children: [
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Image.asset(
+                'assets/login/splace.png',
+                fit: BoxFit.fitWidth,
+              ),
+            ),
+            Align(
+              alignment: const Alignment(0, -0.30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 80,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 12),
+                  RichText(
+                    text: const TextSpan(
+                      children: [
+                        TextSpan(text: 'Your City. Your Services. ', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                        TextSpan(text: 'On Call.', style: TextStyle(color: AppColors.lime500, fontSize: 16, fontWeight: FontWeight.w600)),
+                      ]
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-          // Subtle ambient glow
-          const Positioned(
-              left: -120,
-              top: 200,
-              child: GlowBlob(color: Color(0x1A84CC16), size: 400)), // Lime glow
-          const Positioned(
-              right: -150,
-              top: 50,
-              child: GlowBlob(color: Color(0x1A6366F1), size: 350)), // Indigo glow
-          Center(
-            child: FadeTransition(
-              opacity: _fade,
-              child: ScaleTransition(
-                scale: _scale,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Logo Box with subtle glassmorphism
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 24,
-                            offset: const Offset(0, 10),
-                          )
-                        ]
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: Image.asset('assets/images/logo.png',
-                            height: 110, fit: BoxFit.contain),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    const Text(
-                      'CityCalls',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Home services, sorted.',
-                      style:
-                          TextStyle(color: AppColors.slate400, fontSize: 15, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 48),
-                    const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2.5, color: AppColors.lime400),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
