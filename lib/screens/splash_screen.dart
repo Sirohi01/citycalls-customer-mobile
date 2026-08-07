@@ -6,6 +6,7 @@ import '../widgets/glow_blob.dart';
 import 'otp_request_screen.dart';
 import 'profile_setup_screen.dart';
 import 'main_shell.dart';
+import 'splash2_screen.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -24,11 +25,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1000));
+        vsync: this, duration: const Duration(milliseconds: 2000));
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: 0.85, end: 1.0).animate(
+    _scale = Tween<double>(begin: 0.2, end: 1.0).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-    _controller.forward();
+    
+    // Add delay so animation doesn't finish while app is still loading
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) _controller.forward();
+    });
+    
     _resolveDestination();
   }
 
@@ -51,14 +57,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       destination = const OtpRequestScreen();
     }
 
-    const minDisplay = Duration(minutes: 10);
+    const minDisplay = Duration(seconds: 4);
     final remaining = minDisplay - stopwatch.elapsed;
     if (remaining > Duration.zero) await Future.delayed(remaining);
 
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => destination),
-      (route) => false,
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => Splash2Screen(nextScreen: destination)),
     );
   }
 
@@ -81,8 +86,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             ),
             Align(
               alignment: const Alignment(0, -0.30),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              child: ScaleTransition(
+                scale: _scale,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
                     'assets/images/logo.png',
@@ -100,6 +107,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                 ],
               ),
+            ),
             ),
           ],
         ),
