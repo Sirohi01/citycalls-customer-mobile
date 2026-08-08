@@ -7,25 +7,48 @@ class ServiceRequestRepository {
   ServiceRequestRepository(this._client);
 
   Future<List<ServiceRequestSummary>> listMyRequests() async {
-    final res = await _client.dio.get('/service-requests', queryParameters: {'limit': 100});
-    return (res.data['data'] as List).map((sr) => ServiceRequestSummary.fromJson(sr as Map<String, dynamic>)).toList();
+    final res = await _client.dio
+        .get('/service-requests', queryParameters: {'limit': 100});
+    return (res.data['data'] as List)
+        .map((sr) => ServiceRequestSummary.fromJson(sr as Map<String, dynamic>))
+        .toList();
   }
 
   Future<ServiceRequestDetail> getServiceRequest(String id) async {
     final res = await _client.dio.get('/service-requests/$id');
-    return ServiceRequestDetail.fromJson(res.data['data'] as Map<String, dynamic>);
+    return ServiceRequestDetail.fromJson(
+        res.data['data'] as Map<String, dynamic>);
   }
 
   Future<List<AssignmentHistoryEntry>> getAssignmentHistory(String id) async {
-    final res = await _client.dio.get('/service-requests/$id/assignment-history');
-    return (res.data['data'] as List).map((e) => AssignmentHistoryEntry.fromJson(e as Map<String, dynamic>)).toList();
+    final res =
+        await _client.dio.get('/service-requests/$id/assignment-history');
+    return (res.data['data'] as List)
+        .map((e) => AssignmentHistoryEntry.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<ActivityLogEntry>> getActivityLog(String id) async {
+    final res = await _client.dio.get('/service-requests/$id/activity-log');
+    return (res.data['data'] as List)
+        .map((e) => ActivityLogEntry.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> confirmCompletion(String id) async {
+    await _client.dio.patch('/service-requests/$id/status',
+        data: {'toStatus': 'PAYMENT_PENDING'});
   }
 
   Future<void> cancelServiceRequest(String id, String reason) async {
-    await _client.dio.post('/service-requests/$id/cancel', data: {'reason': reason});
+    await _client.dio
+        .post('/service-requests/$id/cancel', data: {'reason': reason});
   }
 
-  Future<void> requestReschedule(String id, {required DateTime scheduledDate, required String scheduledSlot, String? reason}) async {
+  Future<void> requestReschedule(String id,
+      {required DateTime scheduledDate,
+      required String scheduledSlot,
+      String? reason}) async {
     await _client.dio.patch('/service-requests/$id/reschedule', data: {
       'scheduledDate': scheduledDate.toIso8601String(),
       'scheduledSlot': scheduledSlot,
@@ -34,7 +57,8 @@ class ServiceRequestRepository {
   }
 
   Future<void> reopenServiceRequest(String id, String reason) async {
-    await _client.dio.post('/service-requests/$id/reopen', data: {'reason': reason});
+    await _client.dio
+        .post('/service-requests/$id/reopen', data: {'reason': reason});
   }
 
   Future<void> submitFeedback(String id, int rating, String? remarks) async {

@@ -18,3 +18,7 @@ final serviceRequestDetailProvider = FutureProvider.family<ServiceRequestDetail,
 final assignmentHistoryProvider = FutureProvider.family<List<AssignmentHistoryEntry>, String>((ref, id) async {
   return ref.watch(serviceRequestRepositoryProvider).getAssignmentHistory(id);
 });
+
+final activityLogProvider = FutureProvider.family<List<ActivityLogEntry>, String>((ref, id) async {
+  return ref.watch(serviceRequestRepositoryProvider).getActivityLog(id);
+});

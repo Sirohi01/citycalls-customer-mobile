@@ -186,10 +186,39 @@ class AssignmentHistoryEntry {
       id: json['_id'] as String,
       action: json['action'] as String,
       toAssigneeType: json['toAssigneeType'] as String?,
-      method: json['method'] as String,
+      method: json['method'] as String? ?? 'MANUAL',
       reason: json['reason'] as String?,
       timestamp: json['timestamp'] as String,
       actorName: (json['actorId'] as Map<String, dynamic>?)?['name'] as String?,
+    );
+  }
+}
+
+// Backed by GET /service-requests/:id/activity-log — the real per-request
+// timeline (every status change etc.), not just assignment events. See
+// ServiceRequestRepository.getActivityLog.
+class ActivityLogEntry {
+  final String id;
+  final String action;
+  final String? reason;
+  final String timestamp;
+  final String? actorName;
+
+  ActivityLogEntry({
+    required this.id,
+    required this.action,
+    this.reason,
+    required this.timestamp,
+    this.actorName,
+  });
+
+  factory ActivityLogEntry.fromJson(Map<String, dynamic> json) {
+    return ActivityLogEntry(
+      id: json['id'] as String,
+      action: json['action'] as String,
+      reason: json['reason'] as String?,
+      timestamp: json['timestamp'] as String,
+      actorName: json['actorName'] as String?,
     );
   }
 }
