@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import 'splash3_screen.dart';
+import 'splash4_screen.dart';
 
-class Splash2Screen extends StatefulWidget {
+class Splash3Screen extends StatefulWidget {
   final Widget nextScreen;
-  const Splash2Screen({super.key, required this.nextScreen});
+  const Splash3Screen({super.key, required this.nextScreen});
 
   @override
-  State<Splash2Screen> createState() => _Splash2ScreenState();
+  State<Splash3Screen> createState() => _Splash3ScreenState();
 }
 
-class _Splash2ScreenState extends State<Splash2Screen> {
+class _Splash3ScreenState extends State<Splash3Screen> {
   @override
   void initState() {
     super.initState();
@@ -28,7 +28,7 @@ class _Splash2ScreenState extends State<Splash2Screen> {
   void _goNextStep() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => Splash3Screen(nextScreen: widget.nextScreen)),
+      MaterialPageRoute(builder: (_) => Splash4Screen(nextScreen: widget.nextScreen)),
     );
   }
 
@@ -45,21 +45,21 @@ class _Splash2ScreenState extends State<Splash2Screen> {
               const SizedBox(height: 16),
               Image.asset(
                 'assets/images/logocalls.png',
-                height: 48, // matching roughly the text height (42)
+                height: 48, 
                 fit: BoxFit.contain,
               ),
               const SizedBox(height: 24),
               // Titles
-              const Text('All Services', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.black, letterSpacing: -0.5)),
+              const Text('Verified Professionals', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.black, letterSpacing: -0.5)),
               const SizedBox(height: 4),
-              const Text('At Your Fingertips', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.lime500)),
+              const Text('You Can Trust', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.lime500)),
               const SizedBox(height: 16),
               // Center Image
               Expanded(
                 child: Transform.scale(
-                  scale: 1.40,
+                  scale: 1.1,
                   child: Image.asset(
-                    'assets/login/splash22.png',
+                    'assets/login/splace3.png',
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -67,7 +67,7 @@ class _Splash2ScreenState extends State<Splash2Screen> {
               const SizedBox(height: 32),
               // Description
               const Text(
-                'Book trusted professionals for AC repair,\ncleaning, pest control, beauty services\nand more.',
+                'We verify every professional to ensure\nquality service at your home.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -92,11 +92,11 @@ class _Splash2ScreenState extends State<Splash2Screen> {
                   // Dots
                   Row(
                     children: [
+                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
+                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
                       Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.lime500, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
                     ],
                   ),
                   FilledButton(

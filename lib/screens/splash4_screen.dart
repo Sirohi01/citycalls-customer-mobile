@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import 'splash3_screen.dart';
 
-class Splash2Screen extends StatefulWidget {
+class Splash4Screen extends StatefulWidget {
   final Widget nextScreen;
-  const Splash2Screen({super.key, required this.nextScreen});
+  const Splash4Screen({super.key, required this.nextScreen});
 
   @override
-  State<Splash2Screen> createState() => _Splash2ScreenState();
+  State<Splash4Screen> createState() => _Splash4ScreenState();
 }
 
-class _Splash2ScreenState extends State<Splash2Screen> {
+class _Splash4ScreenState extends State<Splash4Screen> {
   @override
   void initState() {
     super.initState();
@@ -22,13 +21,6 @@ class _Splash2ScreenState extends State<Splash2Screen> {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => widget.nextScreen),
       (route) => false,
-    );
-  }
-
-  void _goNextStep() {
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => Splash3Screen(nextScreen: widget.nextScreen)),
     );
   }
 
@@ -45,21 +37,21 @@ class _Splash2ScreenState extends State<Splash2Screen> {
               const SizedBox(height: 16),
               Image.asset(
                 'assets/images/logocalls.png',
-                height: 48, // matching roughly the text height (42)
+                height: 48, 
                 fit: BoxFit.contain,
               ),
               const SizedBox(height: 24),
               // Titles
-              const Text('All Services', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.black, letterSpacing: -0.5)),
+              const Text('Quick Booking,', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.black, letterSpacing: -0.5)),
               const SizedBox(height: 4),
-              const Text('At Your Fingertips', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.lime500)),
+              const Text('Easy & Fast', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.lime500)),
               const SizedBox(height: 16),
               // Center Image
               Expanded(
                 child: Transform.scale(
-                  scale: 1.40,
+                  scale: 1.1,
                   child: Image.asset(
-                    'assets/login/splash22.png',
+                    'assets/login/splace4.png',
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -67,7 +59,7 @@ class _Splash2ScreenState extends State<Splash2Screen> {
               const SizedBox(height: 32),
               // Description
               const Text(
-                'Book trusted professionals for AC repair,\ncleaning, pest control, beauty services\nand more.',
+                'Book in just a few taps and relax,\nwe\'ll take care of the rest.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -92,15 +84,17 @@ class _Splash2ScreenState extends State<Splash2Screen> {
                   // Dots
                   Row(
                     children: [
+                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
+                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
+                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
+                      const SizedBox(width: 8),
                       Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.lime500, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
                     ],
                   ),
                   FilledButton(
-                    onPressed: _goNextStep,
+                    onPressed: _goNext,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.lime500,
                       minimumSize: Size.zero,
@@ -110,7 +104,7 @@ class _Splash2ScreenState extends State<Splash2Screen> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Next', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                        Text('Get Started', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                         SizedBox(width: 8),
                         Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white),
                       ],

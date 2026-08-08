@@ -49,7 +49,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     Widget destination;
     try {
       final customer =
-          await ref.read(customerRepositoryProvider).getMyProfile();
+          await ref.read(customerRepositoryProvider).getMyProfile().timeout(const Duration(seconds: 3));
       destination = customer.needsProfileSetup
           ? const ProfileSetupScreen()
           : const MainShell();
