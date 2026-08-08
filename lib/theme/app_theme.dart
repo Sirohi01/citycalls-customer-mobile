@@ -14,12 +14,18 @@ class AppColors {
   // Login/onboarding dark treatment — Tailwind slate/lime/indigo.
   static const slate950 = Color(0xFF020617);
   static const slate900 = Color(0xFF0F172A);
+  static const slate700 = Color(0xFF334155);
+  static const slate600 = Color(0xFF475569);
+  static const slate500 = Color(0xFF64748B);
   static const slate400 = Color(0xFF94A3B8);
   static const slate300 = Color(0xFFCBD5E1);
   static const slate200 = Color(0xFFE2E8F0);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate50 = Color(0xFFF8FAFC);
   static const lime500 = Color(0xFF84CC16);
   static const lime400 = Color(0xFFA3E635);
   static const indigo500 = Color(0xFF6366F1);
+  static const red500 = Color(0xFFEF4444);
   static const red400 = Color(0xFFF87171);
 
   // Beauty & Salon vertical accent — approximates oklch(0.65 0.24 5) etc.

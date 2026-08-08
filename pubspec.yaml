@@ -87,7 +87,6 @@ flutter:
     - assets/login/splace4.png
     - assets/login/splash2.png
     - assets/login/splash22.png
-    - assets/login/splash3.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

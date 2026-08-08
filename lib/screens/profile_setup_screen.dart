@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/customer_providers.dart';
 import '../theme/app_theme.dart';
+import '../widgets/auth_background.dart';
 import 'main_shell.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Onboarding" — Registration/
@@ -44,80 +45,169 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       }
     });
 
-    return Scaffold(
-      backgroundColor: AppColors.neutral100,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: [
-                const SizedBox(height: 12),
+    return AuthBackground(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // --- Icon badge ---
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.lime500.withValues(alpha: 0.9),
+                    AppColors.lime500.withValues(alpha: 0.5),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.lime500.withValues(alpha: 0.35),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.person_add_rounded, color: AppColors.slate950, size: 28),
+            ),
+            const SizedBox(height: 24),
+            
+            // --- Heading ---
+            const Text(
+              'Tell us about you', 
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.6,
+                height: 1.1,
+              )
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Just a couple of details before you start booking services.', 
+              style: TextStyle(
+                color: AppColors.slate400,
+                fontSize: 15,
+                height: 1.5,
+              )
+            ),
+            const SizedBox(height: 36),
+            
+            TextFormField(
+              controller: _nameController,
+              style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600),
+              decoration: authFieldDecoration(
+                label: 'Full name', 
+                icon: Icons.person_outline_rounded
+              ),
+              validator: (value) => (value == null || value.trim().length < 2) ? 'Enter your name' : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600),
+              decoration: authFieldDecoration(
+                label: 'Email (optional)', 
+                icon: Icons.mail_outline_rounded
+              ),
+            ),
+            const SizedBox(height: 24),
+                // Consent must be captured explicitly, never pre-checked
                 Container(
-                  width: 68,
-                  height: 68,
-                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: Icon(Icons.waving_hand_rounded, color: Theme.of(context).colorScheme.primary, size: 32),
-                ),
-                const SizedBox(height: 20),
-                const Text('Tell us about you', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text('Just a couple of details before you start booking services.', style: TextStyle(color: AppColors.neutral500)),
-                const SizedBox(height: 28),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.person_outline)),
-                  validator: (value) => (value == null || value.trim().length < 2) ? 'Enter your name' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email (optional)', prefixIcon: Icon(Icons.mail_outline)),
-                ),
-                const SizedBox(height: 20),
-                // Consent must be captured explicitly, never pre-checked —
-                // docs/17-security-and-audit.md §8.
-                Container(
-                  decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(14)),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.2), 
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
                   child: Column(
                     children: [
                       CheckboxListTile(
                         value: _whatsappConsent,
                         onChanged: (v) => setState(() => _whatsappConsent = v ?? false),
-                        title: const Text('Send me booking updates on WhatsApp', style: TextStyle(fontSize: 13.5)),
+                        title: const Text('Send me booking updates on WhatsApp', style: TextStyle(fontSize: 13.5, color: AppColors.slate300)),
                         controlAffinity: ListTileControlAffinity.leading,
                         dense: true,
+                        activeColor: AppColors.lime400,
+                        checkColor: AppColors.slate950,
                       ),
                       CheckboxListTile(
                         value: _emailConsent,
                         onChanged: (v) => setState(() => _emailConsent = v ?? false),
-                        title: const Text('Send me updates by email', style: TextStyle(fontSize: 13.5)),
+                        title: const Text('Send me updates by email', style: TextStyle(fontSize: 13.5, color: AppColors.slate300)),
                         controlAffinity: ListTileControlAffinity.leading,
                         dense: true,
+                        activeColor: AppColors.lime400,
+                        checkColor: AppColors.slate950,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
                 if (error != null)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text('$error', style: const TextStyle(color: Colors.red)),
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.red400.withValues(alpha: 0.1),
+                        border: Border.all(color: AppColors.red400.withValues(alpha: 0.3)),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: AppColors.red500, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '$error',
+                              style: const TextStyle(
+                                color: AppColors.red500,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                FilledButton.icon(
-                  onPressed: isLoading ? null : _submit,
-                  icon: isLoading
-                      ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.arrow_forward, size: 18),
-                  label: Text(isLoading ? 'Saving...' : 'Continue'),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: FilledButton(
+                    style: authButtonStyle().copyWith(
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      elevation: const WidgetStatePropertyAll(0),
+                    ),
+                    onPressed: isLoading ? null : _submit,
+                    child: isLoading
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Complete Profile',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward_rounded, size: 20),
+                            ],
+                          ),
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 

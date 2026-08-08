@@ -34,6 +34,8 @@ class AuthState {
   final String? errorMessage;
   final String? mobile;
   final AuthUser? user;
+  final String? signupName;
+  final String? signupEmail;
 
   const AuthState({
     this.step = AuthStep.enterMobile,
@@ -41,6 +43,8 @@ class AuthState {
     this.errorMessage,
     this.mobile,
     this.user,
+    this.signupName,
+    this.signupEmail,
   });
 
   AuthState copyWith({
@@ -49,6 +53,8 @@ class AuthState {
     String? errorMessage,
     String? mobile,
     AuthUser? user,
+    String? signupName,
+    String? signupEmail,
   }) {
     return AuthState(
       step: step ?? this.step,
@@ -56,6 +62,8 @@ class AuthState {
       errorMessage: errorMessage,
       mobile: mobile ?? this.mobile,
       user: user ?? this.user,
+      signupName: signupName ?? this.signupName,
+      signupEmail: signupEmail ?? this.signupEmail,
     );
   }
 }
@@ -64,8 +72,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
   AuthNotifier(this._repository) : super(const AuthState());
 
-  Future<void> requestOtp(String mobile) async {
-    state = state.copyWith(isLoading: true, errorMessage: null, mobile: mobile);
+  Future<void> requestOtp(String mobile, {String? signupName, String? signupEmail}) async {
+    state = state.copyWith(
+      isLoading: true, 
+      errorMessage: null, 
+      mobile: mobile,
+      signupName: signupName,
+      signupEmail: signupEmail,
+    );
     try {
       await _repository.requestOtp(mobile);
       state = state.copyWith(isLoading: false, step: AuthStep.otpSent);

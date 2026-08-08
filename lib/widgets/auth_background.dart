@@ -1,42 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:ui';
 import '../theme/app_theme.dart';
 import 'glow_blob.dart';
 
-class AuthBackground extends StatelessWidget {
+class AuthBackground extends StatefulWidget {
   final Widget child;
   const AuthBackground({super.key, required this.child});
 
   @override
+  State<AuthBackground> createState() => _AuthBackgroundState();
+}
+
+class _AuthBackgroundState extends State<AuthBackground> with TickerProviderStateMixin {
+  late AnimationController _controller;
+  late AnimationController _bgController;
+  late Animation<double> _fadeLogo;
+  late Animation<Offset> _slideLogo;
+  late Animation<double> _fadeCard;
+  late Animation<Offset> _slideCard;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ensure status bar is light for dark theme
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+    ));
+
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    _bgController = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat(reverse: true);
+
+    _fadeLogo = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6, curve: Curves.easeOut)),
+    );
+    _slideLogo = Tween<Offset>(begin: const Offset(0, -0.3), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic)),
+    );
+
+    _fadeCard = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 1.0, curve: Curves.easeOut)),
+    );
+    _slideCard = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic)),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _bgController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.slate950,
-      body: Stack(
-        children: [
-          // Deep rich background gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF020617), // slate-950
-                  Color(0xFF0F172A), // slate-900
-                  Color(0xFF020617), // slate-950
-                ],
-              ),
-            ),
-          ),
-          // Subtle ambient glow
-          const Positioned(
-              left: -120,
-              top: 200,
-              child: GlowBlob(color: Color(0x1A84CC16), size: 400)), // Lime glow, reduced opacity
-          const Positioned(
-              right: -150,
-              top: 50,
-              child: GlowBlob(color: Color(0x1A6366F1), size: 350)), // Indigo glow, reduced opacity
-          SafeArea(
+      backgroundColor: Colors.black,
+      body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -45,75 +69,54 @@ class AuthBackground extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Sleek Logo Presentation
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          )
-                        ]
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset('assets/images/logo.png',
-                            height: 72, fit: BoxFit.contain),
+                    FadeTransition(
+                      opacity: _fadeLogo,
+                      child: SlideTransition(
+                        position: _slideLogo,
+                          child: Image.asset('assets/images/logo.png',
+                              height: 72, fit: BoxFit.contain),
                       ),
                     ),
                     const SizedBox(height: 36),
-                    _GlassCard(child: child),
+                    FadeTransition(
+                      opacity: _fadeCard,
+                      child: SlideTransition(
+                        position: _slideCard,
+                        child: _AuthCard(child: widget.child),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-          ),
-        ],
       ),
     );
   }
 }
 
-class _GlassCard extends StatelessWidget {
+class _AuthCard extends StatelessWidget {
   final Widget child;
-  const _GlassCard({required this.child});
+  const _AuthCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0.1),
-                Colors.white.withValues(alpha: 0.03),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
-              )
-            ]
-          ),
-          child: child,
-        ),
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 420),
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: AppColors.slate900,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
+          )
+        ],
       ),
+      child: child,
     );
   }
 }
@@ -133,19 +136,19 @@ InputDecoration authFieldDecoration(
           ) 
         : null,
     prefixText: prefixText,
-    prefixStyle: const TextStyle(color: AppColors.white, fontWeight: FontWeight.w600, fontSize: 15),
+    prefixStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
     errorText: errorText,
     errorStyle: const TextStyle(color: AppColors.red400, fontWeight: FontWeight.w500),
     filled: true,
-    fillColor: Colors.black.withValues(alpha: 0.2),
+    fillColor: Colors.white.withValues(alpha: 0.05),
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 1.5),
+      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12), width: 1.5),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 1.5),
+      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12), width: 1.5),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
