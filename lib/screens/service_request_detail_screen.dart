@@ -16,26 +16,61 @@ import 'feedback_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Tracking" — Service Request
 // Detail (status timeline, technician info, live map).
-class ServiceRequestDetailScreen extends ConsumerWidget {
+class ServiceRequestDetailScreen extends ConsumerStatefulWidget {
   final String requestId;
   const ServiceRequestDetailScreen({super.key, required this.requestId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ServiceRequestDetailScreen> createState() => _ServiceRequestDetailScreenState();
+}
+
+class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetailScreen> {
+  String get requestId => widget.requestId;
+  bool _confirming = false;
+
+  Future<void> _confirmCompletion() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Completion'),
+        content: const Text('Confirm that the technician has completed this service? This moves your request forward to payment.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not Yet')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirm')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _confirming = true);
+    try {
+      await ref.read(serviceRequestRepositoryProvider).confirmCompletion(requestId);
+      ref.invalidate(serviceRequestDetailProvider(requestId));
+      ref.invalidate(activityLogProvider(requestId));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not confirm: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _confirming = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final detail = ref.watch(serviceRequestDetailProvider(requestId));
-    final history = ref.watch(assignmentHistoryProvider(requestId));
+    final activityLog = ref.watch(activityLogProvider(requestId));
 
     // Status/assignment changes arrive over the same socket room the Live
     // Map section listens on (serviceRequestRealtimeProvider) — refetching
     // the REST detail/history here instead of trying to patch the socket
     // payload directly into state keeps a single source of truth for what's
-    // actually shown (the full ServiceRequestDetail/AssignmentHistoryEntry
+    // actually shown (the full ServiceRequestDetail/ActivityLogEntry
     // shapes), rather than juggling two representations of the same data.
     ref.listen(serviceRequestRealtimeProvider(requestId), (previous, next) {
       final event = next.valueOrNull;
       if (event != null && event.type != RealtimeEventType.locationUpdated) {
         ref.invalidate(serviceRequestDetailProvider(requestId));
-        ref.invalidate(assignmentHistoryProvider(requestId));
+        ref.invalidate(activityLogProvider(requestId));
       }
     });
 
@@ -46,7 +81,7 @@ class ServiceRequestDetailScreen extends ConsumerWidget {
         data: (sr) => RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(serviceRequestDetailProvider(requestId));
-            ref.invalidate(assignmentHistoryProvider(requestId));
+            ref.invalidate(activityLogProvider(requestId));
           },
           child: ListView(
             padding: const EdgeInsets.all(20),
@@ -72,7 +107,7 @@ class ServiceRequestDetailScreen extends ConsumerWidget {
                   children: [
                     const Text('Activity Timeline', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                     const SizedBox(height: 14),
-                    history.when(
+                    activityLog.when(
                       data: (entries) => entries.isEmpty
                           ? const Text('No activity yet.', style: TextStyle(color: AppColors.neutral500))
                           : Column(children: [for (var i = 0; i < entries.length; i++) _timelineEntry(entries[i], isLast: i == entries.length - 1)]),
@@ -85,6 +120,13 @@ class ServiceRequestDetailScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               if (sr.status == 'ESTIMATE_SHARED' || sr.status == 'AWAITING_CUSTOMER_APPROVAL')
                 _actionButton(context, Icons.receipt_long_outlined, 'Review Estimate', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => EstimateReviewScreen(requestId: requestId)))),
+              // The actual "move this request forward" action for this
+              // status — previously the only thing offered here was "Rate
+              // Your Experience", which submits feedback but never confirms
+              // completion, so the request could sit stuck on this status
+              // forever with no way for the customer to advance it.
+              if (sr.status == 'CUSTOMER_CONFIRMATION_PENDING')
+                _actionButton(context, Icons.check_circle_outline, _confirming ? 'Confirming...' : 'Confirm Completion', _confirming ? () {} : _confirmCompletion),
               if (sr.status == 'PAYMENT_PENDING' || sr.status == 'PARTIALLY_PAID' || sr.status == 'PAID')
                 _actionButton(context, Icons.receipt_outlined, 'View Invoice', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InvoiceViewScreen(requestId: requestId)))),
               if (sr.status == 'SERVICE_COMPLETED' || sr.status == 'CUSTOMER_CONFIRMATION_PENDING')
@@ -197,7 +239,7 @@ class ServiceRequestDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _timelineEntry(AssignmentHistoryEntry entry, {required bool isLast}) {
+  Widget _timelineEntry(ActivityLogEntry entry, {required bool isLast}) {
     return IntrinsicHeight(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -223,6 +265,11 @@ class ServiceRequestDetailScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(entry.action.replaceAll('_', ' '), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    if (entry.reason != null && entry.reason!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(entry.reason!, style: const TextStyle(fontSize: 12)),
+                      ),
                     Text(
                       DateTime.tryParse(entry.timestamp)?.toLocal().toString().split('.').first ?? '',
                       style: const TextStyle(color: AppColors.neutral500, fontSize: 11.5),
