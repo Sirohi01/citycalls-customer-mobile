@@ -50,10 +50,11 @@ class _ProformaReviewScreenState extends ConsumerState<ProformaReviewScreen> {
           surfaceTintColor: AppColors.neutral100),
       body: proforma.when(
         data: (p) {
-          if (p == null)
+          if (p == null) {
             return const Center(
                 child: Text('No bill found for this request yet.',
                     style: TextStyle(color: AppColors.neutral500)));
+          }
           final canAccept = p.status == 'SHARED';
           return Padding(
             padding: const EdgeInsets.all(20),
