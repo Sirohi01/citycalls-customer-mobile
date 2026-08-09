@@ -147,12 +147,6 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // One real rail per category (Home Appliances / Pest Control /
-                  // Home Cleaning / Bliss & Salon) instead of a single flat
-                  // "Popular Services" list mixed across all of them — this is
-                  // what actually makes the dashboard showcase the catalog, per
-                  // Manish's ask to see "categories ke andar ka bhi" here, not
-                  // just a category-picker row.
                   categories.when(
                     data: (cats) => cats.isEmpty
                         ? const SizedBox.shrink()
@@ -250,7 +244,7 @@ class _StatsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4))
         ],
@@ -280,7 +274,8 @@ class _StatsCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(width: 1, height: 40, color: Colors.white.withOpacity(0.2)),
+          Container(
+              width: 1, height: 40, color: Colors.white.withValues(alpha: 0.2)),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -501,7 +496,9 @@ IconData _iconForCategory(String label) {
   if (l.contains('beauty') ||
       l.contains('salon') ||
       l.contains('bliss') ||
-      l.contains('spa')) return Icons.spa;
+      l.contains('spa')) {
+    return Icons.spa;
+  }
   if (l.contains('appliance') || l.contains('repair')) return Icons.build;
   return Icons.miscellaneous_services;
 }
@@ -582,7 +579,7 @@ class _CategoryCard extends StatelessWidget {
               right: -10,
               bottom: -10,
               child: Icon(_iconForCategory(category.label),
-                  color: iconColor.withOpacity(0.4), size: 70),
+                  color: iconColor.withValues(alpha: 0.4), size: 70),
             ),
           ],
         ),
@@ -681,7 +678,7 @@ class _PopularServiceCard extends ConsumerWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
         elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.06),
+        shadowColor: Colors.black.withValues(alpha: 0.06),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: () => Navigator.of(context).push(MaterialPageRoute(

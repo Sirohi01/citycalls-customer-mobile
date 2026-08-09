@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../theme/app_theme.dart';
-import '../widgets/glow_blob.dart';
 import 'otp_request_screen.dart';
 import 'profile_setup_screen.dart';
 import 'main_shell.dart';
