@@ -33,10 +33,6 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    // Foreground messages don't produce a system notification banner on
-    // their own (that's OS behavior for background/terminated apps only) —
-    // shown as an in-app SnackBar instead, since the user is already looking
-    // at the app when these arrive.
     ref.listen(foregroundPushMessageProvider, (previous, next) {
       final message = next.valueOrNull;
       final title = message?.notification?.title;
@@ -61,7 +57,7 @@ class _MainShellState extends ConsumerState<MainShell> {
             color: AppColors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, -4),
               ),
