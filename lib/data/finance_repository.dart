@@ -21,6 +21,16 @@ class FinanceRepository {
     await _client.dio.patch('/estimates/$id/reject');
   }
 
+  Future<ProformaInvoice?> getProformaForRequest(String serviceRequestId) async {
+    final res = await _client.dio.get('/proforma-invoices', queryParameters: {'serviceRequestId': serviceRequestId, 'limit': 1});
+    final items = res.data['data'] as List;
+    return items.isEmpty ? null : ProformaInvoice.fromJson(items.first as Map<String, dynamic>);
+  }
+
+  Future<void> acceptProforma(String id) async {
+    await _client.dio.patch('/proforma-invoices/$id/accept');
+  }
+
   Future<Invoice?> getInvoiceForRequest(String serviceRequestId) async {
     final res = await _client.dio.get('/invoices', queryParameters: {'serviceRequestId': serviceRequestId, 'limit': 1});
     final items = res.data['data'] as List;

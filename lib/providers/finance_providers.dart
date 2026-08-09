@@ -11,6 +11,10 @@ final estimateForRequestProvider = FutureProvider.family<Estimate?, String>((ref
   return ref.watch(financeRepositoryProvider).getEstimateForRequest(serviceRequestId);
 });
 
+final proformaForRequestProvider = FutureProvider.family<ProformaInvoice?, String>((ref, serviceRequestId) async {
+  return ref.watch(financeRepositoryProvider).getProformaForRequest(serviceRequestId);
+});
+
 final invoiceForRequestProvider = FutureProvider.family<Invoice?, String>((ref, serviceRequestId) async {
   return ref.watch(financeRepositoryProvider).getInvoiceForRequest(serviceRequestId);
 });

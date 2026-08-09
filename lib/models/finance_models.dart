@@ -6,7 +6,11 @@ class LineItem {
   final double unitPrice;
   final double lineTotal;
 
-  LineItem({required this.description, required this.qty, required this.unitPrice, required this.lineTotal});
+  LineItem(
+      {required this.description,
+      required this.qty,
+      required this.unitPrice,
+      required this.lineTotal});
 
   factory LineItem.fromJson(Map<String, dynamic> json) {
     return LineItem(
@@ -44,7 +48,46 @@ class Estimate {
       id: json['_id'] as String,
       number: json['number'] as String,
       status: json['status'] as String,
-      items: (json['items'] as List? ?? []).map((i) => LineItem.fromJson(i as Map<String, dynamic>)).toList(),
+      items: (json['items'] as List? ?? [])
+          .map((i) => LineItem.fromJson(i as Map<String, dynamic>))
+          .toList(),
+      subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0,
+      discount: (json['discount'] as num?)?.toDouble() ?? 0,
+      total: (json['total'] as num?)?.toDouble() ?? 0,
+      createdAt: json['createdAt'] as String,
+    );
+  }
+}
+
+class ProformaInvoice {
+  final String id;
+  final String number;
+  final String status;
+  final List<LineItem> items;
+  final double subtotal;
+  final double discount;
+  final double total;
+  final String createdAt;
+
+  ProformaInvoice({
+    required this.id,
+    required this.number,
+    required this.status,
+    required this.items,
+    required this.subtotal,
+    required this.discount,
+    required this.total,
+    required this.createdAt,
+  });
+
+  factory ProformaInvoice.fromJson(Map<String, dynamic> json) {
+    return ProformaInvoice(
+      id: json['_id'] as String,
+      number: json['number'] as String,
+      status: json['status'] as String,
+      items: (json['items'] as List? ?? [])
+          .map((i) => LineItem.fromJson(i as Map<String, dynamic>))
+          .toList(),
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0,
       discount: (json['discount'] as num?)?.toDouble() ?? 0,
       total: (json['total'] as num?)?.toDouble() ?? 0,
@@ -61,7 +104,13 @@ class Invoice {
   final double amountPaid;
   final String createdAt;
 
-  Invoice({required this.id, required this.number, required this.status, required this.total, required this.amountPaid, required this.createdAt});
+  Invoice(
+      {required this.id,
+      required this.number,
+      required this.status,
+      required this.total,
+      required this.amountPaid,
+      required this.createdAt});
 
   double get outstanding => total - amountPaid;
 
@@ -85,7 +134,13 @@ class PaymentReceipt {
   final String? reference;
   final String createdAt;
 
-  PaymentReceipt({required this.id, required this.number, required this.amount, required this.method, this.reference, required this.createdAt});
+  PaymentReceipt(
+      {required this.id,
+      required this.number,
+      required this.amount,
+      required this.method,
+      this.reference,
+      required this.createdAt});
 
   factory PaymentReceipt.fromJson(Map<String, dynamic> json) {
     return PaymentReceipt(
