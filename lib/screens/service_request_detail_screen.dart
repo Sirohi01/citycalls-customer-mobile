@@ -4,12 +4,14 @@ import '../models/service_request_models.dart';
 import '../models/realtime_models.dart';
 import '../providers/service_request_providers.dart';
 import '../providers/realtime_providers.dart';
+import '../providers/finance_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/live_map_section.dart';
 import 'reschedule_screen.dart';
 import 'cancel_request_screen.dart';
 import 'estimate_review_screen.dart';
+import 'proforma_review_screen.dart';
 import 'invoice_view_screen.dart';
 import 'reopen_request_screen.dart';
 import 'feedback_screen.dart';
@@ -59,6 +61,7 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
   Widget build(BuildContext context) {
     final detail = ref.watch(serviceRequestDetailProvider(requestId));
     final activityLog = ref.watch(activityLogProvider(requestId));
+    final proformaAwaitingAcceptance = ref.watch(proformaForRequestProvider(requestId)).valueOrNull?.status == 'SHARED';
 
     // Status/assignment changes arrive over the same socket room the Live
     // Map section listens on (serviceRequestRealtimeProvider) — refetching
@@ -127,6 +130,13 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
               // forever with no way for the customer to advance it.
               if (sr.status == 'CUSTOMER_CONFIRMATION_PENDING')
                 _actionButton(context, Icons.check_circle_outline, _confirming ? 'Confirming...' : 'Confirm Completion', _confirming ? () {} : _confirmCompletion),
+              // The bill is auto-generated from the already-approved Estimate
+              // (no re-typed amounts) but still needs this one explicit tap —
+              // same reasoning as Confirm Completion above: a financial
+              // commitment shouldn't advance silently without the customer
+              // seeing it.
+              if (sr.status == 'PAYMENT_PENDING' && proformaAwaitingAcceptance)
+                _actionButton(context, Icons.request_quote_outlined, 'Review Bill', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProformaReviewScreen(requestId: requestId)))),
               if (sr.status == 'PAYMENT_PENDING' || sr.status == 'PARTIALLY_PAID' || sr.status == 'PAID')
                 _actionButton(context, Icons.receipt_outlined, 'View Invoice', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InvoiceViewScreen(requestId: requestId)))),
               if (sr.status == 'SERVICE_COMPLETED' || sr.status == 'CUSTOMER_CONFIRMATION_PENDING')
