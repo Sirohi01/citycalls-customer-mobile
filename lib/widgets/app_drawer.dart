@@ -4,7 +4,6 @@ import '../providers/customer_providers.dart';
 import '../providers/auth_providers.dart';
 import '../models/customer_models.dart';
 import '../screens/profile_screen.dart';
-import '../screens/service_browse_screen.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -12,241 +11,229 @@ class AppDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(myProfileProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Drawer(
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(24),
-          bottomRight: Radius.zero,
-        ),
-      ),
+      width: screenWidth, // Full screen width to match the mockup perfectly
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero), // Flat edge
       child: SafeArea(
         child: Column(
           children: [
-            // Header (Logo and Close Button)
+            // Header: Close / Profile / Support
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  RichText(
-                    text: const TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'City',
-                          style: TextStyle(
-                            color: Color(0xFF16A34A),
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'Calls',
-                          style: TextStyle(
-                            color: Color(0xFF0F172A),
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded, color: Color(0xFF0F172A), size: 24),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0F172A), size: 20),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                   ),
+                  const Text(
+                    'Profile',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      const Icon(Icons.headset_mic_outlined, size: 18, color: Color(0xFF0F172A)),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Support',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
+            
+            const SizedBox(height: 12),
 
-            // Profile Section
-            InkWell(
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 26,
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      child: ClipOval(
-                        child: Image.network(
-                          'https://api.dicebear.com/7.x/notionists/png?seed=rohit', // Placeholder for avatar
-                          width: 52,
-                          height: 52,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Color(0xFF94A3B8)),
+            // Profile Card (Green)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF4FA021), Color(0xFF388014)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                child: profile.when(
+                  data: (customer) {
+                    final c = customer as Customer;
+                    return Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(2), // White border
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: CircleAvatar(
+                            radius: 30,
+                            backgroundColor: const Color(0xFFF1F5F9),
+                            child: ClipOval(
+                              child: Image.network(
+                                'https://api.dicebear.com/7.x/notionists/png?seed=rohit', // Avatar
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Color(0xFF94A3B8)),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: profile.when(
-                        data: (customer) {
-                          final c = customer as Customer;
-                          return Column(
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 c.name.isNotEmpty ? c.name : 'Guest User',
                                 style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
+                                  color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                c.mobile ?? '',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF64748B),
-                                ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(Icons.phone_outlined, color: Colors.white70, size: 14),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    c.mobile ?? '',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
-                          );
-                        },
-                        loading: () => const Text('Loading...'),
-                        error: (_, __) => const Text('Error loading profile'),
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 22),
-                  ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 24),
+                      ],
+                    );
+                  },
+                  loading: () => const Text('Loading...', style: TextStyle(color: Colors.white)),
+                  error: (_, __) => const Text('Error', style: TextStyle(color: Colors.white)),
                 ),
               ),
             ),
 
-            // Refer & Earn Banner
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFDCFCE7), width: 1),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.card_giftcard_rounded, color: Color(0xFF16A34A), size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Refer & Earn', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
-                          SizedBox(height: 2),
-                          Text('Invite friends and\nearn exciting rewards', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF475569))),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
-                  ],
-                ),
-              ),
-            ),
+            const SizedBox(height: 24),
 
-            const SizedBox(height: 12),
-
-            // Navigation Items
+            // Menu Items List
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  _DrawerItem(icon: Icons.home_rounded, title: 'Home', isActive: true, onTap: () => Navigator.of(context).pop()),
-                  _DrawerItem(icon: Icons.calendar_month_rounded, title: 'Bookings', onTap: () {}),
-                  _DrawerItem(icon: Icons.home_repair_service_outlined, title: 'My Services', onTap: () {}),
-                  _DrawerItem(icon: Icons.account_balance_wallet_outlined, title: 'Wallet', onTap: () {}),
-                  _DrawerItem(icon: Icons.local_offer_outlined, title: 'Offers & Discounts', onTap: () {}),
-                  _DrawerItem(icon: Icons.people_outline_rounded, title: 'Refer & Earn', onTap: () {}),
-                  _DrawerItem(icon: Icons.location_on_outlined, title: 'My Address', onTap: () {}),
-                  _DrawerItem(icon: Icons.headset_mic_outlined, title: 'Help & Support', onTap: () {}),
-                  _DrawerItem(icon: Icons.notifications_none_rounded, title: 'Notifications', hasDot: true, onTap: () {}),
-                  _DrawerItem(icon: Icons.settings_outlined, title: 'Settings', onTap: () {}),
-                  const SizedBox(height: 16),
+                  _MenuListItem(
+                    icon: Icons.person_outline_rounded,
+                    title: 'My Profile',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+                    },
+                  ),
+                  _MenuListItem(icon: Icons.location_on_outlined, title: 'My Addresses', onTap: () {}),
+                  _MenuListItem(
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: 'My Wallet',
+                    trailingText: '₹1,250',
+                    onTap: () {},
+                  ),
+                  _MenuListItem(icon: Icons.credit_card_outlined, title: 'Payments', onTap: () {}),
+                  _MenuListItem(icon: Icons.headset_mic_outlined, title: 'Help & Support', onTap: () {}),
+                  _MenuListItem(icon: Icons.settings_outlined, title: 'Settings', onTap: () {}),
                   
-                  // Logout
+                  const SizedBox(height: 24),
+                  
+                  // Logout Button
                   InkWell(
                     onTap: () {
                       // TODO: Implement logout in auth provider
                     },
                     borderRadius: BorderRadius.circular(12),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFF87171), width: 1.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 22),
-                          SizedBox(width: 16),
-                          Text('Logout', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFFEF4444))),
+                          const Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 20),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Logout',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFFEF4444)),
+                          ),
                         ],
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
+                  
+                  const SizedBox(height: 24),
 
-            // Help Banner & Footer
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-              child: Column(
-                children: [
+                  // Refer & Earn Banner
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: const Color(0xFFF3FAEE), // Very light green
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFDCFCE7), width: 1),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     child: Row(
                       children: [
-                        const Icon(Icons.support_agent_rounded, color: Color(0xFF16A34A), size: 26),
+                        const Icon(Icons.card_giftcard_outlined, color: Color(0xFF4FA021), size: 28),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Need Help?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
-                              SizedBox(height: 2),
-                              Text('We are here to help you', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF475569))),
+                              Text('Refer & Earn', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                              SizedBox(height: 4),
+                              Text('Refer your friends and earn exciting rewards!', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF64748B))),
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF16A34A),
-                            borderRadius: BorderRadius.circular(10),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF4FA021),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Icon(Icons.phone_in_talk_rounded, color: Colors.white, size: 18),
+                          child: const Text('Refer Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'CityCalls v1.0.0',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF94A3B8)),
-                  ),
+                  
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -257,64 +244,69 @@ class AppDrawer extends ConsumerWidget {
   }
 }
 
-class _DrawerItem extends StatelessWidget {
+class _MenuListItem extends StatelessWidget {
   final IconData icon;
   final String title;
-  final bool isActive;
-  final bool hasDot;
+  final String? trailingText;
   final VoidCallback onTap;
 
-  const _DrawerItem({
+  const _MenuListItem({
     required this.icon,
     required this.title,
+    this.trailingText,
     required this.onTap,
-    this.isActive = false,
-    this.hasDot = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        margin: const EdgeInsets.only(bottom: 2),
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFFF0FDF4) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isActive ? const Color(0xFF16A34A) : const Color(0xFF475569),
-              size: 22,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-                  color: isActive ? const Color(0xFF16A34A) : const Color(0xFF0F172A),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                // Icon with rounded square background
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3FAEE), // Light green background
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: const Color(0xFF4FA021), // Green icon
+                    size: 20,
+                  ),
                 ),
-              ),
-            ),
-            if (hasDot)
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.only(right: 4),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF16A34A),
-                  shape: BoxShape.circle,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF334155),
+                    ),
+                  ),
                 ),
-              ),
-            Icon(Icons.chevron_right_rounded, color: isActive ? Colors.transparent : const Color(0xFFCBD5E1), size: 20),
-          ],
-        ),
+                if (trailingText != null)
+                  Text(
+                    trailingText!,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                if (trailingText != null) const SizedBox(width: 8),
+                const Icon(Icons.chevron_right_rounded, color: Color(0xFF0F172A), size: 20),
+              ],
+            ),
+          ),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+        ],
       ),
     );
   }

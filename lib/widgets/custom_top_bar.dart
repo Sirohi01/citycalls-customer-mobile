@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/customer_providers.dart';
 import '../models/customer_models.dart';
 import '../screens/service_browse_screen.dart';
+import '../screens/notifications_screen.dart';
 
 class CustomTopBar extends ConsumerWidget {
   const CustomTopBar({super.key});
@@ -55,48 +56,39 @@ class _HeaderRow extends StatelessWidget {
               child: Icon(Icons.menu_rounded, size: 28, color: Color(0xFF0F172A)),
             ),
           ),
-          RichText(
-            text: const TextSpan(
-              children: [
-                TextSpan(
-                  text: 'City',
-                  style: TextStyle(
-                    color: Color(0xFF16A34A),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                TextSpan(
-                  text: 'Calls',
-                  style: TextStyle(
-                    color: Color(0xFF0F172A),
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ],
-            ),
+          Image.asset(
+            'assets/images/logocalls.png',
+            height: 32, // Adjusted height for top bar
           ),
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              const Icon(Icons.notifications_none_rounded, size: 26, color: Color(0xFF0F172A)),
-              Positioned(
-                top: 2,
-                right: 2,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF16A34A),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 1.5),
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.notifications_none_rounded, size: 26, color: Color(0xFF0F172A)),
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF16A34A),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
