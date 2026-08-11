@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+  import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/api_client.dart';
 import '../data/auth_repository.dart';
 import '../data/customer_repository.dart';
@@ -6,7 +6,7 @@ import '../models/auth_models.dart';
 
 const String _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://192.168.0.164:4000/api/v1',
+  defaultValue: 'http://10.65.92.146:4000/api/v1',
 );
 
 // const String _apiBaseUrl = String.fromEnvironment(
