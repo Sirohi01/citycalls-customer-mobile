@@ -48,20 +48,20 @@ class HomeScreen extends ConsumerWidget {
                   ref.invalidate(servicesByCategoryProvider);
                 },
                 child: ListView(
-                  padding: const EdgeInsets.only(top: 16, bottom: 24),
+                  padding: const EdgeInsets.only(top: 0, bottom: 24),
                   children: [
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: _HeroBanner(),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _StatsCard(
                     activeCount: activeCount,
                     completedCount: completedCount),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -178,21 +178,21 @@ class _HeroBannerState extends State<_HeroBanner> {
       'title1': 'We Are Just\\n',
       'title2': 'A Call Away',
       'subtitle': 'Book trusted professionals\\nat your doorstep',
-      'color': const Color(0xFFF0FDF4),
+      'imageUrl': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop',
       'buttonColor': const Color(0xFF16A34A),
     },
     {
       'title1': 'Flat 20% Off\\n',
       'title2': 'On AC Repair',
       'subtitle': 'Beat the summer heat with\\nour expert technicians',
-      'color': const Color(0xFFEFF6FF),
+      'imageUrl': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop',
       'buttonColor': const Color(0xFF2563EB),
     },
     {
       'title1': 'Deep Cleaning\\n',
       'title2': 'Starts at ₹999',
       'subtitle': 'Give your home the shine\\nit deserves today',
-      'color': const Color(0xFFFEF2F2),
+      'imageUrl': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=800&auto=format&fit=crop',
       'buttonColor': const Color(0xFFDC2626),
     },
   ];
@@ -200,14 +200,15 @@ class _HeroBannerState extends State<_HeroBanner> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: 0);
+    _currentPage = _slides.length * 1000; // Start high to allow swiping left
+    _pageController = PageController(initialPage: _currentPage);
     _startTimer();
   }
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_pageController.hasClients) {
-        final nextPage = (_currentPage + 1) % _slides.length;
+        final nextPage = _currentPage + 1;
         _pageController.animateToPage(
           nextPage,
           duration: const Duration(milliseconds: 500),
@@ -230,21 +231,45 @@ class _HeroBannerState extends State<_HeroBanner> {
       height: 140,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: _slides[_currentPage]['color'] as Color,
+        color: const Color(0xFFF1F5F9), // Fallback color
       ),
       child: Stack(
         children: [
-          PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            itemCount: _slides.length,
-            itemBuilder: (context, index) {
-              final slide = _slides[index];
-              return Padding(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final slide = _slides[index % _slides.length];
+                return Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage(slide['imageUrl'] as String),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Gradient Overlay
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withValues(alpha: 0.7),
+                              Colors.black.withValues(alpha: 0.1),
+                            ],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                        ),
+                      ),
+                      // Content
+                      Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -260,7 +285,7 @@ class _HeroBannerState extends State<_HeroBanner> {
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF0F172A),
+                                color: Colors.white,
                                 height: 1.2,
                               ),
                               children: [
@@ -278,7 +303,7 @@ class _HeroBannerState extends State<_HeroBanner> {
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF475569),
+                              color: Color(0xFFE2E8F0),
                               height: 1.3,
                             ),
                           ),
@@ -300,10 +325,14 @@ class _HeroBannerState extends State<_HeroBanner> {
                     ),
                   ],
                 ),
-              );
+              ),
+            ],
+          ),
+        );
             },
           ),
-          Positioned(
+        ),
+        Positioned(
             bottom: 12,
             left: 0,
             right: 0,
@@ -311,18 +340,21 @@ class _HeroBannerState extends State<_HeroBanner> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 _slides.length,
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: _currentPage == index ? 16 : 6,
-                  height: 6,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  decoration: BoxDecoration(
-                    color: _currentPage == index
-                        ? _slides[_currentPage]['buttonColor'] as Color
-                        : const Color(0xFFCBD5E1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
+                (index) {
+                  final activeIndex = _currentPage % _slides.length;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: activeIndex == index ? 16 : 6,
+                    height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: activeIndex == index
+                          ? _slides[activeIndex]['buttonColor'] as Color
+                          : const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  );
+                },
               ),
             ),
           ),
