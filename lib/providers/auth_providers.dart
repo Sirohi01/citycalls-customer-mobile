@@ -6,7 +6,8 @@ import '../models/auth_models.dart';
 
 const String _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://10.65.92.146:4000/api/v1',
+  defaultValue: 'http://192.168.0.164:4000/api/v1',
+    // defaultValue: 'http://10.65.92.146:4000/api/v1',
 );
 
 // const String _apiBaseUrl = String.fromEnvironment(

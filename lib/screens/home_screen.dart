@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/customer_providers.dart';
@@ -5,10 +6,11 @@ import '../providers/service_request_providers.dart';
 import '../providers/catalog_providers.dart';
 import '../models/catalog_models.dart';
 import '../models/customer_models.dart';
-import '../theme/app_theme.dart';
 import 'service_browse_screen.dart';
 import 'service_detail_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/custom_top_bar.dart';
+import '../widgets/app_drawer.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -18,6 +20,7 @@ class HomeScreen extends ConsumerWidget {
     final profile = ref.watch(myProfileProvider);
     final requests = ref.watch(myServiceRequestsProvider);
     final categories = ref.watch(serviceCategoriesProvider);
+    
     final activeCount = requests.maybeWhen(
         data: (items) => items.where((r) => r.isActive).length,
         orElse: () => 0);
@@ -29,353 +32,297 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: Column(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: _TopAppBar(profile: profile),
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              color: const Color(0xFF16A34A),
-              onRefresh: () async {
-                ref.invalidate(myProfileProvider);
-                ref.invalidate(myServiceRequestsProvider);
-                ref.invalidate(serviceCategoriesProvider);
-                ref.invalidate(servicesByCategoryProvider);
-              },
-              child: ListView(
-                padding: const EdgeInsets.only(bottom: 24),
-                children: [
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _StatsCard(
-                        activeCount: activeCount,
-                        completedCount: completedCount),
-                  ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _BookServiceCard(
+      drawer: const AppDrawer(),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            const CustomTopBar(),
+            Expanded(
+              child: RefreshIndicator(
+                color: const Color(0xFF16A34A),
+                onRefresh: () async {
+                  ref.invalidate(myProfileProvider);
+                  ref.invalidate(myServiceRequestsProvider);
+                  ref.invalidate(serviceCategoriesProvider);
+                  ref.invalidate(servicesByCategoryProvider);
+                },
+                child: ListView(
+                  padding: const EdgeInsets.only(top: 16, bottom: 24),
+                  children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: _HeroBanner(),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _StatsCard(
+                    activeCount: activeCount,
+                    completedCount: completedCount),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Explore Categories',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    InkWell(
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const ServiceBrowseScreen(),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const _TrustStrip(),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Explore Categories',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ServiceBrowseScreen(),
-                            ),
-                          ),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'See all',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF16A34A),
-                                  ),
-                                ),
-                                SizedBox(width: 2),
-                                Icon(Icons.arrow_forward_ios_rounded,
-                                    size: 11, color: Color(0xFF16A34A)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: categories.when(
-                      data: (cats) => cats.isEmpty
-                          ? const SizedBox.shrink()
-                          : GridView.builder(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: cats.length,
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 1.35,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                        child: Row(
+                          children: [
+                            Text(
+                              'See all',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF16A34A),
                               ),
-                              itemBuilder: (context, i) => _CategoryCard(
-                                  category: cats[i], colorIndex: i),
                             ),
-                      loading: () => const SizedBox(
-                        height: 120,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Color(0xFF16A34A),
-                          ),
-                        ),
-                      ),
-                      error: (_, __) => const SizedBox.shrink(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  categories.when(
-                    data: (cats) => cats.isEmpty
-                        ? const SizedBox.shrink()
-                        : Column(
-                            children: [
-                              for (final c in cats)
-                                _CategoryServiceRail(category: c)
-                            ],
-                          ),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopAppBar extends ConsumerWidget {
-  final AsyncValue profile;
-  const _TopAppBar({required this.profile});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: profile.when(
-                  data: (customer) {
-                    final Customer c = customer as Customer;
-                    final addresses = c.addresses;
-                    final CustomerAddress? primary = addresses.isEmpty
-                        ? null
-                        : addresses.firstWhere((a) => a.isDefault,
-                            orElse: () => addresses.first);
-
-                    final title =
-                        primary == null ? 'Select Location' : 'Current Location';
-                    final subtitle = primary == null
-                        ? 'Tap to add your home address'
-                        : '${primary.city}, ${primary.pinCode}';
-
-                    return InkWell(
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (_) => const ProfileScreen()),
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.near_me_rounded,
-                                color: Color(0xFF16A34A), size: 18),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      title,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w900,
-                                        color: Color(0xFF0F172A),
-                                        letterSpacing: -0.2,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    const Icon(Icons.keyboard_arrow_down_rounded,
-                                        color: Color(0xFF0F172A), size: 18),
-                                  ],
-                                ),
-                                Text(
-                                  subtitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF64748B),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  loading: () => const SizedBox(height: 36),
-                  error: (_, __) => const SizedBox(height: 36),
-                ),
-              ),
-              const SizedBox(width: 10),
-              InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No new notifications')),
-                  );
-                },
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: const Color(0xFFE2E8F0), width: 1.0),
-                      ),
-                      child: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: Color(0xFF0F172A),
-                        size: 20,
-                      ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
+                            SizedBox(width: 2),
+                            Icon(Icons.arrow_forward_ios_rounded,
+                                size: 11, color: Color(0xFF16A34A)),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: categories.when(
+                  data: (cats) => cats.isEmpty
+                      ? const SizedBox.shrink()
+                      : GridView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: cats.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 1.35,
+                          ),
+                          itemBuilder: (context, i) => _CategoryCard(
+                              category: cats[i], colorIndex: i),
+                        ),
+                  loading: () => const SizedBox(
+                    height: 120,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Color(0xFF16A34A),
+                      ),
+                    ),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              categories.when(
+                data: (cats) => cats.isEmpty
+                    ? const SizedBox.shrink()
+                    : Column(
+                        children: [
+                          for (final c in cats)
+                            _CategoryServiceRail(category: c)
+                        ],
+                      ),
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
             ],
           ),
-          const SizedBox(height: 14),
-          // Compact and Functional Search Bar
-          InkWell(
-            onTap: () {
-              // Now functional: navigates to ServiceBrowseScreen
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ServiceBrowseScreen()),
+        ),
+              ),
+            ],
+          ),
+        ),
+    );
+  }
+}
+
+class _HeroBanner extends StatefulWidget {
+  const _HeroBanner();
+
+  @override
+  State<_HeroBanner> createState() => _HeroBannerState();
+}
+
+class _HeroBannerState extends State<_HeroBanner> {
+  late final PageController _pageController;
+  Timer? _timer;
+  int _currentPage = 0;
+
+  final List<Map<String, dynamic>> _slides = [
+    {
+      'title1': 'We Are Just\\n',
+      'title2': 'A Call Away',
+      'subtitle': 'Book trusted professionals\\nat your doorstep',
+      'color': const Color(0xFFF0FDF4),
+      'buttonColor': const Color(0xFF16A34A),
+    },
+    {
+      'title1': 'Flat 20% Off\\n',
+      'title2': 'On AC Repair',
+      'subtitle': 'Beat the summer heat with\\nour expert technicians',
+      'color': const Color(0xFFEFF6FF),
+      'buttonColor': const Color(0xFF2563EB),
+    },
+    {
+      'title1': 'Deep Cleaning\\n',
+      'title2': 'Starts at ₹999',
+      'subtitle': 'Give your home the shine\\nit deserves today',
+      'color': const Color(0xFFFEF2F2),
+      'buttonColor': const Color(0xFFDC2626),
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_pageController.hasClients) {
+        final nextPage = (_currentPage + 1) % _slides.length;
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 140,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: _slides[_currentPage]['color'] as Color,
+      ),
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            itemCount: _slides.length,
+            itemBuilder: (context, index) {
+              final slide = _slides[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF0F172A),
+                                height: 1.2,
+                              ),
+                              children: [
+                                TextSpan(text: slide['title1'] as String),
+                                TextSpan(
+                                  text: slide['title2'] as String,
+                                  style: TextStyle(color: slide['buttonColor'] as Color),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            slide['subtitle'] as String,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF475569),
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: slide['buttonColor'] as Color,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('Book Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ],
+                ),
               );
             },
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Reduced vertical padding
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+          ),
+          Positioned(
+            bottom: 12,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _slides.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: _currentPage == index ? 16 : 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: _currentPage == index
+                        ? _slides[_currentPage]['buttonColor'] as Color
+                        : const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 4),
-                  const Icon(Icons.search_rounded,
-                      color: Color(0xFF16A34A), size: 20), // Smaller icon
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Search "AC Repair", "Cleaning"...', // Single line text to save height
-                      style: TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    height: 18, // Shorter divider
-                    width: 1.2,
-                    color: const Color(0xFFE2E8F0),
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Voice search coming soon')),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.all(6), // Smaller mic padding
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF16A34A).withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.mic_none_rounded,
-                          color: Color(0xFF16A34A), size: 16), // Smaller icon
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -401,9 +348,9 @@ class _StatsCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               onTap: () {},
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12), // Very compact height
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4), // Premium soft green background
+                  color: const Color(0xFFF0FDF4),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFBBF7D0), width: 1.2),
                 ),
@@ -467,159 +414,7 @@ class _StatsCard extends StatelessWidget {
   }
 }
 
-class _BookServiceCard extends StatelessWidget {
-  final VoidCallback onTap;
-  const _BookServiceCard({required this.onTap});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF16A34A).withValues(alpha: 0.25),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF16A34A), Color(0xFF15803D)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.calendar_month_rounded,
-                      color: Colors.white, size: 22),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Book a Quick Service',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Instant booking with verified experts',
-                        style: TextStyle(
-                          color: Color(0xFFDCFCE7),
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_forward_rounded,
-                      color: Color(0xFF16A34A), size: 16),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TrustStrip extends StatelessWidget {
-  const _TrustStrip();
-
-  @override
-  Widget build(BuildContext context) {
-    const items = [
-      (Icons.verified_user_rounded, 'Verified Pros', '100% Background checked'),
-      (Icons.alarm_on_rounded, 'On-Time', 'Punctual service guarantee'),
-      (Icons.shield_rounded, 'Transparent', 'Upfront safe pricing'),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: items
-            .map(
-              (item) => Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(item.$1, color: const Color(0xFF16A34A), size: 20),
-                      const SizedBox(height: 6),
-                      Text(
-                        item.$2,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.$3,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-}
 
 IconData _iconForCategory(String label) {
   final l = label.toLowerCase();
