@@ -65,10 +65,10 @@ class HomeScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Explore Categories',
+                      'Top Categories',
                       style: TextStyle(
                         fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: Color(0xFF0F172A),
                         letterSpacing: -0.3,
                       ),
@@ -182,14 +182,14 @@ class _HeroBannerState extends State<_HeroBanner> {
       'title1': 'Flat 20% Off\n',
       'title2': 'On AC Repair',
       'subtitle': 'Beat the summer heat with\nour expert technicians',
-      'imageUrl': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop',
+      'imageUrl': 'assets/home/home_bannar2.png',
       'buttonColor': const Color(0xFF2563EB),
     },
     {
       'title1': 'Deep Cleaning\n',
       'title2': 'Starts at ₹999',
       'subtitle': 'Give your home the shine\nit deserves today',
-      'imageUrl': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=800&auto=format&fit=crop',
+      'imageUrl': 'assets/home/home_bannar3.png',
       'buttonColor': const Color(0xFFDC2626),
     },
   ];
@@ -203,13 +203,13 @@ class _HeroBannerState extends State<_HeroBanner> {
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (_pageController.hasClients) {
         final nextPage = _currentPage + 1;
         _pageController.animateToPage(
           nextPage,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.fastOutSlowIn,
         );
       }
     });
@@ -225,10 +225,17 @@ class _HeroBannerState extends State<_HeroBanner> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 140,
+      height: 190,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: const Color(0xFFF1F5F9), // Fallback color
+        color: const Color(0xFFF8FAFC),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Stack(
         children: [
@@ -243,114 +250,114 @@ class _HeroBannerState extends State<_HeroBanner> {
               },
               itemBuilder: (context, index) {
                 final slide = _slides[index % _slides.length];
-                return Container(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: (slide['imageUrl'] as String).startsWith('http')
-                          ? NetworkImage(slide['imageUrl'] as String)
-                          : AssetImage(slide['imageUrl'] as String) as ImageProvider,
-                      fit: BoxFit.cover,
+                final buttonColor = slide['buttonColor'] as Color;
+                return Stack(
+                  children: [
+                    // Background Image
+                    Positioned.fill(
+                      child: Image(
+                        image: (slide['imageUrl'] as String).startsWith('http')
+                            ? NetworkImage(slide['imageUrl'] as String)
+                            : AssetImage(slide['imageUrl'] as String) as ImageProvider,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Gradient Overlay
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.black.withValues(alpha: 0.7),
-                              Colors.black.withValues(alpha: 0.1),
-                            ],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
+                    // No gradient overlay as requested
+                    // Content
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.black,
+                                  height: 1.2,
+                                  letterSpacing: -0.5,
+                                ),
+                                children: [
+                                  TextSpan(text: slide['title1'] as String),
+                                  TextSpan(
+                                    text: slide['title2'] as String,
+                                    style: TextStyle(color: buttonColor),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              slide['subtitle'] as String,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: buttonColor,
+                                foregroundColor: Colors.white,
+                                elevation: 4,
+                                shadowColor: buttonColor.withValues(alpha: 0.4),
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Book Now',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.white),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      // Content
-                      Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          RichText(
-                            text: TextSpan(
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                height: 1.2,
-                              ),
-                              children: [
-                                TextSpan(text: slide['title1'] as String),
-                                TextSpan(
-                                  text: slide['title2'] as String,
-                                  style: TextStyle(color: slide['buttonColor'] as Color),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            slide['subtitle'] as String,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFFE2E8F0),
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: slide['buttonColor'] as Color,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: const Text('Book Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                     ),
                   ],
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
-        );
-            },
-          ),
-        ),
-        Positioned(
-            bottom: 12,
-            left: 0,
-            right: 0,
+          // Navigation Dots
+          Positioned(
+            bottom: 14,
+            right: 20,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: List.generate(
                 _slides.length,
                 (index) {
                   final activeIndex = _currentPage % _slides.length;
+                  final isActive = activeIndex == index;
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    width: activeIndex == index ? 16 : 6,
+                    width: isActive ? 24 : 6,
                     height: 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    margin: const EdgeInsets.only(left: 6),
                     decoration: BoxDecoration(
-                      color: activeIndex == index
+                      color: isActive
                           ? _slides[activeIndex]['buttonColor'] as Color
-                          : const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(4),
+                          : Colors.white.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   );
                 },
