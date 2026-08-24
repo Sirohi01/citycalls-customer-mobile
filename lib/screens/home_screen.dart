@@ -175,23 +175,23 @@ class _HeroBannerState extends State<_HeroBanner> {
 
   final List<Map<String, dynamic>> _slides = [
     {
-      'title1': 'We Are Just\\n',
+      'title1': 'We Are Just\n',
       'title2': 'A Call Away',
-      'subtitle': 'Book trusted professionals\\nat your doorstep',
-      'imageUrl': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop',
+      'subtitle': 'Book trusted professionals\nat your doorstep',
+      'imageUrl': 'assets/home/home_bannar.png',
       'buttonColor': const Color(0xFF16A34A),
     },
     {
-      'title1': 'Flat 20% Off\\n',
+      'title1': 'Flat 20% Off\n',
       'title2': 'On AC Repair',
-      'subtitle': 'Beat the summer heat with\\nour expert technicians',
+      'subtitle': 'Beat the summer heat with\nour expert technicians',
       'imageUrl': 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop',
       'buttonColor': const Color(0xFF2563EB),
     },
     {
-      'title1': 'Deep Cleaning\\n',
+      'title1': 'Deep Cleaning\n',
       'title2': 'Starts at ₹999',
-      'subtitle': 'Give your home the shine\\nit deserves today',
+      'subtitle': 'Give your home the shine\nit deserves today',
       'imageUrl': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=800&auto=format&fit=crop',
       'buttonColor': const Color(0xFFDC2626),
     },
@@ -249,7 +249,9 @@ class _HeroBannerState extends State<_HeroBanner> {
                 return Container(
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage(slide['imageUrl'] as String),
+                      image: (slide['imageUrl'] as String).startsWith('http')
+                          ? NetworkImage(slide['imageUrl'] as String)
+                          : AssetImage(slide['imageUrl'] as String) as ImageProvider,
                       fit: BoxFit.cover,
                     ),
                   ),
