@@ -5,10 +5,8 @@ import '../providers/customer_providers.dart';
 import '../providers/service_request_providers.dart';
 import '../providers/catalog_providers.dart';
 import '../models/catalog_models.dart';
-import '../models/customer_models.dart';
 import 'service_browse_screen.dart';
 import 'service_detail_screen.dart';
-import 'profile_screen.dart';
 import '../widgets/custom_top_bar.dart';
 import '../widgets/app_drawer.dart';
 
@@ -17,7 +15,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(myProfileProvider);
     final requests = ref.watch(myServiceRequestsProvider);
     final categories = ref.watch(serviceCategoriesProvider);
     
