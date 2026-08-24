@@ -9,6 +9,7 @@ import 'service_browse_screen.dart';
 import 'service_detail_screen.dart';
 import '../widgets/custom_top_bar.dart';
 import '../widgets/app_drawer.dart';
+import '../theme/app_theme.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -59,91 +60,24 @@ class HomeScreen extends ConsumerWidget {
               //       completedCount: completedCount),
               // ),
               // const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Top Categories',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ServiceBrowseScreen(),
-                        ),
-                      ),
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                        child: Row(
-                          children: [
-                            Text(
-                              'See all',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF16A34A),
-                              ),
-                            ),
-                            SizedBox(width: 2),
-                            Icon(Icons.arrow_forward_ios_rounded,
-                                size: 11, color: Color(0xFF16A34A)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: categories.when(
-                  data: (cats) => cats.isEmpty
-                      ? const SizedBox.shrink()
-                      : GridView.builder(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: cats.length,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1.35,
-                          ),
-                          itemBuilder: (context, i) => _CategoryCard(
-                              category: cats[i], colorIndex: i),
-                        ),
-                  loading: () => const SizedBox(
-                    height: 120,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Color(0xFF16A34A),
-                      ),
-                    ),
-                  ),
-                  error: (_, __) => const SizedBox.shrink(),
-                ),
-              ),
+              const _TopCategoriesSection(),
               const SizedBox(height: 16),
               categories.when(
-                data: (cats) => cats.isEmpty
-                    ? const SizedBox.shrink()
-                    : Column(
-                        children: [
-                          for (final c in cats)
-                            _CategoryServiceRail(category: c)
-                        ],
-                      ),
+                data: (cats) {
+                  final displayCats = cats.where((c) => !c.label.toLowerCase().contains('bliss') && !c.label.toLowerCase().contains('salon')).toList();
+                  if (displayCats.isEmpty) return const SizedBox.shrink();
+                  return Column(
+                    children: [
+                      for (final c in displayCats)
+                        if (c.label.toLowerCase().contains('appliance') ||
+                            c.label.toLowerCase().contains('cleaning') ||
+                            c.label.toLowerCase().contains('pest'))
+                          _ApplianceServiceList(category: c)
+                        else
+                          _CategoryServiceRail(category: c)
+                    ],
+                  );
+                },
                 loading: () => const SizedBox.shrink(),
                 error: (_, __) => const SizedBox.shrink(),
               ),
@@ -305,10 +239,10 @@ class _HeroBannerState extends State<_HeroBanner> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: buttonColor,
                                 foregroundColor: Colors.white,
-                                elevation: 4,
-                                shadowColor: buttonColor.withValues(alpha: 0.4),
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                                elevation: 3,
+                                shadowColor: buttonColor.withValues(alpha: 0.3),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
@@ -319,12 +253,12 @@ class _HeroBannerState extends State<_HeroBanner> {
                                     'Book Now',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                      letterSpacing: 0.3,
+                                      fontSize: 11.5,
+                                      letterSpacing: 0.2,
                                     ),
                                   ),
                                   SizedBox(width: 4),
-                                  Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.white),
+                                  Icon(Icons.arrow_forward_rounded, size: 12, color: Colors.white),
                                 ],
                               ),
                             ),
@@ -492,84 +426,214 @@ const _categorySubtitles = [
   'Safe & reliable',
 ];
 
-class _CategoryCard extends StatelessWidget {
-  final ServiceCategory category;
-  final int colorIndex;
-  const _CategoryCard({required this.category, required this.colorIndex});
+class _TopCategoriesSection extends ConsumerStatefulWidget {
+  const _TopCategoriesSection({super.key});
+
+  @override
+  ConsumerState<_TopCategoriesSection> createState() => _TopCategoriesSectionState();
+}
+
+class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
-    final tint = _categoryTints[colorIndex % _categoryTints.length];
-    final iconColor =
-        _categoryIconColors[colorIndex % _categoryIconColors.length];
-    final subtitle = _categorySubtitles[colorIndex % _categorySubtitles.length];
+    final categories = ref.watch(serviceCategoriesProvider);
 
-    return Material(
-      color: tint,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) =>
-                ServiceBrowseScreen(initialCategoryId: category.id),
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: iconColor.withValues(alpha: 0.12),
-              width: 1,
-            ),
-          ),
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      category.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13.5,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: iconColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.arrow_forward_rounded,
-                          color: Colors.white, size: 12),
-                    ),
-                  ],
+    return categories.when(
+      data: (cats) {
+        final displayCats = cats.where((c) => !c.label.toLowerCase().contains('bliss') && !c.label.toLowerCase().contains('salon')).toList();
+        if (displayCats.isEmpty) return const SizedBox.shrink();
+
+        final itemsToShow = _expanded ? displayCats.length : (displayCats.length > 4 ? 3 : displayCats.length);
+        final showMoreBtn = !_expanded && displayCats.length > 4;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Top Categories',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.3,
                 ),
               ),
-              Positioned(
-                right: -8,
-                bottom: -8,
-                child: Icon(_iconForCategory(category.label),
-                    color: iconColor.withValues(alpha: 0.15), size: 64),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 16,
+                alignment: WrapAlignment.start,
+                children: [
+                  for (int i = 0; i < itemsToShow; i++)
+                    _buildCategoryItem(displayCats[i], i),
+                  if (showMoreBtn) _buildMoreButton(),
+                  if (_expanded && displayCats.length > 4) _buildLessButton(),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox(
+        height: 120,
+        child: Center(
+          child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF16A34A)),
+        ),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildCategoryItem(ServiceCategory category, int index) {
+    // 4 items per row with 12px spacing -> 3 * 12 = 36px total spacing
+    // Plus 32px horizontal padding -> 68px total padding/spacing
+    final width = (MediaQuery.of(context).size.width - 68) / 4;
+    final iconColor = _categoryIconColors[index % _categoryIconColors.length];
+
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ServiceBrowseScreen(initialCategoryId: category.id),
+        ),
+      ),
+      child: SizedBox(
+        width: width,
+        child: Column(
+          children: [
+            Container(
+              height: width,
+              width: width,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200, width: 1),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
+                ],
+              ),
+              child: ref.watch(masterMediaProvider(category.id)).when(
+                data: (media) {
+                  final img = media.where((m) => m.category == 'CATALOG_IMAGE').firstOrNull;
+                  if (img != null) {
+                    final url = ref.read(catalogRepositoryProvider).resolveMediaUrl(img);
+                    print('Category ${category.label} Image URL: $url');
+                    return Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Image.network(
+                        url,
+                        width: double.infinity,
+                        height: double.infinity,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Image load failed for $url: $error');
+                          return Icon(_iconForCategory(category.label), color: iconColor, size: 30);
+                        },
+                      ),
+                    );
+                  }
+                  return Center(
+                    child: Icon(_iconForCategory(category.label), color: iconColor, size: 30),
+                  );
+                },
+                loading: () => const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                error: (_, __) => Center(child: Icon(_iconForCategory(category.label), color: iconColor, size: 30)),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              category.label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Color(0xFF334155)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoreButton() {
+    final width = (MediaQuery.of(context).size.width - 68) / 4;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _expanded = true;
+        });
+      },
+      child: SizedBox(
+        width: width,
+        child: Column(
+          children: [
+            Container(
+              height: width,
+              width: width,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200, width: 1),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
+                ],
+              ),
+              child: const Center(
+                child: Icon(Icons.more_horiz_rounded, color: Colors.grey, size: 30),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'More\nServices',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Color(0xFF334155)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLessButton() {
+    final width = (MediaQuery.of(context).size.width - 68) / 4;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _expanded = false;
+        });
+      },
+      child: SizedBox(
+        width: width,
+        child: Column(
+          children: [
+            Container(
+              height: width,
+              width: width,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200, width: 1),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
+                ],
+              ),
+              child: const Center(
+                child: Icon(Icons.unfold_less_rounded, color: Colors.grey, size: 30),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Show\nLess',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Color(0xFF334155)),
+            ),
+          ],
         ),
       ),
     );
@@ -785,6 +849,167 @@ class _ServiceCardPlaceholder extends StatelessWidget {
       child: const Center(
         child: Icon(Icons.home_repair_service_rounded,
             color: Color(0xFF94A3B8), size: 28),
+      ),
+    );
+  }
+}
+
+class _ApplianceServiceList extends ConsumerStatefulWidget {
+  final ServiceCategory category;
+  const _ApplianceServiceList({required this.category});
+
+  @override
+  ConsumerState<_ApplianceServiceList> createState() => _ApplianceServiceListState();
+}
+
+class _ApplianceServiceListState extends ConsumerState<_ApplianceServiceList> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final servicesAsync = ref.watch(servicesByCategoryProvider(widget.category.id));
+    
+    return servicesAsync.when(
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+        
+        final itemsToShow = _expanded ? items.length : (items.length > 4 ? 4 : items.length);
+        
+        return Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      widget.category.label,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    if (items.length > 4)
+                      InkWell(
+                        onTap: () => setState(() => _expanded = !_expanded),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                          child: Text(
+                            _expanded ? 'View less' : 'View all',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF16A34A),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              ListView.separated(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                itemCount: itemsToShow,
+                separatorBuilder: (_, __) => const SizedBox(height: 4),
+                itemBuilder: (context, i) => _ApplianceServiceCard(service: items[i]),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _ApplianceServiceCard extends ConsumerWidget {
+  final Service service;
+  const _ApplianceServiceCard({required this.service});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final media = ref.watch(serviceMediaProvider(service.id));
+    final catalogRepo = ref.read(catalogRepositoryProvider);
+    final thumbnailUrl = media.maybeWhen(
+      data: (files) {
+        final images = files.where((f) => !f.isVideo);
+        return images.isEmpty ? null : catalogRepo.resolveMediaUrl(images.first);
+      },
+      orElse: () => null,
+    );
+
+    // Mock rating based on string length to give it a realistic varied look like the design
+    final rating = (4.0 + (service.name.length % 10) / 10).toStringAsFixed(1);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ServiceDetailScreen(serviceId: service.id))),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    color: AppColors.white,
+                    child: thumbnailUrl != null
+                        ? Image.network(
+                            thumbnailUrl,
+                            fit: BoxFit.contain, // So the appliance image fits nicely without cropping
+                            errorBuilder: (_, __, ___) => const Icon(Icons.build_outlined, color: AppColors.neutral500),
+                          )
+                        : const Icon(Icons.build_outlined, color: AppColors.neutral500),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(service.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF1E293B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 4),
+                      Text('Starting at ₹${service.pricing.basePrice.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.star, color: Color(0xFF16A34A), size: 16),
+                    const SizedBox(width: 4),
+                    Text(rating, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF334155))),
+                    const SizedBox(width: 12),
+                    const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

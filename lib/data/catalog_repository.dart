@@ -39,5 +39,10 @@ class CatalogRepository {
     return (res.data['data'] as List).map((f) => MediaFile.fromJson(f as Map<String, dynamic>)).toList();
   }
 
+  Future<List<MediaFile>> getMasterMedia(String masterId) async {
+    final res = await _client.dio.get('/files', queryParameters: {'entityType': 'MASTER', 'entityId': masterId});
+    return (res.data['data'] as List).map((f) => MediaFile.fromJson(f as Map<String, dynamic>)).toList();
+  }
+
   String resolveMediaUrl(MediaFile file) => file.provider == 'LOCAL' ? '${_client.apiOrigin}${file.url}' : file.url;
 }

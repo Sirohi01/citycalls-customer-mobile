@@ -28,3 +28,8 @@ final serviceMediaProvider =
     FutureProvider.family<List<MediaFile>, String>((ref, serviceId) async {
   return ref.watch(catalogRepositoryProvider).getServiceMedia(serviceId);
 });
+
+final masterMediaProvider =
+    FutureProvider.family<List<MediaFile>, String>((ref, masterId) async {
+  return ref.watch(catalogRepositoryProvider).getMasterMedia(masterId);
+});
