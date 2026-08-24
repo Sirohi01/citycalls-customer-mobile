@@ -23,8 +23,11 @@ final productTypesProvider = FutureProvider<List<ServiceCategory>>((ref) {
   return ref.watch(bookingRepositoryProvider).listMasters('PRODUCT_TYPE');
 });
 
-final symptomsProvider = FutureProvider<List<ServiceCategory>>((ref) {
-  return ref.watch(bookingRepositoryProvider).listMasters('SYMPTOM');
+// Scoped to the service being booked — shows only the symptoms actually
+// linked to that appliance/service (Service.symptomIds), not every symptom
+// across every product in the catalog.
+final serviceSymptomsProvider = FutureProvider.family<List<ServiceCategory>, String>((ref, serviceId) {
+  return ref.watch(bookingRepositoryProvider).listServiceSymptoms(serviceId);
 });
 
 // Re-resolves branch coverage using the booking address actually chosen in

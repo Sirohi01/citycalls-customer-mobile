@@ -30,6 +30,15 @@ class BookingRepository {
     return (res.data['data'] as List).map((m) => ServiceCategory.fromJson(m as Map<String, dynamic>)).toList();
   }
 
+  // Only the symptoms actually linked to this service (Service.symptomIds) —
+  // not the full global SYMPTOM master list, which mixes in every other
+  // appliance's issues too.
+  Future<List<ServiceCategory>> listServiceSymptoms(String serviceId) async {
+    final res = await _client.dio.get('/services/$serviceId/diagnostics');
+    final symptoms = res.data['data']['symptoms'] as List;
+    return symptoms.map((m) => ServiceCategory.fromJson(m as Map<String, dynamic>)).toList();
+  }
+
   Future<void> addAddress(String customerId, AddressDraft address) async {
     await _client.dio.post('/customers/$customerId/addresses', data: address.toAddAddressJson());
   }

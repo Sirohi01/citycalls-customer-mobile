@@ -68,7 +68,7 @@ class _IssueDescriptionScreenState extends ConsumerState<IssueDescriptionScreen>
 
   @override
   Widget build(BuildContext context) {
-    final symptoms = ref.watch(symptomsProvider);
+    final symptoms = ref.watch(serviceSymptomsProvider(widget.draft.serviceId));
 
     return Scaffold(
       backgroundColor: AppColors.white,
