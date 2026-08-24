@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/customer_providers.dart';
 import '../providers/auth_providers.dart';
-import '../models/customer_models.dart';
+import '../providers/push_providers.dart';
+import '../providers/realtime_providers.dart';
 import '../screens/profile_screen.dart';
+import '../screens/support_screen.dart';
+import '../screens/otp_request_screen.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -16,8 +19,9 @@ class AppDrawer extends ConsumerWidget {
     return Drawer(
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.white,
-      width: screenWidth, // Full screen width to match the mockup perfectly
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero), // Flat edge
+      width: screenWidth,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero), // Flat edge
       child: SafeArea(
         child: Column(
           children: [
@@ -29,10 +33,12 @@ class AppDrawer extends ConsumerWidget {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0F172A), size: 20),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Color(0xFF0F172A), size: 20),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                    style: IconButton.styleFrom(
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                   ),
                   const Text(
                     'Profile',
@@ -44,18 +50,22 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.headset_mic_outlined, size: 18, color: Color(0xFF0F172A)),
+                      const Icon(Icons.headset_mic_outlined,
+                          size: 18, color: Color(0xFF0F172A)),
                       const SizedBox(width: 4),
                       const Text(
                         'Support',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0F172A)),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 12),
 
             // Profile Card (Green)
@@ -70,10 +80,10 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 child: profile.when(
-                  data: (customer) {
-                    final c = customer as Customer;
+                  data: (c) {
                     return Row(
                       children: [
                         Container(
@@ -91,7 +101,9 @@ class AppDrawer extends ConsumerWidget {
                                 width: 60,
                                 height: 60,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Color(0xFF94A3B8)),
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.person,
+                                    color: Color(0xFF94A3B8)),
                               ),
                             ),
                           ),
@@ -112,7 +124,8 @@ class AppDrawer extends ConsumerWidget {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(Icons.phone_outlined, color: Colors.white70, size: 14),
+                                  const Icon(Icons.phone_outlined,
+                                      color: Colors.white70, size: 14),
                                   const SizedBox(width: 6),
                                   Text(
                                     c.mobile ?? '',
@@ -127,12 +140,15 @@ class AppDrawer extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 24),
+                        const Icon(Icons.chevron_right_rounded,
+                            color: Colors.white, size: 24),
                       ],
                     );
                   },
-                  loading: () => const Text('Loading...', style: TextStyle(color: Colors.white)),
-                  error: (_, __) => const Text('Error', style: TextStyle(color: Colors.white)),
+                  loading: () => const Text('Loading...',
+                      style: TextStyle(color: Colors.white)),
+                  error: (_, __) => const Text('Error',
+                      style: TextStyle(color: Colors.white)),
                 ),
               ),
             ),
@@ -150,49 +166,61 @@ class AppDrawer extends ConsumerWidget {
                     title: 'My Profile',
                     onTap: () {
                       Navigator.of(context).pop();
-                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ProfileScreen()));
                     },
                   ),
-                  _MenuListItem(icon: Icons.location_on_outlined, title: 'My Addresses', onTap: () {}),
                   _MenuListItem(
-                    icon: Icons.account_balance_wallet_outlined,
-                    title: 'My Wallet',
-                    trailingText: '₹1,250',
-                    onTap: () {},
+                    icon: Icons.location_on_outlined,
+                    title: 'My Addresses',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ProfileScreen()));
+                    },
                   ),
-                  _MenuListItem(icon: Icons.credit_card_outlined, title: 'Payments', onTap: () {}),
-                  _MenuListItem(icon: Icons.headset_mic_outlined, title: 'Help & Support', onTap: () {}),
-                  _MenuListItem(icon: Icons.settings_outlined, title: 'Settings', onTap: () {}),
-                  
+                  _MenuListItem(
+                    icon: Icons.headset_mic_outlined,
+                    title: 'Help & Support',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const SupportScreen()));
+                    },
+                  ),
+
                   const SizedBox(height: 24),
-                  
+
                   // Logout Button
                   InkWell(
-                    onTap: () {
-                      // TODO: Implement logout in auth provider
-                    },
+                    onTap: () => _logout(context, ref),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFF87171), width: 1.5),
+                        border: Border.all(
+                            color: const Color(0xFFF87171), width: 1.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.logout_rounded, color: Color(0xFFEF4444), size: 20),
+                          const Icon(Icons.logout_rounded,
+                              color: Color(0xFFEF4444), size: 20),
                           const SizedBox(width: 8),
                           const Text(
                             'Logout',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFFEF4444)),
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFEF4444)),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
 
                   // Refer & Earn Banner
@@ -201,18 +229,29 @@ class AppDrawer extends ConsumerWidget {
                       color: const Color(0xFFF3FAEE), // Very light green
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
                     child: Row(
                       children: [
-                        const Icon(Icons.card_giftcard_outlined, color: Color(0xFF4FA021), size: 28),
+                        const Icon(Icons.card_giftcard_outlined,
+                            color: Color(0xFF4FA021), size: 28),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Refer & Earn', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+                              Text('Refer & Earn',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A))),
                               SizedBox(height: 4),
-                              Text('Refer your friends and earn exciting rewards!', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF64748B))),
+                              Text(
+                                  'Refer your friends and earn exciting rewards!',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF64748B))),
                             ],
                           ),
                         ),
@@ -222,17 +261,23 @@ class AppDrawer extends ConsumerWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4FA021),
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text('Refer Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
+                          child: const Text('Refer Now',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12)),
                         ),
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
                 ],
               ),
@@ -242,18 +287,27 @@ class AppDrawer extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    await ref.read(pushNotificationServiceProvider).unregisterCurrentToken();
+    await ref.read(authRepositoryProvider).logout();
+    ref.read(socketServiceProvider).disconnect();
+    if (!context.mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const OtpRequestScreen()),
+      (route) => false,
+    );
+  }
 }
 
 class _MenuListItem extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String? trailingText;
   final VoidCallback onTap;
 
   const _MenuListItem({
     required this.icon,
     required this.title,
-    this.trailingText,
     required this.onTap,
   });
 
@@ -291,17 +345,8 @@ class _MenuListItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (trailingText != null)
-                  Text(
-                    trailingText!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF475569),
-                    ),
-                  ),
-                if (trailingText != null) const SizedBox(width: 8),
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF0F172A), size: 20),
+                const Icon(Icons.chevron_right_rounded,
+                    color: Color(0xFF0F172A), size: 20),
               ],
             ),
           ),
