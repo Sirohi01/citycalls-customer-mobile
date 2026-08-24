@@ -51,14 +51,14 @@ class HomeScreen extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: _HeroBanner(),
               ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _StatsCard(
-                    activeCount: activeCount,
-                    completedCount: completedCount),
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 7), // Reduced spacing
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 16),
+              //   child: _StatsCard(
+              //       activeCount: activeCount,
+              //       completedCount: completedCount),
+              // ),
+              // const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -101,7 +101,7 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: categories.when(
@@ -225,7 +225,7 @@ class _HeroBannerState extends State<_HeroBanner> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 190,
+      height: 165,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: const Color(0xFFF8FAFC),
@@ -266,7 +266,7 @@ class _HeroBannerState extends State<_HeroBanner> {
                     // Content
                     Positioned.fill(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -293,13 +293,13 @@ class _HeroBannerState extends State<_HeroBanner> {
                             Text(
                               slide['subtitle'] as String,
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.black87,
-                                height: 1.3,
+                                height: 1.2,
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 10),
                             ElevatedButton(
                               onPressed: () {},
                               style: ElevatedButton.styleFrom(
