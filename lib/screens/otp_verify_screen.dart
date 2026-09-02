@@ -1,8 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../theme/app_theme.dart';
-import '../widgets/auth_background.dart';
 import 'profile_setup_screen.dart';
 import 'main_shell.dart';
 import '../providers/customer_providers.dart';
@@ -15,24 +15,51 @@ class OtpVerifyScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _otpController = TextEditingController();
-  final _focusNode = FocusNode();
-  bool _isFocused = false;
+  String _otpCode = "";
+  Timer? _timer;
+  int _secondsLeft = 25;
 
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(() {
-      setState(() => _isFocused = _focusNode.hasFocus);
-    });
+    _startTimer();
   }
 
   @override
   void dispose() {
-    _otpController.dispose();
-    _focusNode.dispose();
+    _timer?.cancel();
     super.dispose();
+  }
+
+  void _startTimer() {
+    _secondsLeft = 25;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsLeft > 0) {
+        setState(() => _secondsLeft--);
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _onKeypadTap(String value) {
+    if (value == 'clear') {
+      if (_otpCode.isNotEmpty) {
+        setState(() => _otpCode = _otpCode.substring(0, _otpCode.length - 1));
+      }
+    } else {
+      if (_otpCode.length < 6) {
+        setState(() => _otpCode += value);
+        if (_otpCode.length == 6) {
+          _submit();
+        }
+      }
+    }
+  }
+
+  void _submit() {
+    ref.read(authProvider.notifier).verifyOtp(_otpCode);
   }
 
   @override
@@ -45,237 +72,142 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
       }
     });
 
-    return AuthBackground(
-      child: Form(
-        key: _formKey,
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // --- Icon badge ---
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.lime500.withValues(alpha: 0.9),
-                        AppColors.lime500.withValues(alpha: 0.5),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.lime500.withValues(alpha: 0.35),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.verified_user_rounded, color: AppColors.slate950, size: 28),
-                ),
-                // --- Back button ---
-                InkWell(
-                  onTap: () {
+            // --- Header (Back Button & Logo) ---
+            Padding(
+              padding: const EdgeInsets.only(left: 8, top: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () {
                     ref.read(authProvider.notifier).backToMobileEntry();
                     Navigator.of(context).pop();
                   },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.arrow_back_rounded, color: Colors.white, size: 18),
-                        SizedBox(width: 8),
-                        Text('Back', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 13)),
-                      ],
+                ),
+              ),
+            ),
+            
+            // --- Logo ---
+            Center(
+              child: Image.asset('assets/images/logo.png', height: 48, fit: BoxFit.contain),
+            ),
+            const SizedBox(height: 32),
+
+            // --- Texts ---
+            const Text(
+              'Verify Your Number',
+              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Enter the 6 digit code sent to',
+              style: TextStyle(color: AppColors.slate400, fontSize: 14),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '+91 ${authState.mobile ?? ''}',
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 32),
+
+            // --- OTP Squares ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(6, (index) {
+                final hasDigit = index < _otpCode.length;
+                return Container(
+                  width: 48,
+                  height: 56,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E20),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: hasDigit ? AppColors.slate600 : Colors.transparent,
                     ),
                   ),
-                ),
-              ],
+                  alignment: Alignment.center,
+                  child: Text(
+                    hasDigit ? _otpCode[index] : '',
+                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w600),
+                  ),
+                );
+              }),
             ),
             const SizedBox(height: 24),
 
-            // --- Heading ---
-            const Text(
-              'Secure Verification',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.6,
-                height: 1.1,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Enter the 6-digit authentication code we sent to\n+91 ${authState.mobile ?? ''}',
-              style: const TextStyle(
-                color: AppColors.slate400,
-                fontSize: 15,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 36),
-
-            // --- OTP field ---
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: _isFocused
-                    ? [
-                        BoxShadow(
-                          color: AppColors.lime500.withValues(alpha: 0.18),
-                          blurRadius: 18,
-                          spreadRadius: 1,
-                        ),
-                      ]
-                    : [],
-              ),
-              child: TextFormField(
-                controller: _otpController,
-                focusNode: _focusNode,
-                autofocus: true,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 10,
+            // --- Resend Timer ---
+            if (authState.isLoading)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(color: AppColors.lime500),
+              )
+            else if (_secondsLeft > 0)
+              Text(
+                'Resend code in 00:${_secondsLeft.toString().padLeft(2, '0')}',
+                style: const TextStyle(color: AppColors.slate400, fontSize: 14),
+              )
+            else
+              GestureDetector(
+                onTap: () {
+                  ref.read(authProvider.notifier).requestOtp(authState.mobile!);
+                  _startTimer();
+                },
+                child: const Text(
+                  'Resend code',
+                  style: TextStyle(color: AppColors.lime500, fontSize: 14, fontWeight: FontWeight.w600),
                 ),
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                textAlign: TextAlign.center,
-                decoration: authFieldDecoration(
-                  label: 'Authentication Code',
-                  icon: null,
-                ).copyWith(
-                  counterText: '',
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                validator: (value) => (value == null || value.length != 6)
-                    ? 'Please enter the complete 6-digit code'
-                    : null,
               ),
-            ),
-            const SizedBox(height: 22),
 
             // --- Error banner ---
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              child: authState.errorMessage != null
-                  ? Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.red400.withValues(alpha: 0.1),
-                          border: Border.all(color: AppColors.red400.withValues(alpha: 0.3)),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.error_outline_rounded, color: AppColors.red400, size: 20),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                authState.errorMessage!,
-                                style: const TextStyle(
-                                  color: AppColors.red400,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
+            if (authState.errorMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Text(
+                  authState.errorMessage!,
+                  style: const TextStyle(color: AppColors.red400, fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+              ),
 
-            // --- Verify button ---
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: FilledButton(
-                style: authButtonStyle().copyWith(
-                  shape: WidgetStatePropertyAll(
-                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            const Spacer(),
+
+            // --- Custom Numpad ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              child: Column(
+                children: [
+                  _NumpadRow(['1', '2', '3'], _onKeypadTap),
+                  const SizedBox(height: 12),
+                  _NumpadRow(['4', '5', '6'], _onKeypadTap),
+                  const SizedBox(height: 12),
+                  _NumpadRow(['7', '8', '9'], _onKeypadTap),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const SizedBox(width: 80), // Empty space for left
+                      _NumpadButton(label: '0', onTap: _onKeypadTap),
+                      _NumpadButton(label: 'clear', icon: Icons.backspace_outlined, onTap: _onKeypadTap),
+                    ],
                   ),
-                  elevation: const WidgetStatePropertyAll(0),
-                ),
-                onPressed: authState.isLoading ? null : _submit,
-                child: authState.isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                      )
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.lock_open_rounded, size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'Verify Identity',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 0.2),
-                          ),
-                        ],
-                      ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-
-            // --- Resend code ---
-            Center(
-              child: TextButton(
-                onPressed: authState.isLoading || authState.mobile == null
-                    ? null
-                    : () => ref.read(authProvider.notifier).requestOtp(authState.mobile!),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-                    SizedBox(width: 6),
-                    Text('Resend Code'),
-                  ],
-                ),
-              ),
-            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      ref.read(authProvider.notifier).verifyOtp(_otpController.text.trim());
-    }
-  }
-
   Future<void> _routeAfterLogin(BuildContext context, WidgetRef ref) async {
     final authState = ref.read(authProvider);
 
-    // If it's a signup flow with pre-filled name, auto-save profile
     if (authState.signupName != null) {
       try {
         await ref.read(profileSetupProvider.notifier).save(
@@ -291,7 +223,7 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
         );
         return;
       } catch (e) {
-        // Fallback if update fails
+        // Fallback
       }
     }
 
@@ -303,6 +235,48 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => needsSetup ? const ProfileSetupScreen() : const MainShell()),
       (route) => false,
+    );
+  }
+}
+
+class _NumpadRow extends StatelessWidget {
+  final List<String> values;
+  final Function(String) onTap;
+
+  const _NumpadRow(this.values, this.onTap);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: values.map((val) => _NumpadButton(label: val, onTap: onTap)).toList(),
+    );
+  }
+}
+
+class _NumpadButton extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final Function(String) onTap;
+
+  const _NumpadButton({required this.label, this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onTap(label),
+      child: Container(
+        width: 90,
+        height: 60,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E20),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: icon != null
+            ? Icon(icon, color: Colors.white, size: 24)
+            : Text(label, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w500)),
+      ),
     );
   }
 }
