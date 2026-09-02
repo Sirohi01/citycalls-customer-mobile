@@ -20,12 +20,12 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell> {
   int _index = 0;
 
-  static const _tabs = [
-    HomeScreen(),
-    _BlissSalonTab(),
-    MyServicesScreen(),
-    NotificationsScreen(),
-    ProfileScreen(),
+  List<Widget> get _tabs => [
+    const HomeScreen(),
+    _BlissSalonTab(onBack: () => setState(() => _index = 0)),
+    const MyServicesScreen(),
+    const NotificationsScreen(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -162,7 +162,8 @@ class _MainShellState extends ConsumerState<MainShell> {
 }
 
 class _BlissSalonTab extends ConsumerWidget {
-  const _BlissSalonTab();
+  final VoidCallback? onBack;
+  const _BlissSalonTab({this.onBack});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -173,7 +174,7 @@ class _BlissSalonTab extends ConsumerWidget {
       data: (cats) {
         final blissCat = cats.where((c) => c.label.toLowerCase().contains('bliss') || c.label.toLowerCase().contains('salon')).firstOrNull;
         if (blissCat != null) {
-          return ServiceBrowseScreen(initialCategoryId: blissCat.id);
+          return ServiceBrowseScreen(initialCategoryId: blissCat.id, title: 'Salon Services', onBack: onBack);
         }
         return const Scaffold(body: Center(child: Text('Salon services not available')));
       },

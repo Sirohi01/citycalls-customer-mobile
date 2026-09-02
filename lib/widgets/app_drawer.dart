@@ -7,6 +7,7 @@ import '../providers/realtime_providers.dart';
 import '../screens/profile_screen.dart';
 import '../screens/support_screen.dart';
 import '../screens/otp_request_screen.dart';
+import '../screens/service_browse_screen.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -161,6 +162,15 @@ class AppDrawer extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 physics: const BouncingScrollPhysics(),
                 children: [
+                  _MenuListItem(
+                    icon: Icons.grid_view_rounded,
+                    title: 'All Categories',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ServiceBrowseScreen(title: 'All Categories')));
+                    },
+                  ),
                   _MenuListItem(
                     icon: Icons.person_outline_rounded,
                     title: 'My Profile',

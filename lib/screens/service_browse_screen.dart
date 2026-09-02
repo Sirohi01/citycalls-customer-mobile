@@ -11,7 +11,9 @@ import 'service_detail_screen.dart';
 // categories themselves are already loaded.
 class ServiceBrowseScreen extends ConsumerStatefulWidget {
   final String? initialCategoryId;
-  const ServiceBrowseScreen({super.key, this.initialCategoryId});
+  final String title;
+  final VoidCallback? onBack;
+  const ServiceBrowseScreen({super.key, this.initialCategoryId, this.title = 'Browse Services', this.onBack});
 
   @override
   ConsumerState<ServiceBrowseScreen> createState() => _ServiceBrowseScreenState();
@@ -36,7 +38,25 @@ class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutral100,
       appBar: AppBar(
-        title: const Text('Browse Services'),
+        leading: (widget.onBack != null || Navigator.canPop(context))
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+                onPressed: () {
+                  if (widget.onBack != null) {
+                    widget.onBack!();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
+              )
+            : null,
+        title: Text(
+          widget.title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600, // semi-bold
+          ),
+        ),
         centerTitle: false,
         backgroundColor: AppColors.neutral100,
         surfaceTintColor: AppColors.neutral100,
@@ -68,28 +88,29 @@ class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
               ),
             ),
           ),
-          Container(
-            color: AppColors.white,
-            child: SizedBox(
-              height: 56,
-              child: categories.when(
-                data: (cats) => ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  children: [
-                    _CategoryChip(label: 'All', selected: _selectedCategoryId == null, onTap: () => setState(() => _selectedCategoryId = null)),
-                    ...cats.map((c) => _CategoryChip(
-                          label: c.label,
-                          selected: _selectedCategoryId == c.id,
-                          onTap: () => setState(() => _selectedCategoryId = c.id),
-                        )),
-                  ],
+          if (widget.initialCategoryId == null)
+            Container(
+              color: AppColors.white,
+              child: SizedBox(
+                height: 56,
+                child: categories.when(
+                  data: (cats) => ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    children: [
+                      _CategoryChip(label: 'All', selected: _selectedCategoryId == null, onTap: () => setState(() => _selectedCategoryId = null)),
+                      ...cats.map((c) => _CategoryChip(
+                            label: c.label,
+                            selected: _selectedCategoryId == c.id,
+                            onTap: () => setState(() => _selectedCategoryId = c.id),
+                          )),
+                    ],
+                  ),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, _) => Center(child: Text('Failed to load categories: $err')),
                 ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Failed to load categories: $err')),
               ),
             ),
-          ),
           Expanded(
             child: services.when(
               data: (allItems) {
