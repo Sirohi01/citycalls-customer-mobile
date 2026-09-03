@@ -31,65 +31,205 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
     final profile = ref.watch(myProfileProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Select Address'), centerTitle: false),
-      body: profile.when(
-        data: (customer) => Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const BookingStepHeader(step: 2, totalSteps: 5, title: 'Where should the technician visit?'),
-              Expanded(
-                child: ListView(
-                  children: [
-                    ...customer.addresses.map((a) => _AddressTile(
-                          address: a,
-                          selected: _selectedAddressId == a.id,
-                          onTap: () => setState(() => _selectedAddressId = a.id),
-                        )),
-                    Material(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      elevation: 1,
-                      shadowColor: Colors.black.withValues(alpha: 0.04),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: () => _showAddAddressSheet(context, customer.id),
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(14),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                                child: Icon(Icons.add, color: Theme.of(context).colorScheme.primary, size: 20),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text('Add a new address', style: TextStyle(fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+      backgroundColor: const Color(0xFFFAFAFA),
+      body: Stack(
+        children: [
+          // Background Gradient matching the UI
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 350,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF6EAF6),
+                    Color(0xFFECF1FD),
+                    Color(0xFFFAFAFA),
                   ],
+                  stops: [0.0, 0.5, 1.0],
                 ),
               ),
-              FilledButton(
-                onPressed: _selectedAddressId == null
-                    ? null
-                    : () {
-                        final a = customer.addresses.firstWhere((a) => a.id == _selectedAddressId);
-                        _proceed(AddressDraft(label: a.label, line1: a.line1 ?? '', line2: a.line2, landmark: a.landmark, city: a.city, state: a.state, pinCode: a.pinCode));
-                      },
-                child: const Text('Continue'),
-              ),
-            ],
+            ),
           ),
-        ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Failed to load your addresses: $err')),
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- Custom Header (Back Button) ---
+                Padding(
+                  padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 8),
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.02),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.arrow_back, color: Color(0xFF16A34A), size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // --- Title and Progress ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text('Select Address', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          RichText(
+                            text: const TextSpan(
+                              children: [
+                                TextSpan(text: 'Step 2 ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
+                                TextSpan(text: 'of 5', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
+                              ]
+                            )
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Progress Bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: 2 / 5,
+                          minHeight: 5,
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: const AlwaysStoppedAnimation(Color(0xFF16A34A)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // --- Question Card ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.location_on, color: Color(0xFF16A34A), size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Where should the', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87, height: 1.2)),
+                            const Text('technician visit?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF16A34A), height: 1.2)),
+                            const SizedBox(height: 6),
+                            const Text('Choose an address from the list below', style: TextStyle(color: Colors.black54, fontSize: 13)),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // --- Address List ---
+                Expanded(
+                  child: profile.when(
+                    data: (customer) => ListView(
+                      padding: const EdgeInsets.only(top: 8, bottom: 20),
+                      children: [
+                        ...customer.addresses.map((a) => _AddressTile(
+                              address: a,
+                              selected: _selectedAddressId == a.id,
+                              onTap: () => setState(() => _selectedAddressId = a.id),
+                            )),
+                        _AddressTile(
+                          address: null, // Add new address
+                          selected: false,
+                          onTap: () => _showAddAddressSheet(context, customer.id),
+                        ),
+                      ],
+                    ),
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (err, _) => Center(child: Text('Failed to load your addresses: $err')),
+                  ),
+                ),
+
+                // --- Sticky Bottom Action ---
+                if (profile.hasValue)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: _selectedAddressId == null
+                                ? null
+                                : () {
+                                    final customer = profile.value!;
+                                    final a = customer.addresses.firstWhere((a) => a.id == _selectedAddressId);
+                                    _proceed(AddressDraft(label: a.label, line1: a.line1 ?? '', line2: a.line2, landmark: a.landmark, city: a.city, state: a.state, pinCode: a.pinCode));
+                                  },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: _selectedAddressId != null ? const Color(0xFF16A34A) : Colors.grey.shade400,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'Continue',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -98,6 +238,7 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) => _AddAddressSheet(
         onSaved: (address) {
           Navigator.of(sheetContext).pop();
@@ -228,43 +369,96 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
 }
 
 class _AddressTile extends StatelessWidget {
-  final CustomerAddress address;
+  final CustomerAddress? address;
   final bool selected;
   final VoidCallback onTap;
   const _AddressTile({required this.address, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return Material(
-      color: selected ? primary.withValues(alpha: 0.05) : AppColors.white,
-      borderRadius: BorderRadius.circular(14),
-      elevation: selected ? 0 : 1,
-      shadowColor: Colors.black.withValues(alpha: 0.04),
+    final isAddNew = address == null;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: selected ? const Color(0xFF16A34A) : Colors.grey.shade200, 
+          width: selected ? 1.5 : 1
+        ),
+        boxShadow: [
+          if (!selected)
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03), 
+              blurRadius: 10, 
+              offset: const Offset(0, 4)
+            ),
+        ],
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            border: Border.all(color: selected ? primary : Colors.transparent, width: 1.5),
-            borderRadius: BorderRadius.circular(14),
-          ),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.location_on_outlined, color: AppColors.neutral500, size: 20),
+              // Image / Icon Box
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: isAddNew ? const Color(0xFFFAFAFA) : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: isAddNew ? Border.all(color: Colors.grey.shade300, style: BorderStyle.none) : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: isAddNew
+                        ? const Icon(Icons.add, color: Color(0xFF16A34A), size: 24)
+                        : const Icon(Icons.location_on, color: Colors.black38, size: 28),
+                  ),
+                  if (selected)
+                    Positioned(
+                      top: -6,
+                      left: -6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF16A34A),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.check, color: Colors.white, size: 14),
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
+              // Texts
               Expanded(
-                child: Text(
-                  [address.label, address.line1, address.city, address.state, address.pinCode].where((s) => s != null && s.isNotEmpty).join(', '),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAddNew ? 'Add a new address' : address!.label ?? 'Home',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)
+                    ),
+                    const SizedBox(height: 6),
+                    if (!isAddNew)
+                      Text(
+                        [address!.line1, address!.city, address!.pinCode].where((s) => s != null && s!.isNotEmpty).join(', '),
+                        style: const TextStyle(color: Colors.black54, fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    else
+                      const Text('Enter address details manually', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                  ],
                 ),
               ),
-              if (selected) Icon(Icons.check_circle, color: primary, size: 20),
+              const Icon(Icons.chevron_right, color: Colors.black38, size: 24),
             ],
           ),
         ),

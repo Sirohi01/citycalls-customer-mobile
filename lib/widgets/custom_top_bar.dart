@@ -14,14 +14,7 @@ class CustomTopBar extends ConsumerWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        color: Colors.transparent,
       ),
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(

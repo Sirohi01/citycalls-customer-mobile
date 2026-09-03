@@ -31,10 +31,33 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       drawer: const AppDrawer(),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
+      body: Stack(
+        children: [
+          // Background Gradient matching the UI
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 350,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF6EAF6), // Soft purple/pink glow top-left
+                    Color(0xFFECF1FD), // Soft blue glow top-right
+                    Color(0xFFF8FAFC), // Fade to normal background
+                  ],
+                  stops: [0.0, 0.5, 1.0],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
             const CustomTopBar(),
             Expanded(
               child: RefreshIndicator(
@@ -88,6 +111,8 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
         ),
+        ],
+      ),
     );
   }
 }

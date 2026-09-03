@@ -243,30 +243,7 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
                     : Text(_isLogin ? 'Login' : 'Sign Up', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               ),
             ),
-            const SizedBox(height: 28),
-
-            // --- Social Login ---
-            Row(
-              children: [
-                Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.1))),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('or continue with', style: TextStyle(color: AppColors.slate400, fontSize: 13)),
-                ),
-                Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.1))),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _SocialButton(icon: Icons.g_mobiledata, color: Colors.white, label: 'Google', onTap: () {}),
-                _SocialButton(icon: Icons.apple, color: Colors.white, label: 'Apple', onTap: () {}),
-                _SocialButton(icon: Icons.facebook, color: Colors.blue, label: 'Facebook', onTap: () {}),
-              ],
-            ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 12),
 
             // --- Secure Login Footer ---
             Row(
@@ -293,38 +270,5 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
         signupEmail: _isLogin ? null : _emailController.text.trim(),
       );
     }
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-  final VoidCallback onTap;
-
-  const _SocialButton({required this.icon, required this.color, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 11)),
-          ],
-        ),
-      ),
-    );
   }
 }

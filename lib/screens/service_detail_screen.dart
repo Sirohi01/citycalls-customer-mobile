@@ -89,260 +89,545 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     final catalogRepo = ref.read(catalogRepositoryProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      appBar: AppBar(title: const Text('Service Details'), centerTitle: false),
-      body: service.when(
-        data: (s) => Padding(
-          padding: const EdgeInsets.all(20),
-          // SingleChildScrollView+Column, not ListView — a plain scrollable
-          // Column tolerates a resizing child better than ListView's
-          // Sliver/Viewport machinery. That alone wasn't sufficient, though:
-          // the media gallery below still jumps from a fixed-height loading
-          // placeholder to a very different final height (0 with no media,
-          // ~220 images-only, 400+ with videos too) in a single frame — and
-          // when that jump lands while this screen's own MaterialPageRoute
-          // push transition is still animating in, it's reproduced the
-          // RenderBox "hasSize" assertion (not a one-off hot-reload
-          // artifact — it recurred across fresh app launches). AnimatedSize
-          // is the actual fix: its RenderObject is built to tolerate a
-          // child's size changing frame-to-frame without breaking the
-          // surrounding scrollable/transition's layout invariants, instead
-          // of handing the parent an abrupt single-frame size change.
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  alignment: Alignment.topCenter,
-                  child: media.when(
-                    data: (files) => MediaGallerySection(
-                        media: files, resolveUrl: catalogRepo.resolveMediaUrl),
-                    loading: () => const SizedBox(
-                        height: 200,
-                        child: Center(child: CircularProgressIndicator())),
-                    error: (_, __) => const SizedBox.shrink(),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(s.name,
-                    style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold, height: 1.2)),
-                if (s.description != null && s.description!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(s.description!,
-                      style: const TextStyle(
-                          color: AppColors.neutral500, fontSize: 14, height: 1.4)),
-                ],
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                        child: _StatTile(
-                            icon: Icons.currency_rupee,
-                            label: 'Starting at',
-                            value: '₹${s.pricing.basePrice.toStringAsFixed(0)}')),
-                    const SizedBox(width: 10),
-                    Expanded(
-                        child: _StatTile(
-                            icon: Icons.schedule,
-                            label: 'Duration',
-                            value: '~${s.expectedDurationMinutes} min')),
-                    if (s.warrantyPeriodDays > 0) ...[
-                      const SizedBox(width: 10),
-                      Expanded(
-                          child: _StatTile(
-                              icon: Icons.verified_user_outlined,
-                              label: 'Warranty',
-                              value: '${s.warrantyPeriodDays}d')),
-                    ],
+      backgroundColor: const Color(0xFFFAFAFA),
+      body: Stack(
+        children: [
+          // Background Gradient matching the UI
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 350,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFF6EAF6),
+                    Color(0xFFECF1FD),
+                    Color(0xFFFAFAFA),
                   ],
+                  stops: [0.0, 0.5, 1.0],
                 ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                      color: AppColors.neutral100,
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.directions_car_filled_outlined,
-                          size: 16, color: AppColors.neutral500),
-                      const SizedBox(width: 8),
-                      Text('Visiting charge: ₹${s.pricing.visitingCharge.toStringAsFixed(0)}',
-                          style: const TextStyle(color: AppColors.neutral500, fontSize: 12.5)),
-                    ],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // --- Custom Header ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.arrow_back, color: Colors.black87, size: 20),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 28),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4)),
-                    ],
-                    border: Border.all(color: AppColors.neutral200),
+                  const Text(
+                    'Service Details',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
+                  InkWell(
+                    onTap: () {},
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.favorite_border, color: Color(0xFF16A34A), size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // --- Body Content ---
+            Expanded(
+              child: service.when(
+                data: (s) => SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10)),
-                            child: Icon(Icons.location_on_outlined,
-                                size: 18, color: Theme.of(context).colorScheme.primary),
+                      // --- Image Gallery Section ---
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 200),
+                        alignment: Alignment.topCenter,
+                        child: media.when(
+                          data: (files) => Stack(
+                            children: [
+                              MediaGallerySection(
+                                media: files,
+                                resolveUrl: catalogRepo.resolveMediaUrl,
+                              ),
+                              // Badge Overlay: Verified Experts
+                              Positioned(
+                                bottom: 35, // Moved up
+                                left: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.06),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          _buildAvatar(),
+                                          const SizedBox(width: 4),
+                                          _buildAvatar(),
+                                          const SizedBox(width: 4),
+                                          _buildAvatar(),
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.all(2),
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF16A34A),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(Icons.check, color: Colors.white, size: 12),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const Text(
+                                        'Verified Experts',
+                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.black87),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Category/Snowflake Icon Overlay
+                              Positioned(
+                                bottom: 35, // Moved up
+                                right: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.06),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    s.name.toLowerCase().contains('ac') ? Icons.ac_unit_rounded : Icons.home_repair_service,
+                                    color: const Color(0xFF3B82F6),
+                                    size: 28,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          const Expanded(
-                            child: Text('Check availability in your area',
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5)),
-                          ),
-                        ],
+                          loading: () => const SizedBox(
+                              height: 200,
+                              child: Center(child: CircularProgressIndicator())),
+                          error: (_, __) => const SizedBox.shrink(),
+                        ),
                       ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _pinCodeController,
-                              keyboardType: TextInputType.number,
-                              maxLength: 6,
-                              onChanged: (_) {
-                                if (_pinFromSavedAddress) setState(() => _pinFromSavedAddress = false);
-                              },
-                              decoration: const InputDecoration(
-                                  labelText: 'PIN code', counterText: ''),
+                      const SizedBox(height: 12),
+                      
+                      // --- Title ---
+                      Text(
+                        s.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // --- Stats Row Card ---
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          FilledButton(
-                            onPressed: _checking ? null : _checkCoverage,
-                            style: FilledButton.styleFrom(minimumSize: const Size(88, 48)),
-                            child: _checking
-                                ? const SizedBox(
-                                    height: 16,
-                                    width: 16,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: Colors.white))
-                                : const Text('Check'),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildStatItem(
+                              icon: Icons.currency_rupee_rounded,
+                              iconColor: const Color(0xFF16A34A),
+                              bgColor: const Color(0xFFF0FDF4),
+                              title: '₹${s.pricing.basePrice.toStringAsFixed(0)}',
+                              subtitle: 'Starting at',
+                            ),
+                            Container(width: 1, height: 40, color: Colors.grey.shade200),
+                            _buildStatItem(
+                              icon: Icons.schedule_rounded,
+                              iconColor: const Color(0xFF3B82F6),
+                              bgColor: const Color(0xFFEFF6FF),
+                              title: '~${s.expectedDurationMinutes} min',
+                              subtitle: 'Duration',
+                            ),
+                            Container(width: 1, height: 40, color: Colors.grey.shade200),
+                            _buildStatItem(
+                              icon: Icons.directions_car_rounded,
+                              iconColor: const Color(0xFFF97316),
+                              bgColor: const Color(0xFFFFF7ED),
+                              title: '₹${s.pricing.visitingCharge.toStringAsFixed(0)}',
+                              subtitle: 'Visiting charge',
+                            ),
+                          ],
+                        ),
                       ),
-                      if (_pinFromSavedAddress)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 6),
-                          child: Text(
-                            'Using your saved address — edit above to check a different area.',
-                            style: TextStyle(color: AppColors.neutral500, fontSize: 11.5),
-                          ),
-                        ),
-                      if (_checkError != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(_checkError!, style: const TextStyle(color: Colors.red)),
-                        ),
-                      if (_coverage != null)
+                      const SizedBox(height: 12),
+
+                      // --- Service Description Card ---
+                      if (s.description != null && s.description!.trim().isNotEmpty) ...[
                         Container(
-                          margin: const EdgeInsets.only(top: 12),
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: _coverage!.serviceable
-                                ? Colors.green.shade50
-                                : Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(10),
+                            color: const Color(0xFFF6FAF6),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFD1E8D5)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF16A34A).withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                _coverage!.serviceable
-                                    ? Icons.check_circle
-                                    : Icons.info_outline,
-                                color: _coverage!.serviceable
-                                    ? Colors.green.shade700
-                                    : Colors.red.shade700,
-                                size: 20,
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.description_outlined, color: Color(0xFF16A34A), size: 20),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 12),
                               Expanded(
-                                child: Text(
-                                  _coverage!.serviceable
-                                      ? 'Great news — this service is available in your area!'
-                                      : 'Sorry, this service isn\'t available in your area yet — ${_coverageReasonLabel(_coverage!.reason)}.',
-                                  style: TextStyle(
-                                      color: _coverage!.serviceable
-                                          ? Colors.green.shade800
-                                          : Colors.red.shade800,
-                                      fontSize: 13),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Service Description',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      s.description!,
+                                      style: const TextStyle(color: Colors.black54, fontSize: 13, height: 1.4),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // --- Check Availability Card ---
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.02),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFF0FDF4),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.location_on, color: Color(0xFF16A34A), size: 18),
+                                ),
+                                const SizedBox(width: 10),
+                                const Text(
+                                  'Check availability in your area',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            const Text('PIN code', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey.shade300),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: TextField(
+                                      controller: _pinCodeController,
+                                      keyboardType: TextInputType.number,
+                                      maxLength: 6,
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 1),
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        counterText: '',
+                                      ),
+                                      onChanged: (_) {
+                                        if (_pinFromSavedAddress) setState(() => _pinFromSavedAddress = false);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                InkWell(
+                                  onTap: _checking ? null : _checkCoverage,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    height: 48,
+                                    width: 100,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF16A34A),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: _checking
+                                        ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                          )
+                                        : const Text(
+                                            'Check',
+                                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (_pinFromSavedAddress) ...[
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Using your saved address — edit above to check a different area.',
+                                style: TextStyle(color: Colors.black54, fontSize: 11),
+                              ),
+                            ],
+                            if (_checkError != null) ...[
+                              const SizedBox(height: 12),
+                              Text(_checkError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                            ],
+                            if (_coverage != null) ...[
+                              const SizedBox(height: 16),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: _coverage!.serviceable ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      _coverage!.serviceable ? Icons.check_circle_outline : Icons.error_outline,
+                                      color: _coverage!.serviceable ? const Color(0xFF16A34A) : Colors.red,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _coverage!.serviceable
+                                            ? 'Great news — this service is available in your area!'
+                                            : 'Sorry, this service isn\'t available in your area yet — ${_coverageReasonLabel(_coverage!.reason)}',
+                                        style: TextStyle(
+                                          color: _coverage!.serviceable ? const Color(0xFF16A34A) : Colors.red,
+                                          fontSize: 13,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: _coverage?.serviceable == true
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, _) => Center(child: Text('Failed to load service: $err')),
+              ),
+            ),
+
+            // --- Sticky Bottom Action ---
+            if (service.hasValue)
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: InkWell(
+                  onTap: _coverage?.serviceable == true
                       ? () => Navigator.of(context).push(MaterialPageRoute(
                             builder: (_) => ProductSelectScreen(
                               draft: BookingDraft(
-                                  serviceId: s.id,
-                                  serviceName: s.name,
+                                  serviceId: widget.serviceId,
+                                  serviceName: service.value!.name,
                                   pinCode: _pinCodeController.text.trim()),
                             ),
                           ))
                       : null,
-                  icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                  label: const Text('Book Now'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _coverage?.serviceable == true ? const Color(0xFF16A34A) : Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.calendar_month_outlined, color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Book Now',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
+              ),
+          ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Failed to load service: $err')),
       ),
-    );
-  }
+    ],
+  ),
+);
 }
 
-class _StatTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  const _StatTile({required this.icon, required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildAvatar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      width: 24,
+      height: 24,
       decoration: BoxDecoration(
-        color: AppColors.neutral100,
-        borderRadius: BorderRadius.circular(14),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 1.5),
+        color: Colors.grey.shade200,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(height: 8),
-          Text(value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
-          Text(label, style: const TextStyle(color: AppColors.neutral500, fontSize: 10.5)),
-        ],
-      ),
+      alignment: Alignment.center,
+      child: const Icon(Icons.person, size: 14, color: Colors.black38),
+    );
+  }
+
+  Widget _buildStatItem({
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required String title,
+    required String subtitle,
+  }) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: bgColor,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Colors.black87),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: const TextStyle(color: Colors.black54, fontSize: 11),
+        ),
+      ],
     );
   }
 }
