@@ -13,8 +13,7 @@ import '../models/auth_models.dart';
 
 const String _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  // defaultValue: 'https://nenita-untoured-nonhesitantly.ngrok-free.dev/api/v1',
-  defaultValue: 'http://10.99.241.146:4000/api/v1',
+  defaultValue: 'http://192.168.0.164:4000/api/v1',
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {

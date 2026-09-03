@@ -10,7 +10,12 @@ class ApiClient {
   // place only, auth_providers.dart's `_apiBaseUrl`, so there's never a
   // question of which value is actually in effect.
   ApiClient({required String baseUrl})
-      : dio = Dio(BaseOptions(baseUrl: baseUrl, headers: {'Content-Type': 'application/json'})) {
+      : dio = Dio(BaseOptions(
+          baseUrl: baseUrl,
+          headers: {'Content-Type': 'application/json'},
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        )) {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await _storage.read(key: _accessTokenKey);

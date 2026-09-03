@@ -58,56 +58,56 @@ class _ProductSelectScreenState extends ConsumerState<ProductSelectScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- Custom Header (Back Button) ---
+                // --- Custom Header (Back Button & Title) ---
                 Padding(
-                  padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 8),
+                  padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 12),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      InkWell(
-                        onTap: () => Navigator.pop(context),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
+                      Row(
+                        children: [
+                          InkWell(
+                            onTap: () => Navigator.pop(context),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade200),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ],
+                              child: const Icon(Icons.arrow_back, color: Color(0xFF16A34A), size: 20),
+                            ),
                           ),
-                          child: const Icon(Icons.arrow_back, color: Color(0xFF16A34A), size: 20),
-                        ),
+                          const SizedBox(width: 16),
+                          const Text('Select Appliance', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        ],
+                      ),
+                      RichText(
+                        text: const TextSpan(
+                          children: [
+                            TextSpan(text: 'Step 1 ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
+                            TextSpan(text: 'of 5', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
+                          ]
+                        )
                       ),
                     ],
                   ),
                 ),
 
-                // --- Title and Progress ---
+                // --- Progress ---
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text('Select Appliance', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
-                          RichText(
-                            text: const TextSpan(
-                              children: [
-                                TextSpan(text: 'Step 1 ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
-                                TextSpan(text: 'of 5', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
-                              ]
-                            )
-                          )
-                        ],
-                      ),
                       const SizedBox(height: 16),
                       // Progress Bar
                       ClipRRect(
@@ -201,7 +201,7 @@ class _ProductSelectScreenState extends ConsumerState<ProductSelectScreen> {
                             onTap: () => _proceed(null),
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
-                              height: 52,
+                              height: 48,
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
@@ -225,7 +225,7 @@ class _ProductSelectScreenState extends ConsumerState<ProductSelectScreen> {
                             onTap: _selectedProductId == null ? null : () => _proceed(_selectedProductId),
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
-                              height: 52,
+                              height: 48,
                               decoration: BoxDecoration(
                                 color: _selectedProductId != null ? const Color(0xFF16A34A) : Colors.grey.shade400,
                                 borderRadius: BorderRadius.circular(12),

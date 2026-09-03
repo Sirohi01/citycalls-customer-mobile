@@ -59,56 +59,56 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- Custom Header (Back Button) ---
+                // --- Custom Header (Back Button & Title) ---
                 Padding(
-                  padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 8),
+                  padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 12),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      InkWell(
-                        onTap: () => Navigator.pop(context),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
+                      Row(
+                        children: [
+                          InkWell(
+                            onTap: () => Navigator.pop(context),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade200),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ],
+                              child: const Icon(Icons.arrow_back, color: Color(0xFF16A34A), size: 20),
+                            ),
                           ),
-                          child: const Icon(Icons.arrow_back, color: Color(0xFF16A34A), size: 20),
-                        ),
+                          const SizedBox(width: 16),
+                          const Text('Select Address', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        ],
+                      ),
+                      RichText(
+                        text: const TextSpan(
+                          children: [
+                            TextSpan(text: 'Step 2 ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
+                            TextSpan(text: 'of 5', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
+                          ]
+                        )
                       ),
                     ],
                   ),
                 ),
 
-                // --- Title and Progress ---
+                // --- Progress ---
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text('Select Address', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
-                          RichText(
-                            text: const TextSpan(
-                              children: [
-                                TextSpan(text: 'Step 2 ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
-                                TextSpan(text: 'of 5', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
-                              ]
-                            )
-                          )
-                        ],
-                      ),
                       const SizedBox(height: 16),
                       // Progress Bar
                       ClipRRect(
@@ -206,7 +206,7 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                                   },
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
-                              height: 52,
+                              height: 48,
                               decoration: BoxDecoration(
                                 color: _selectedAddressId != null ? const Color(0xFF16A34A) : Colors.grey.shade400,
                                 borderRadius: BorderRadius.circular(12),
@@ -310,58 +310,60 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Add Address', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _line1Controller,
-              decoration: const InputDecoration(labelText: 'House / Flat / Street'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-            ),
-            const SizedBox(height: 10),
-            TextFormField(controller: _line2Controller, decoration: const InputDecoration(labelText: 'Area (optional)')),
-            const SizedBox(height: 10),
-            TextFormField(controller: _landmarkController, decoration: const InputDecoration(labelText: 'Landmark (optional)')),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _cityController,
-                    decoration: const InputDecoration(labelText: 'City'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Add Address', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _line1Controller,
+                decoration: const InputDecoration(labelText: 'House / Flat / Street'),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(controller: _line2Controller, decoration: const InputDecoration(labelText: 'Area (optional)')),
+              const SizedBox(height: 10),
+              TextFormField(controller: _landmarkController, decoration: const InputDecoration(labelText: 'Landmark (optional)')),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _cityController,
+                      decoration: const InputDecoration(labelText: 'City'),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextFormField(
-                    controller: _stateController,
-                    decoration: const InputDecoration(labelText: 'State'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _stateController,
+                      decoration: const InputDecoration(labelText: 'State'),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _pinCodeController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'PIN Code'),
-              validator: (v) => (v == null || v.trim().length < 4) ? 'Enter a valid PIN code' : null,
-            ),
-            if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: Colors.red))),
-            const SizedBox(height: 16),
-            FilledButton(
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
-              onPressed: _saving ? null : _save,
-              child: _saving ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save & Continue'),
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _pinCodeController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'PIN Code'),
+                validator: (v) => (v == null || v.trim().length < 4) ? 'Enter a valid PIN code' : null,
+              ),
+              if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: Colors.red))),
+              const SizedBox(height: 16),
+              FilledButton(
+                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
+                onPressed: _saving ? null : _save,
+                child: _saving ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Save & Continue'),
+              ),
+            ],
+          ),
         ),
       ),
     );
