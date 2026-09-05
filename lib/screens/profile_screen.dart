@@ -6,14 +6,12 @@ import '../providers/customer_providers.dart';
 import '../providers/realtime_providers.dart';
 import '../providers/push_providers.dart';
 import '../providers/theme_providers.dart';
-import '../theme/app_theme.dart';
 import 'otp_request_screen.dart';
 import 'saved_products_screen.dart';
 import 'notification_preferences_screen.dart';
 import 'support_screen.dart';
+import 'edit_profile_screen.dart';
 
-// Per docs/rohit/05-customer-app-screen-list.md "Profile" — Profile edit,
-// Address book, Saved Products, Notification Preferences, plus Help & Support.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -23,194 +21,368 @@ class ProfileScreen extends ConsumerWidget {
     final beautyMode = ref.watch(beautyModeProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
-      appBar: AppBar(title: const Text('Profile'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
-      body: profile.when(
-        data: (customer) => ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2)),
-              child: CircleAvatar(
-                radius: 32,
-                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                child: Text(
-                  customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+      backgroundColor: const Color(0xFFFAFAFA),
+      body: Stack(
+        children: [
+          // Background Gradient (Top)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [const Color(0xFF16A34A).withValues(alpha: 0.1), Colors.transparent],
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            Text(customer.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            if (customer.mobile != null) Text('+91 ${customer.mobile}', style: const TextStyle(color: AppColors.neutral500)),
-            if (customer.email != null) Text(customer.email!, style: const TextStyle(color: AppColors.neutral500)),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () => _showEditProfileSheet(context, ref, customer),
-              icon: const Icon(Icons.edit_outlined, size: 16),
-              label: const Text('Edit Profile'),
-            ),
-            const SizedBox(height: 28),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ),
+          
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Saved Addresses', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                TextButton.icon(
-                  onPressed: () => _showAddressSheet(context, ref, customer.id),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            if (customer.addresses.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(14)),
-                child: const Text('No saved addresses yet.', style: TextStyle(color: AppColors.neutral500)),
-              )
-            else
-              ...customer.addresses.map(
-                (a) => Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
-                  ),
+                // --- Custom Header (Back Button & Title) ---
+                Padding(
+                  padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 8),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                        child: Icon(Icons.location_on_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          [a.label, a.line1, a.city, a.state, a.pinCode].where((s) => s != null && s.isNotEmpty).join(', '),
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 2)),
+                            ],
+                          ),
+                          child: const Icon(Icons.arrow_back, color: Color(0xFF16A34A), size: 20),
                         ),
                       ),
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert, size: 18, color: AppColors.neutral500),
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _showAddressSheet(context, ref, customer.id, existing: a);
-                          } else if (value == 'delete') {
-                            _confirmDeleteAddress(context, ref, customer.id, a.id);
-                          }
-                        },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
-                        ],
-                      ),
+                      const SizedBox(width: 16),
+                      const Text('Profile', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black87)),
                     ],
                   ),
                 ),
-              ),
-            const SizedBox(height: 28),
-            const Text('More', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.beautyAccent,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.beautyPrimary.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.spa_outlined, color: AppColors.beautyPrimary),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                
+                Expanded(
+                  child: profile.when(
+                    data: (customer) => ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       children: [
-                        Text('Beauty Mode', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.beautyAccentForeground)),
-                        Text('Switch the app to our Bliss & Salon look', style: TextStyle(color: AppColors.beautyAccentForeground, fontSize: 11.5)),
+                        // --- Profile Info Card ---
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                          ),
+                          child: Row(
+                            children: [
+                              // Avatar
+                              SizedBox(
+                                width: 64,
+                                height: 64,
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: const BoxDecoration(color: Color(0xFF0F5132), shape: BoxShape.circle),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
+                                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE6F4EA),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white, width: 2),
+                                        ),
+                                        child: const Icon(Icons.camera_alt_outlined, size: 12, color: Color(0xFF0F5132)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              // Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(customer.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                                    const SizedBox(height: 4),
+                                    if (customer.mobile != null)
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.phone_outlined, size: 12, color: Colors.black54),
+                                          const SizedBox(width: 4),
+                                          Text('+91 ${customer.mobile}', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                                        ],
+                                      ),
+                                    const SizedBox(height: 2),
+                                    if (customer.email != null)
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.email_outlined, size: 12, color: Colors.black54),
+                                          const SizedBox(width: 4),
+                                          Expanded(child: Text(customer.email!, style: const TextStyle(color: Colors.black54, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                        ],
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              // Edit Button
+                              InkWell(
+                                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditProfileScreen())),
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE6F4EA),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.edit_outlined, size: 12, color: Color(0xFF16A34A)),
+                                      SizedBox(width: 4),
+                                      Text('Edit Profile', style: TextStyle(color: Color(0xFF16A34A), fontSize: 11, fontWeight: FontWeight.w600)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // --- Saved Addresses ---
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.location_on, color: Color(0xFF0F5132), size: 18),
+                                SizedBox(width: 8),
+                                Text('Saved Addresses', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                              ],
+                            ),
+                            InkWell(
+                              onTap: () => _showAddressSheet(context, ref, customer.id),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.add, color: Color(0xFF16A34A), size: 14),
+                                  SizedBox(width: 2),
+                                  Text('Add', style: TextStyle(color: Color(0xFF16A34A), fontSize: 13, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        
+                        if (customer.addresses.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                            child: const Text('No saved addresses yet.', style: TextStyle(color: Colors.black54, fontSize: 13)),
+                          )
+                        else
+                          ...customer.addresses.map((a) {
+                            // Determine style based on label
+                            final labelLower = (a.label ?? '').toLowerCase();
+                            IconData iconData = Icons.location_on_outlined;
+                            Color badgeBg = const Color(0xFFF3F4F6); // Gray for other
+                            Color badgeText = const Color(0xFF4B5563);
+                            
+                            if (labelLower == 'home') {
+                              iconData = Icons.home_outlined;
+                              badgeBg = const Color(0xFFE6F4EA);
+                              badgeText = const Color(0xFF16A34A);
+                            } else if (labelLower == 'office') {
+                              iconData = Icons.business_outlined;
+                              badgeBg = const Color(0xFFE0E7FF);
+                              badgeText = const Color(0xFF4338CA);
+                            }
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 2))],
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Icon
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0FDF4),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(iconData, size: 20, color: const Color(0xFF16A34A)),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Details
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(8)),
+                                          child: Text(a.label ?? '', style: TextStyle(color: badgeText, fontSize: 10, fontWeight: FontWeight.bold)),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          [a.line1, a.city, a.state, a.pinCode].where((s) => s != null && s.isNotEmpty).join(', '),
+                                          style: const TextStyle(color: Colors.black87, fontSize: 13, height: 1.3),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Actions
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      PopupMenuButton<String>(
+                                        icon: const Icon(Icons.more_vert, size: 18, color: Colors.black87),
+                                        padding: EdgeInsets.zero,
+                                        onSelected: (value) {
+                                          if (value == 'edit') _showAddressSheet(context, ref, customer.id, existing: a);
+                                          else if (value == 'delete') _confirmDeleteAddress(context, ref, customer.id, a.id);
+                                        },
+                                        itemBuilder: (context) => const [
+                                          PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                        ],
+                                      ),
+                                      // If default, show badge (mocking for home)
+                                      if (labelLower == 'home')
+                                        Container(
+                                          margin: const EdgeInsets.only(top: 8),
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(color: const Color(0xFFE6F4EA), borderRadius: BorderRadius.circular(6)),
+                                          child: const Text('Default', style: TextStyle(color: Color(0xFF16A34A), fontSize: 9, fontWeight: FontWeight.bold)),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                          
+                        const SizedBox(height: 16),
+                        
+                        // --- More Section ---
+                        const Text('More', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        const SizedBox(height: 12),
+                        
+                        // Beauty Mode
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2), // Light pink
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFFECDD3).withValues(alpha: 0.5)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.local_florist_outlined, color: Color(0xFFE11D48), size: 24),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Beauty Mode', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFBE123C), fontSize: 14)),
+                                    SizedBox(height: 2),
+                                    Text('Switch the app to our Bliss & Salon look', style: TextStyle(color: Color(0xFF9F1239), fontSize: 11)),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: beautyMode,
+                                activeColor: const Color(0xFFE11D48),
+                                activeTrackColor: const Color(0xFFFECDD3),
+                                inactiveThumbColor: Colors.grey.shade400,
+                                inactiveTrackColor: Colors.grey.shade200,
+                                onChanged: (_) => ref.read(beautyModeProvider.notifier).toggle(),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Menu Items
+                        _MenuTile(
+                          icon: Icons.developer_board, // Appliance like icon
+                          label: 'Saved Appliances',
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SavedProductsScreen())),
+                        ),
+                        _MenuTile(
+                          icon: Icons.notifications_none,
+                          label: 'Notification Preferences',
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationPreferencesScreen())),
+                        ),
+                        _MenuTile(
+                          icon: Icons.headset_mic_outlined,
+                          label: 'Help & Support',
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportScreen())),
+                        ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // --- Logout Button ---
+                        InkWell(
+                          onTap: () => _logout(context, ref),
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: Colors.red, width: 1.5),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.logout, color: Colors.red, size: 18),
+                                SizedBox(width: 8),
+                                Text('Logout', style: TextStyle(color: Colors.red, fontSize: 14, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 40),
                       ],
                     ),
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (err, _) => Center(child: Text('Failed to load profile: $err', style: const TextStyle(color: Colors.black54))),
                   ),
-                  Switch(
-                    value: beautyMode,
-                    activeColor: AppColors.beautyPrimary,
-                    onChanged: (_) => ref.read(beautyModeProvider.notifier).toggle(),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            _MenuTile(
-              icon: Icons.build_outlined,
-              label: 'Saved Appliances',
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SavedProductsScreen())),
-            ),
-            _MenuTile(
-              icon: Icons.notifications_outlined,
-              label: 'Notification Preferences',
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationPreferencesScreen())),
-            ),
-            _MenuTile(
-              icon: Icons.help_outline,
-              label: 'Help & Support',
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportScreen())),
-            ),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: () => _logout(context, ref),
-              icon: const Icon(Icons.logout, size: 18),
-              label: const Text('Logout'),
-              style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
-            ),
-          ],
-        ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Failed to load profile: $err')),
-      ),
-    );
-  }
-
-  void _showEditProfileSheet(BuildContext context, WidgetRef ref, Customer customer) {
-    final nameController = TextEditingController(text: customer.name);
-    final emailController = TextEditingController(text: customer.email ?? '');
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 20,
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Edit Profile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Full name')),
-            const SizedBox(height: 12),
-            TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email (optional)')),
-            const SizedBox(height: 20),
-            FilledButton(
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
-              onPressed: () async {
-                await ref.read(customerRepositoryProvider).updateProfile(
-                      customer.id,
-                      name: nameController.text.trim(),
-                      email: emailController.text.trim(),
-                    );
-                ref.invalidate(myProfileProvider);
-                if (sheetContext.mounted) Navigator.of(sheetContext).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -219,6 +391,7 @@ class ProfileScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) => _AddressFormSheet(
         customerId: customerId,
         existing: existing,
@@ -252,14 +425,8 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
-    // Must run before authRepository.logout() clears the stored access
-    // token — unregisterCurrentToken's DELETE call needs it to identify
-    // "me" server-side.
     await ref.read(pushNotificationServiceProvider).unregisterCurrentToken();
     await ref.read(authRepositoryProvider).logout();
-    // Without this, the socket stays connected under the outgoing account's
-    // JWT for the rest of this app process's lifetime — SocketService is a
-    // long-lived singleton Provider, not scoped to a login session.
     ref.read(socketServiceProvider).disconnect();
     if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
@@ -345,7 +512,11 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
       child: Form(
         key: _formKey,
@@ -397,9 +568,9 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
               if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: Colors.red))),
               const SizedBox(height: 16),
               FilledButton(
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
+                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48), backgroundColor: const Color(0xFF16A34A)),
                 onPressed: _saving ? null : _save,
-                child: _saving ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Save'),
+                child: _saving ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Save Address'),
               ),
             ],
           ),
@@ -417,27 +588,28 @@ class _MenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.white,
-      borderRadius: BorderRadius.circular(14),
-      elevation: 1,
-      shadowColor: Colors.black.withValues(alpha: 0.03),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 6, offset: const Offset(0, 2))],
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: AppColors.neutral500, size: 18),
+                decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, color: Colors.black54, size: 20),
               ),
-              const SizedBox(width: 12),
-              Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
-              const Icon(Icons.chevron_right, color: AppColors.neutral200),
+              const SizedBox(width: 16),
+              Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black87, fontSize: 13))),
+              const Icon(Icons.chevron_right, color: Colors.black38, size: 20),
             ],
           ),
         ),

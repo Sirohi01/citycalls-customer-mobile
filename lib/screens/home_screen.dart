@@ -259,6 +259,7 @@ class _HeroBannerState extends State<_HeroBanner> {
                               ),
                             ),
                             const SizedBox(height: 10),
+                            /*
                             ElevatedButton(
                               onPressed: () {},
                               style: ElevatedButton.styleFrom(
@@ -287,6 +288,7 @@ class _HeroBannerState extends State<_HeroBanner> {
                                 ],
                               ),
                             ),
+                            */
                           ],
                         ),
                       ),
