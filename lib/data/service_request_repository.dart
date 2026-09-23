@@ -1,5 +1,7 @@
 import 'api_client.dart';
+import '../models/reopen_models.dart';
 import '../models/service_request_models.dart';
+import '../models/visit_models.dart';
 
 // One repository class per module, per docs/12-frontend-data-contracts.md §3.
 class ServiceRequestRepository {
@@ -32,6 +34,24 @@ class ServiceRequestRepository {
     final res = await _client.dio.get('/service-requests/$id/activity-log');
     return (res.data['data'] as List)
         .map((e) => ActivityLogEntry.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  // What the technician actually recorded in the field — diagnosis, parts,
+  // work notes, before/after photos. A CUSTOMER role has fieldExecution:view
+  // at OWN scope (citycalls-api scripts/seed.ts), so this is readable by the
+  // customer who owns the request even though the writes are technician-only.
+  Future<List<ServiceVisit>> listVisits(String id) async {
+    final res = await _client.dio.get('/service-requests/$id/visits');
+    return (res.data['data'] as List)
+        .map((v) => ServiceVisit.fromJson(v as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<ReopenRecord>> getReopenHistory(String id) async {
+    final res = await _client.dio.get('/service-requests/$id/reopen-history');
+    return (res.data['data'] as List)
+        .map((r) => ReopenRecord.fromJson(r as Map<String, dynamic>))
         .toList();
   }
 

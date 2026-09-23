@@ -72,6 +72,23 @@ class CustomerRepository {
     });
   }
 
+  // The address sub-document schema carries isDefault, but the backend
+  // doesn't unset the previous default when a new one is set, so both steps
+  // happen here — otherwise the customer ends up with two "default"
+  // addresses and whichever one sorts first silently wins.
+  Future<void> setDefaultAddress(String customerId, String addressId, {String? previousDefaultId}) async {
+    if (previousDefaultId != null && previousDefaultId != addressId) {
+      await _client.dio.patch(
+        '/customers/$customerId/addresses/$previousDefaultId',
+        data: {'isDefault': false},
+      );
+    }
+    await _client.dio.patch(
+      '/customers/$customerId/addresses/$addressId',
+      data: {'isDefault': true},
+    );
+  }
+
   Future<void> deleteAddress(String customerId, String addressId) async {
     await _client.dio.delete('/customers/$customerId/addresses/$addressId');
   }

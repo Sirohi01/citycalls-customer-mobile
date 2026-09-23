@@ -4,6 +4,7 @@ import '../providers/finance_providers.dart';
 import '../providers/service_request_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/state_views.dart';
 
 class ProformaReviewScreen extends ConsumerStatefulWidget {
   final String requestId;
@@ -190,7 +191,12 @@ class _ProformaReviewScreenState extends ConsumerState<ProformaReviewScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Failed to load bill: $err')),
+        error: (err, _) => Center(
+          child: AppErrorView(
+            error: err,
+            onRetry: () => ref.invalidate(proformaForRequestProvider(widget.requestId)),
+          ),
+        ),
       ),
     );
   }

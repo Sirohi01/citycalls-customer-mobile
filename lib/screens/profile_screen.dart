@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/customer_models.dart';
 import '../providers/auth_providers.dart';
 import '../providers/customer_providers.dart';
+import '../providers/geo_providers.dart';
 import '../providers/realtime_providers.dart';
 import '../providers/push_providers.dart';
 import '../providers/theme_providers.dart';
+import '../widgets/state_views.dart';
+import 'active_sessions_screen.dart';
+import 'my_complaints_screen.dart';
 import 'otp_request_screen.dart';
 import 'saved_products_screen.dart';
 import 'notification_preferences_screen.dart';
@@ -267,8 +271,11 @@ class ProfileScreen extends ConsumerWidget {
                                         icon: const Icon(Icons.more_vert, size: 18, color: Colors.black87),
                                         padding: EdgeInsets.zero,
                                         onSelected: (value) {
-                                          if (value == 'edit') _showAddressSheet(context, ref, customer.id, existing: a);
-                                          else if (value == 'delete') _confirmDeleteAddress(context, ref, customer.id, a.id);
+                                          if (value == 'edit') {
+                                            _showAddressSheet(context, ref, customer.id, existing: a);
+                                          } else if (value == 'delete') {
+                                            _confirmDeleteAddress(context, ref, customer.id, a.id);
+                                          }
                                         },
                                         itemBuilder: (context) => const [
                                           PopupMenuItem(value: 'edit', child: Text('Edit')),
@@ -343,6 +350,16 @@ class ProfileScreen extends ConsumerWidget {
                           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NotificationPreferencesScreen())),
                         ),
                         _MenuTile(
+                          icon: Icons.devices_outlined,
+                          label: 'Signed-in Devices',
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ActiveSessionsScreen())),
+                        ),
+                        _MenuTile(
+                          icon: Icons.forum_outlined,
+                          label: 'My Complaints',
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyComplaintsScreen())),
+                        ),
+                        _MenuTile(
                           icon: Icons.headset_mic_outlined,
                           label: 'Help & Support',
                           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportScreen())),
@@ -376,7 +393,9 @@ class ProfileScreen extends ConsumerWidget {
                       ],
                     ),
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, _) => Center(child: Text('Failed to load profile: $err', style: const TextStyle(color: Colors.black54))),
+                    error: (err, _) => Center(
+                      child: AppErrorView(error: err, onRetry: () => ref.invalidate(myProfileProvider)),
+                    ),
                   ),
                 ),
               ],
@@ -456,10 +475,53 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
   late final _stateController = TextEditingController(text: widget.existing?.state);
   late final _pinCodeController = TextEditingController(text: widget.existing?.pinCode);
   bool _saving = false;
+  bool _lookingUpPin = false;
   String? _error;
+  String? _pinNotice;
+  late String _lastLookedUpPin = widget.existing?.pinCode ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+    _pinCodeController.addListener(_onPinChanged);
+  }
+
+  // Same GET /geo/pincode/:pincode autofill the booking flow's address sheet
+  // uses — kept identical here so a saved address and a booking address are
+  // never resolved by two different rules.
+  void _onPinChanged() {
+    final pin = _pinCodeController.text.trim();
+    if (pin.length != 6 || pin == _lastLookedUpPin) return;
+    _lastLookedUpPin = pin;
+    _lookupPin(pin);
+  }
+
+  Future<void> _lookupPin(String pin) async {
+    setState(() {
+      _lookingUpPin = true;
+      _pinNotice = null;
+    });
+    final area = await ref.read(geoRepositoryProvider).lookupPincode(pin);
+    if (!mounted || _pinCodeController.text.trim() != pin) return;
+    setState(() {
+      _lookingUpPin = false;
+      if (area == null) return;
+      // Fill blanks only — never overwrite what the user typed.
+      if (_cityController.text.trim().isEmpty && area.resolvedCity != null) {
+        _cityController.text = area.resolvedCity!;
+      }
+      if (_stateController.text.trim().isEmpty && area.state != null) {
+        _stateController.text = area.state!;
+      }
+      _pinNotice = area.serviceable
+          ? 'We serve this area${area.branchName != null ? ' · ${area.branchName}' : ''}'
+          : "We don't cover this PIN code yet — you can still save the address.";
+    });
+  }
 
   @override
   void dispose() {
+    _pinCodeController.removeListener(_onPinChanged);
     _labelController.dispose();
     _line1Controller.dispose();
     _line2Controller.dispose();
@@ -539,6 +601,35 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
               const SizedBox(height: 10),
               TextFormField(controller: _landmarkController, decoration: const InputDecoration(labelText: 'Landmark (optional)')),
               const SizedBox(height: 10),
+              TextFormField(
+                controller: _pinCodeController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: InputDecoration(
+                  labelText: 'PIN Code',
+                  counterText: '',
+                  helperText: 'City and state fill in automatically',
+                  suffixIcon: _lookingUpPin
+                      ? const Padding(
+                          padding: EdgeInsets.all(14),
+                          child: SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                        )
+                      : null,
+                ),
+                validator: (v) => (v == null || v.trim().length < 6) ? 'Enter a valid 6-digit PIN code' : null,
+              ),
+              if (_pinNotice != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                  child: Text(
+                    _pinNotice!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _pinNotice!.startsWith('We serve') ? const Color(0xFF16A34A) : Colors.orange.shade800,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
@@ -557,13 +648,6 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _pinCodeController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'PIN Code'),
-                validator: (v) => (v == null || v.trim().length < 4) ? 'Enter a valid PIN code' : null,
               ),
               if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: Colors.red))),
               const SizedBox(height: 16),

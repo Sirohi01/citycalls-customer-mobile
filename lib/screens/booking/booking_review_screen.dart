@@ -4,8 +4,6 @@ import '../../models/booking_models.dart';
 import '../../providers/booking_providers.dart';
 import '../../providers/customer_providers.dart';
 import '../../providers/service_request_providers.dart';
-import '../../theme/app_theme.dart';
-import '../../widgets/booking_step_header.dart';
 import 'booking_success_screen.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Booking" — Booking Review & Confirm.

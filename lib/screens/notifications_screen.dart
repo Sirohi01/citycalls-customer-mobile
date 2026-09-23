@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/notification_providers.dart';
 import '../models/notification_models.dart';
+import '../widgets/state_views.dart';
+import 'notification_preferences_screen.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -12,7 +14,6 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   String _selectedFilter = 'All';
-  bool _stayUpdated = true;
 
   final List<String> _filters = ['All', 'Unread', 'Service', 'Payment', 'Invoice'];
 
@@ -171,15 +172,23 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             Expanded(
               child: notificationsAsync.when(
                 data: (items) {
-                  // For the mockup, we need to show groups like "Today" and "Earlier".
-                  // Since we might not have real categorized data, we just assume the first item is Today and rest is Earlier, or just render it all as "Earlier" for fallback if empty.
-                  // Mocking the structure to precisely match screenshot if items is empty or if we want to ensure it looks exact.
-                  // We will render the real items but group them.
-                  
                   if (items.isEmpty) {
-                    return _buildMockList();
+                    return ListView(
+                      children: [
+                        const SizedBox(height: 40),
+                        const AppEmptyView(
+                          icon: Icons.notifications_none_rounded,
+                          title: 'No notifications yet',
+                          subtitle: "Updates about your bookings, estimates and payments will show up here.",
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: _buildStayUpdatedCard(),
+                        ),
+                      ],
+                    );
                   }
-                  
+
                   List<AppNotification> filteredItems = items;
                   if (_selectedFilter != 'All') {
                     if (_selectedFilter == 'Unread') {
@@ -200,7 +209,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   }
 
                   if (filteredItems.isEmpty) {
-                    return const Center(child: Text('No notifications found.', style: TextStyle(color: Colors.black54)));
+                    return AppEmptyView(
+                      icon: Icons.filter_list_off_rounded,
+                      title: 'Nothing under "$_selectedFilter"',
+                      subtitle: 'Try a different filter to see your other notifications.',
+                    );
                   }
 
                   // Real data rendering (simplified grouping)
@@ -216,8 +229,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     ],
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Failed to load notifications: $err')),
+                loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF16A34A))),
+                error: (err, _) => ListView(
+                  children: [
+                    const SizedBox(height: 40),
+                    AppErrorView(error: err, onRetry: () => ref.invalidate(myNotificationsProvider)),
+                  ],
+                ),
               ),
             ),
               ],
@@ -315,95 +333,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-  // A mock list builder if real notifications are empty, to demonstrate the UI matches the screenshot exactly.
-  Widget _buildMockList() {
-    final mockItems = [
-      AppNotification(
-        id: '1',
-        subject: 'Your service request\nSR-GZB-2627-000025 has been received.',
-        body: "We've received your request and will assign\na technician soon.",
-        createdAt: '2026-09-03 12:33:26',
-      ),
-      AppNotification(
-        id: '2',
-        subject: 'Payment of ₹500 received\nfor receipt RC-DELCS-2627-000001.',
-        body: 'Thank you for your payment.',
-        createdAt: '2026-08-24 21:18:27',
-      ),
-      AppNotification(
-        id: '3',
-        subject: 'A proforma invoice PI-DELCS-2627-000001\nhas been shared with you.',
-        body: 'Please review the invoice.',
-        createdAt: '2026-08-24 21:11:37',
-      ),
-      AppNotification(
-        id: '4',
-        subject: 'An estimate for ₹200 has been shared\nwith you.',
-        body: 'Please review and approve.',
-        createdAt: '2026-08-24 21:09:40',
-      ),
-      AppNotification(
-        id: '5',
-        subject: 'Your service has been marked complete.',
-        body: 'Please confirm if the issue is resolved.',
-        createdAt: '2026-08-24 21:09:06',
-        readAt: '123'
-      ),
-      AppNotification(
-        id: '6',
-        subject: 'Your technician is on the way.',
-        body: 'Our technician will reach your location soon.',
-        createdAt: '2026-08-24 21:04:23',
-      ),
-      AppNotification(
-        id: '7',
-        subject: 'Your service request SR-DELCS-2627-000013\nhas been received.',
-        body: "We've received your request and will assign\na technician soon.",
-        createdAt: '2026-08-24 21:00:06',
-        readAt: '123'
-      ),
-    ];
-
-    List<AppNotification> filteredItems = mockItems;
-    if (_selectedFilter != 'All') {
-      if (_selectedFilter == 'Unread') {
-        filteredItems = mockItems.where((n) => !n.isRead).toList();
-      } else if (_selectedFilter == 'Service') {
-        filteredItems = mockItems.where((n) {
-          final lower = n.subject?.toLowerCase() ?? '';
-          return lower.contains('service') || lower.contains('technician') || lower.contains('complete');
-        }).toList();
-      } else if (_selectedFilter == 'Payment') {
-        filteredItems = mockItems.where((n) => (n.subject?.toLowerCase() ?? '').contains('payment')).toList();
-      } else if (_selectedFilter == 'Invoice') {
-        filteredItems = mockItems.where((n) {
-          final lower = n.subject?.toLowerCase() ?? '';
-          return lower.contains('invoice') || lower.contains('estimate');
-        }).toList();
-      }
-    }
-
-    if (filteredItems.isEmpty) {
-      return const Center(child: Text('No notifications found for this filter.', style: TextStyle(color: Colors.black54)));
-    }
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        if (_selectedFilter == 'All' || _selectedFilter == 'Unread' || _selectedFilter == 'Service') ...[
-          const Text('Today', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87)),
-          const SizedBox(height: 12),
-        ],
-        ...filteredItems.map((n) => _buildNotificationCard(n)),
-        const SizedBox(height: 12),
-        _buildStayUpdatedCard(),
-        const SizedBox(height: 40),
-      ],
-    );
-  }
-
+  // Was a Switch bound to a local bool that persisted nothing and reached no
+  // API — it looked like a working preference but wasn't one. Notification
+  // channel consent genuinely lives on PATCH /customers/:id/consent, which is
+  // what NotificationPreferencesScreen drives, so this now takes the user
+  // there instead.
   Widget _buildStayUpdatedCard() {
-    return Container(
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const NotificationPreferencesScreen()),
+      ),
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: const Color(0xFFEAF5ED), // Light green to match the mockup
@@ -425,18 +366,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Transform.scale(
-            scale: 0.9,
-            child: Switch(
-              value: _stayUpdated,
-              onChanged: (val) => setState(() => _stayUpdated = val),
-              activeColor: Colors.white,
-              activeTrackColor: const Color(0xFF16A34A),
-              inactiveThumbColor: Colors.grey.shade400,
-              inactiveTrackColor: Colors.grey.shade200,
-            ),
-          ),
+          const Icon(Icons.chevron_right_rounded, color: Color(0xFF16A34A), size: 22),
         ],
+      ),
       ),
     );
   }

@@ -10,3 +10,8 @@ final complaintRepositoryProvider = Provider<ComplaintRepository>((ref) {
 final myComplaintsProvider = FutureProvider<List<ComplaintSummary>>((ref) async {
   return ref.watch(complaintRepositoryProvider).listMyComplaints();
 });
+
+final complaintDetailProvider =
+    FutureProvider.family<ComplaintSummary, String>((ref, id) async {
+  return ref.watch(complaintRepositoryProvider).getComplaint(id);
+});

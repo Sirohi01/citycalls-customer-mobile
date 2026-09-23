@@ -4,6 +4,7 @@ import '../providers/finance_providers.dart';
 import '../providers/service_request_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/state_views.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Estimates & Payments" —
 // Estimate Review & Approve/Reject.
@@ -154,7 +155,12 @@ class _EstimateReviewScreenState extends ConsumerState<EstimateReviewScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Failed to load estimate: $err')),
+        error: (err, _) => Center(
+          child: AppErrorView(
+            error: err,
+            onRetry: () => ref.invalidate(estimateForRequestProvider(widget.requestId)),
+          ),
+        ),
       ),
     );
   }

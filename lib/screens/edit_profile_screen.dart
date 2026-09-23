@@ -366,8 +366,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                       icon: const Icon(Icons.more_vert, size: 18, color: Colors.black87),
                                       padding: EdgeInsets.zero,
                                       onSelected: (value) {
-                                        if (value == 'edit') _showAddressSheet(context, ref, profile.id, existing: a);
-                                        else if (value == 'delete') _confirmDeleteAddress(context, ref, profile.id, a.id);
+                                        if (value == 'edit') {
+                                          _showAddressSheet(context, ref, profile.id, existing: a);
+                                        } else if (value == 'delete') {
+                                          _confirmDeleteAddress(context, ref, profile.id, a.id);
+                                        }
                                       },
                                       itemBuilder: (context) => const [
                                         PopupMenuItem(value: 'edit', child: Text('Edit')),

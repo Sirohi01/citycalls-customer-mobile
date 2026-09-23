@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/catalog_models.dart';
 import '../providers/catalog_providers.dart';
+import '../widgets/state_views.dart';
 import 'service_detail_screen.dart';
 
 class ServiceBrowseScreen extends ConsumerStatefulWidget {
@@ -28,7 +29,11 @@ class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
   @override
   Widget build(BuildContext context) {
     final categories = ref.watch(serviceCategoriesProvider);
-    final services = ref.watch(servicesByCategoryProvider(_selectedCategoryId));
+    // While the user is searching, look across the WHOLE catalog rather than
+    // only the selected category — typing "AC repair" with Cleaning selected
+    // used to return nothing at all, which reads as "we don't offer it".
+    final isSearching = _query.isNotEmpty;
+    final services = ref.watch(servicesByCategoryProvider(isSearching ? null : _selectedCategoryId));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -204,7 +209,11 @@ class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
                     ],
                   ),
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => Center(child: Text('Failed to load categories: $err')),
+                  error: (err, _) => AppErrorView(
+                    error: err,
+                    compact: true,
+                    onRetry: () => ref.invalidate(serviceCategoriesProvider),
+                  ),
                 ),
               ),
 
@@ -292,16 +301,16 @@ class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
                   SliverToBoxAdapter(
                     child: services.when(
                       data: (allItems) {
-                        final items = _query.isEmpty ? allItems : allItems.where((s) => s.name.toLowerCase().contains(_query)).toList();
+                        final items = _query.isEmpty
+                            ? allItems
+                            : allItems.where((s) => s.name.toLowerCase().contains(_query)).toList();
                         return items.isEmpty
-                            ? Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(32.0),
-                                  child: Text(
-                                    _query.isEmpty ? 'No services available in this category yet.' : 'No services match "$_query".',
-                                    style: const TextStyle(color: Colors.black45),
-                                  ),
-                                ),
+                            ? AppEmptyView(
+                                icon: _query.isEmpty ? Icons.home_repair_service_outlined : Icons.search_off_rounded,
+                                title: _query.isEmpty ? 'Nothing here yet' : 'No match for "$_query"',
+                                subtitle: _query.isEmpty
+                                    ? 'This category has no services listed right now.'
+                                    : 'Try a shorter word, or browse the categories above.',
                               )
                             : ListView.separated(
                                 shrinkWrap: true,
@@ -313,7 +322,10 @@ class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
                               );
                       },
                       loading: () => const Center(child: Padding(padding: EdgeInsets.all(32.0), child: CircularProgressIndicator())),
-                      error: (err, _) => Center(child: Text('Failed to load services: $err')),
+                      error: (err, _) => AppErrorView(
+                        error: err,
+                        onRetry: () => ref.invalidate(servicesByCategoryProvider(isSearching ? null : _selectedCategoryId)),
+                      ),
                     ),
                   ),
 

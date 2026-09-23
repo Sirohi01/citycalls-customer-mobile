@@ -4,9 +4,9 @@ import '../../models/booking_models.dart';
 import '../../models/customer_models.dart';
 import '../../providers/booking_providers.dart';
 import '../../providers/customer_providers.dart';
-import '../../theme/app_theme.dart';
-import '../../widgets/booking_step_header.dart';
+import '../../providers/geo_providers.dart';
 import 'issue_description_screen.dart';
+import '../../widgets/state_views.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Booking" — Address Select/Add.
 class AddressSelectScreen extends ConsumerStatefulWidget {
@@ -175,7 +175,9 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                       ],
                     ),
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, _) => Center(child: Text('Failed to load your addresses: $err')),
+                    error: (err, _) => Center(
+                      child: AppErrorView(error: err, onRetry: () => ref.invalidate(myProfileProvider)),
+                    ),
                   ),
                 ),
 
@@ -269,10 +271,57 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
   final _stateController = TextEditingController();
   final _pinCodeController = TextEditingController();
   bool _saving = false;
+  bool _lookingUpPin = false;
   String? _error;
+  String? _pinNotice;
+  String _lastLookedUpPin = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _pinCodeController.addListener(_onPinChanged);
+  }
+
+  // GET /geo/pincode/:pincode resolves city/state (and whether we even cover
+  // the area) from the PIN — the user used to have to type both by hand, and
+  // a typo there is exactly what makes a request land on the wrong branch.
+  void _onPinChanged() {
+    final pin = _pinCodeController.text.trim();
+    if (pin.length != 6 || pin == _lastLookedUpPin) return;
+    _lastLookedUpPin = pin;
+    _lookupPin(pin);
+  }
+
+  Future<void> _lookupPin(String pin) async {
+    setState(() {
+      _lookingUpPin = true;
+      _pinNotice = null;
+    });
+    final area = await ref.read(geoRepositoryProvider).lookupPincode(pin);
+    if (!mounted || _pinCodeController.text.trim() != pin) return;
+    setState(() {
+      _lookingUpPin = false;
+      if (area == null) {
+        _pinNotice = null;
+        return;
+      }
+      // Only fill blanks — never overwrite something the user typed
+      // themselves, since the lookup is a convenience, not an authority.
+      if (_cityController.text.trim().isEmpty && area.resolvedCity != null) {
+        _cityController.text = area.resolvedCity!;
+      }
+      if (_stateController.text.trim().isEmpty && area.state != null) {
+        _stateController.text = area.state!;
+      }
+      _pinNotice = area.serviceable
+          ? 'We serve this area${area.branchName != null ? ' · ${area.branchName}' : ''}'
+          : "We don't cover this PIN code yet — you can still save the address.";
+    });
+  }
 
   @override
   void dispose() {
+    _pinCodeController.removeListener(_onPinChanged);
     _line1Controller.dispose();
     _line2Controller.dispose();
     _landmarkController.dispose();
@@ -329,6 +378,35 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
               const SizedBox(height: 10),
               TextFormField(controller: _landmarkController, decoration: const InputDecoration(labelText: 'Landmark (optional)')),
               const SizedBox(height: 10),
+              TextFormField(
+                controller: _pinCodeController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: InputDecoration(
+                  labelText: 'PIN Code',
+                  counterText: '',
+                  helperText: 'City and state fill in automatically',
+                  suffixIcon: _lookingUpPin
+                      ? const Padding(
+                          padding: EdgeInsets.all(14),
+                          child: SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                        )
+                      : null,
+                ),
+                validator: (v) => (v == null || v.trim().length < 6) ? 'Enter a valid 6-digit PIN code' : null,
+              ),
+              if (_pinNotice != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                  child: Text(
+                    _pinNotice!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _pinNotice!.startsWith('We serve') ? const Color(0xFF16A34A) : Colors.orange.shade800,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
@@ -347,13 +425,6 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _pinCodeController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'PIN Code'),
-                validator: (v) => (v == null || v.trim().length < 4) ? 'Enter a valid PIN code' : null,
               ),
               if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: Colors.red))),
               const SizedBox(height: 16),
@@ -450,7 +521,7 @@ class _AddressTile extends StatelessWidget {
                     const SizedBox(height: 6),
                     if (!isAddNew)
                       Text(
-                        [address!.line1, address!.city, address!.pinCode].where((s) => s != null && s!.isNotEmpty).join(', '),
+                        [address!.line1, address!.city, address!.pinCode].where((s) => s != null && s.isNotEmpty).join(', '),
                         style: const TextStyle(color: Colors.black54, fontSize: 12),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

@@ -155,3 +155,39 @@ class PaymentReceipt {
 }
 
 const kPaymentMethods = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE'];
+
+// Credit/debit notes issued against an Invoice (citycalls-api's
+// creditDebitNotes.model.ts) — a value adjustment on an already-issued bill.
+// The customer is the party the adjustment applies to, so they need to see it
+// alongside the invoice rather than only in the admin panel.
+class InvoiceNote {
+  final String id;
+  final String number;
+  final double amount;
+  final String reason;
+  final String? pdfUrl;
+  final String? createdAt;
+  final bool isCredit;
+
+  InvoiceNote({
+    required this.id,
+    required this.number,
+    required this.amount,
+    required this.reason,
+    this.pdfUrl,
+    this.createdAt,
+    required this.isCredit,
+  });
+
+  factory InvoiceNote.fromJson(Map<String, dynamic> json, {required bool isCredit}) {
+    return InvoiceNote(
+      id: json['_id'] as String,
+      number: json['number'] as String? ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      reason: json['reason'] as String? ?? '',
+      pdfUrl: json['pdfUrl'] as String?,
+      createdAt: json['createdAt'] as String?,
+      isCredit: isCredit,
+    );
+  }
+}

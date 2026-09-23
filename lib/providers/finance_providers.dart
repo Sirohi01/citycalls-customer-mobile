@@ -22,3 +22,7 @@ final invoiceForRequestProvider = FutureProvider.family<Invoice?, String>((ref, 
 final paymentsForInvoiceProvider = FutureProvider.family<List<PaymentReceipt>, String>((ref, invoiceId) async {
   return ref.watch(financeRepositoryProvider).listPayments(invoiceId);
 });
+
+final invoiceNotesProvider = FutureProvider.family<List<InvoiceNote>, String>((ref, invoiceId) async {
+  return ref.watch(financeRepositoryProvider).listInvoiceNotes(invoiceId);
+});

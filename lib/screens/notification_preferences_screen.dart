@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../providers/customer_providers.dart';
 import '../theme/app_theme.dart';
+import '../widgets/state_views.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Profile" — Notification
 // Preferences / Consent management. Backed by the existing
@@ -51,7 +52,9 @@ class NotificationPreferencesScreen extends ConsumerWidget {
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Failed to load preferences: $err')),
+        error: (err, _) => Center(
+          child: AppErrorView(error: err, onRetry: () => ref.invalidate(myProfileProvider)),
+        ),
       ),
     );
   }

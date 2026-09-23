@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/reopen_models.dart';
 import '../models/service_request_models.dart';
 import '../models/realtime_models.dart';
 import '../providers/service_request_providers.dart';
@@ -8,6 +9,8 @@ import '../providers/finance_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/live_map_section.dart';
+import '../widgets/state_views.dart';
+import 'service_visits_screen.dart';
 import 'reschedule_screen.dart';
 import 'cancel_request_screen.dart';
 import 'estimate_review_screen.dart';
@@ -61,6 +64,11 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
   Widget build(BuildContext context) {
     final detail = ref.watch(serviceRequestDetailProvider(requestId));
     final activityLog = ref.watch(activityLogProvider(requestId));
+    // Drives the "Work Details" entry point below — the button only appears
+    // once a technician has actually opened a visit, so it never leads to an
+    // empty screen.
+    final hasVisits = ref.watch(serviceVisitsProvider(requestId)).valueOrNull?.isNotEmpty ?? false;
+    final reopenHistory = ref.watch(reopenHistoryProvider(requestId)).valueOrNull ?? const <ReopenRecord>[];
     final proformaAwaitingAcceptance = ref.watch(proformaForRequestProvider(requestId)).valueOrNull?.status == 'SHARED';
 
     // Status/assignment changes arrive over the same socket room the Live
@@ -74,6 +82,7 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
       if (event != null && event.type != RealtimeEventType.locationUpdated) {
         ref.invalidate(serviceRequestDetailProvider(requestId));
         ref.invalidate(activityLogProvider(requestId));
+        ref.invalidate(serviceVisitsProvider(requestId));
       }
     });
 
@@ -85,6 +94,8 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
           onRefresh: () async {
             ref.invalidate(serviceRequestDetailProvider(requestId));
             ref.invalidate(activityLogProvider(requestId));
+            ref.invalidate(serviceVisitsProvider(requestId));
+            ref.invalidate(reopenHistoryProvider(requestId));
           },
           child: ListView(
             padding: const EdgeInsets.all(20),
@@ -98,6 +109,10 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
               if (sr.notes != null && sr.notes!.isNotEmpty) _infoCard(context, Icons.notes_outlined, 'Notes', sr.notes!),
               if (sr.status == 'CANCELLED' && sr.cancelReason != null) _infoCard(context, Icons.cancel_outlined, 'Cancellation Reason', sr.cancelReason!),
               const SizedBox(height: 10),
+              if (reopenHistory.isNotEmpty) ...[
+                _reopenHistoryCard(reopenHistory),
+                const SizedBox(height: 10),
+              ],
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -115,12 +130,29 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                           ? const Text('No activity yet.', style: TextStyle(color: AppColors.neutral500))
                           : Column(children: [for (var i = 0; i < entries.length; i++) _timelineEntry(entries[i], isLast: i == entries.length - 1)]),
                       loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (_, __) => const Text('Failed to load activity', style: TextStyle(color: AppColors.neutral500)),
+                      error: (err, __) => AppErrorView(
+                        error: err,
+                        compact: true,
+                        onRetry: () => ref.invalidate(activityLogProvider(requestId)),
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
+              // The technician's own record of the job — diagnosis, parts
+              // fitted, work notes and before/after photos. Previously none
+              // of this reached the customer at all, even though they get
+              // billed for the parts listed in it.
+              if (hasVisits)
+                _actionButton(
+                  context,
+                  Icons.assignment_outlined,
+                  'View Work Details',
+                  () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => ServiceVisitsScreen(requestId: requestId, requestNumber: sr.number),
+                  )),
+                ),
               if (sr.status == 'ESTIMATE_SHARED' || sr.status == 'AWAITING_CUSTOMER_APPROVAL')
                 _actionButton(context, Icons.receipt_long_outlined, 'Review Estimate', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => EstimateReviewScreen(requestId: requestId)))),
               // The actual "move this request forward" action for this
@@ -157,7 +189,12 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Failed to load service request: $err')),
+        error: (err, _) => Center(
+          child: AppErrorView(
+            error: err,
+            onRetry: () => ref.invalidate(serviceRequestDetailProvider(requestId)),
+          ),
+        ),
       ),
     );
   }
@@ -288,6 +325,91 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // A customer-initiated reopen starts PENDING and needs staff approval
+  // (reopenRecords.model.ts), so without this the customer tapped "Reopen",
+  // got a success toast, and then had no way to learn whether it was ever
+  // approved. The /reopen-requests list endpoint is happyCalls-gated, but
+  // this per-request history is serviceRequests:view at OWN scope.
+  Widget _reopenHistoryCard(List<ReopenRecord> records) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Reopen Requests', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const SizedBox(height: 12),
+          for (final record in records) _reopenRow(record),
+        ],
+      ),
+    );
+  }
+
+  Widget _reopenRow(ReopenRecord record) {
+    final color = switch (record.status) {
+      'APPROVED' => const Color(0xFF16A34A),
+      'REJECTED' => Colors.red,
+      _ => const Color(0xFFF59E0B),
+    };
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Reopen #${record.reopenCount}',
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                ),
+                Text(
+                  reopenStatusLabel(record.status),
+                  style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(record.reason, style: const TextStyle(fontSize: 12.5, height: 1.4)),
+            if (record.status == 'REJECTED' && record.rejectionReason != null) ...[
+              const SizedBox(height: 5),
+              Text(
+                'Reason: ${record.rejectionReason}',
+                style: const TextStyle(fontSize: 12, color: AppColors.neutral500, height: 1.4),
+              ),
+            ],
+            if (!record.withinPolicyWindow) ...[
+              const SizedBox(height: 5),
+              const Text(
+                'Raised outside the standard reopen window',
+                style: TextStyle(fontSize: 11.5, color: AppColors.neutral500),
+              ),
+            ],
+            if (record.reopenedAt != null) ...[
+              const SizedBox(height: 5),
+              Text(
+                '${record.reopenedAt!.day.toString().padLeft(2, '0')}/${record.reopenedAt!.month.toString().padLeft(2, '0')}/${record.reopenedAt!.year}',
+                style: const TextStyle(fontSize: 11, color: AppColors.neutral500),
+              ),
+            ],
           ],
         ),
       ),

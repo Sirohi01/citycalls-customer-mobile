@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/booking_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/add_product_sheet.dart';
+import '../widgets/state_views.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Profile" — Saved Products.
 class SavedProductsScreen extends ConsumerWidget {
@@ -91,7 +92,9 @@ class SavedProductsScreen extends ConsumerWidget {
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Failed to load your appliances: $err')),
+        error: (err, _) => Center(
+          child: AppErrorView(error: err, onRetry: () => ref.invalidate(customerProductsProvider)),
+        ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import 'service_browse_screen.dart';
 import 'service_detail_screen.dart';
 import '../widgets/custom_top_bar.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/state_views.dart';
 import '../theme/app_theme.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -16,17 +17,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final requests = ref.watch(myServiceRequestsProvider);
     final categories = ref.watch(serviceCategoriesProvider);
-    
-    final activeCount = requests.maybeWhen(
-        data: (items) => items.where((r) => r.isActive).length,
-        orElse: () => 0);
-    final completedCount = requests.maybeWhen(
-      data: (items) =>
-          items.where((r) => !r.isActive && r.status != 'CANCELLED').length,
-      orElse: () => 0,
-    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -102,7 +93,11 @@ class HomeScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
+                error: (err, __) => AppErrorView(
+                  error: err,
+                  compact: true,
+                  onRetry: () => ref.invalidate(serviceCategoriesProvider),
+                ),
               ),
             ],
           ),
@@ -331,90 +326,6 @@ class _HeroBannerState extends State<_HeroBanner> {
   }
 }
 
-class _StatsCard extends StatelessWidget {
-  final int activeCount;
-  final int completedCount;
-  const _StatsCard({required this.activeCount, required this.completedCount});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {},
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFBBF7D0), width: 1.2),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.bolt_rounded, color: Color(0xFF16A34A), size: 22),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('$activeCount Active', style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Color(0xFF166534), letterSpacing: -0.2)),
-                        const Text('Bookings', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF22C55E))),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {},
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    )
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_rounded, color: Color(0xFF94A3B8), size: 20),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('$completedCount Done', style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Color(0xFF334155), letterSpacing: -0.2)),
-                        const Text('Past jobs', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-
-
 IconData _iconForCategory(String label) {
   final l = label.toLowerCase();
   if (l.contains('ac') || l.contains('air')) return Icons.ac_unit_rounded;
@@ -434,27 +345,28 @@ IconData _iconForCategory(String label) {
   return Icons.miscellaneous_services_rounded;
 }
 
-const _categoryTints = [
-  Color(0xFFFAF5FF),
-  Color(0xFFF0F9FF),
-  Color(0xFFF0FDF4),
-  Color(0xFFFFFAF0),
-];
 const _categoryIconColors = [
   Color(0xFF9333EA),
   Color(0xFF0284C7),
   Color(0xFF16A34A),
   Color(0xFFEA580C),
 ];
-const _categorySubtitles = [
-  'Expert salon care',
-  'Quick repairs',
-  'Spotless cleaning',
-  'Safe & reliable',
-];
+
+// Service.expectedDurationMinutes rendered for a customer. Replaces the
+// star rating that used to sit in this slot, which was computed from the
+// service NAME's length — Service carries no rating field at all, and the
+// backend has no rating-aggregate endpoint, so there was nothing real to
+// show there.
+String formatServiceDuration(int minutes) {
+  if (minutes < 60) return '$minutes min';
+  final hours = minutes ~/ 60;
+  final rest = minutes % 60;
+  if (rest == 0) return hours == 1 ? '1 hr' : '$hours hrs';
+  return '$hours hr $rest min';
+}
 
 class _TopCategoriesSection extends ConsumerStatefulWidget {
-  const _TopCategoriesSection({super.key});
+  const _TopCategoriesSection();
 
   @override
   ConsumerState<_TopCategoriesSection> createState() => _TopCategoriesSectionState();
@@ -514,7 +426,11 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
           child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF16A34A)),
         ),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (err, __) => AppErrorView(
+        error: err,
+        compact: true,
+        onRetry: () => ref.invalidate(serviceCategoriesProvider),
+      ),
     );
   }
 
@@ -550,7 +466,6 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
                   final img = media.where((m) => m.category == 'CATALOG_IMAGE').firstOrNull;
                   if (img != null) {
                     final url = ref.read(catalogRepositoryProvider).resolveMediaUrl(img);
-                    print('Category ${category.label} Image URL: $url');
                     return Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Image.network(
@@ -558,10 +473,8 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
                         width: double.infinity,
                         height: double.infinity,
                         fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          print('Image load failed for $url: $error');
-                          return Icon(_iconForCategory(category.label), color: iconColor, size: 30);
-                        },
+                        errorBuilder: (context, error, stackTrace) =>
+                            Icon(_iconForCategory(category.label), color: iconColor, size: 30),
                       ),
                     );
                   }
@@ -974,9 +887,6 @@ class _ApplianceServiceCard extends ConsumerWidget {
       orElse: () => null,
     );
 
-    // Mock rating based on string length to give it a realistic varied look like the design
-    final rating = (4.0 + (service.name.length % 10) / 10).toStringAsFixed(1);
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1026,10 +936,13 @@ class _ApplianceServiceCard extends ConsumerWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.star, color: Color(0xFF16A34A), size: 16),
+                    const Icon(Icons.schedule, color: Color(0xFF16A34A), size: 15),
                     const SizedBox(width: 4),
-                    Text(rating, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF334155))),
-                    const SizedBox(width: 12),
+                    Text(
+                      formatServiceDuration(service.expectedDurationMinutes),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(width: 10),
                     const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
                   ],
                 ),

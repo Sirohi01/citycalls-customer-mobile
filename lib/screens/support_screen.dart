@@ -33,8 +33,16 @@ class SupportScreen extends StatelessWidget {
       'If the technician finds additional work is needed, you\'ll get an estimate to review and approve or reject from the request\'s detail screen. Once the job is done, you can view and pay the invoice from the same screen.',
     ),
     (
+      'Where can I see what the technician actually did?',
+      'Open the request from My Services and tap "View Work Details" — it shows the diagnosis, any parts fitted with their prices, the technician\'s work notes, and before/after photos from the visit.',
+    ),
+    (
       'The issue came back after the technician left — what do I do?',
-      'Open the completed request from My Services\' History tab and use "Reopen Request" — our team will follow up without needing a fresh booking.',
+      'Open the completed request from My Services\' History tab and use "Reopen Request" — our team will follow up without needing a fresh booking. The request\'s detail screen then shows whether it was approved or rejected.',
+    ),
+    (
+      'How do I sign out of a phone I no longer use?',
+      'Go to Profile > Signed-in Devices. You can end any single device\'s session there, or sign out everywhere at once.',
     ),
   ];
 

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/complaint_models.dart';
 import '../providers/complaint_providers.dart';
 import '../theme/app_theme.dart';
+import '../widgets/state_views.dart';
+import 'complaint_detail_screen.dart';
 import 'raise_complaint_screen.dart';
 
 class MyComplaintsScreen extends ConsumerWidget {
@@ -40,20 +42,28 @@ class MyComplaintsScreen extends ConsumerWidget {
           data: (items) => items.isEmpty
               ? ListView(
                   children: const [
-                    SizedBox(height: 120),
-                    Icon(Icons.forum_outlined, color: AppColors.neutral200, size: 48),
-                    SizedBox(height: 12),
-                    Center(child: Text('No complaints raised yet.', style: TextStyle(color: AppColors.neutral500))),
+                    SizedBox(height: 80),
+                    AppEmptyView(
+                      icon: Icons.forum_outlined,
+                      title: 'No complaints raised yet',
+                      subtitle: 'If something went wrong with a service, raise a complaint and our team will respond.',
+                    ),
                   ],
                 )
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
                   itemCount: items.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) => _ComplaintCard(complaint: items[i], color: _statusColor(items[i].status)),
+                  itemBuilder: (context, i) =>
+                      _ComplaintCard(complaint: items[i], color: _statusColor(items[i].status)),
                 ),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Failed to load complaints: $err')),
+          error: (err, _) => ListView(
+            children: [
+              const SizedBox(height: 80),
+              AppErrorView(error: err, onRetry: () => ref.invalidate(myComplaintsProvider)),
+            ],
+          ),
         ),
       ),
     );
@@ -67,50 +77,65 @@ class _ComplaintCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(border: Border.all(color: AppColors.neutral200), borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(child: Text(complaint.subject, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5))),
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ComplaintDetailScreen(complaintId: complaint.id)),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration:
+            BoxDecoration(border: Border.all(color: AppColors.neutral200), borderRadius: BorderRadius.circular(12)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                    child:
+                        Text(complaint.subject, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5))),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration:
+                      BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+                  child: Text(complaintStatusLabel(complaint.status),
+                      style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(complaint.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AppColors.neutral500, fontSize: 13)),
+            if (complaint.serviceRequestNumber != null) ...[
+              const SizedBox(height: 6),
+              Text('Re: ${complaint.serviceRequestNumber}',
+                  style: const TextStyle(color: AppColors.neutral500, fontSize: 11.5)),
+            ],
+            if (complaint.response != null && complaint.response!.isNotEmpty) ...[
+              const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-                child: Text(complaintStatusLabel(complaint.status), style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(8)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Response from our team', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11.5)),
+                    const SizedBox(height: 4),
+                    Text(complaint.response!, style: const TextStyle(fontSize: 12.5)),
+                  ],
+                ),
               ),
             ],
-          ),
-          const SizedBox(height: 6),
-          Text(complaint.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.neutral500, fontSize: 13)),
-          if (complaint.serviceRequestNumber != null) ...[
             const SizedBox(height: 6),
-            Text('Re: ${complaint.serviceRequestNumber}', style: const TextStyle(color: AppColors.neutral500, fontSize: 11.5)),
-          ],
-          if (complaint.response != null && complaint.response!.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: AppColors.neutral100, borderRadius: BorderRadius.circular(8)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Response from our team', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11.5)),
-                  const SizedBox(height: 4),
-                  Text(complaint.response!, style: const TextStyle(fontSize: 12.5)),
-                ],
-              ),
+            Text(
+              DateTime.tryParse(complaint.createdAt)?.toLocal().toString().split(' ').first ?? '',
+              style: const TextStyle(color: AppColors.neutral500, fontSize: 11),
             ),
           ],
-          const SizedBox(height: 6),
-          Text(
-            DateTime.tryParse(complaint.createdAt)?.toLocal().toString().split(' ').first ?? '',
-            style: const TextStyle(color: AppColors.neutral500, fontSize: 11),
-          ),
-        ],
+        ),
       ),
     );
   }

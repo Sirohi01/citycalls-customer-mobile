@@ -50,3 +50,32 @@ class ApiFieldError {
     );
   }
 }
+
+// An active login on some device (citycalls-api's sessions.model.ts), from
+// GET /auth/sessions. Only non-revoked, unexpired rows come back, and the
+// refresh-token hash is stripped server-side.
+class AuthSession {
+  final String id;
+  final String? device;
+  final String? ipAddress;
+  final DateTime? createdAt;
+  final DateTime? expiresAt;
+
+  AuthSession({
+    required this.id,
+    this.device,
+    this.ipAddress,
+    this.createdAt,
+    this.expiresAt,
+  });
+
+  factory AuthSession.fromJson(Map<String, dynamic> json) {
+    return AuthSession(
+      id: json['_id'] as String,
+      device: json['device'] as String?,
+      ipAddress: json['ipAddress'] as String?,
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal(),
+      expiresAt: DateTime.tryParse(json['expiresAt']?.toString() ?? '')?.toLocal(),
+    );
+  }
+}

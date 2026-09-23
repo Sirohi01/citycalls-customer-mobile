@@ -42,6 +42,19 @@ class FinanceRepository {
     return (res.data['data'] as List).map((p) => PaymentReceipt.fromJson(p as Map<String, dynamic>)).toList();
   }
 
+  // Returns credits and debits merged into one list — a customer reads an
+  // adjustment as a single "this changed your bill" event, not as two
+  // separate ledgers the way the backend stores them.
+  Future<List<InvoiceNote>> listInvoiceNotes(String invoiceId) async {
+    final res = await _client.dio.get('/invoices/$invoiceId/notes');
+    final data = res.data['data'] as Map<String, dynamic>;
+    final credits = (data['creditNotes'] as List? ?? [])
+        .map((n) => InvoiceNote.fromJson(n as Map<String, dynamic>, isCredit: true));
+    final debits = (data['debitNotes'] as List? ?? [])
+        .map((n) => InvoiceNote.fromJson(n as Map<String, dynamic>, isCredit: false));
+    return [...credits, ...debits];
+  }
+
   Future<void> recordPayment(String invoiceId, {required double amount, required String method, String? reference}) async {
     await _client.dio.post('/invoices/$invoiceId/payments', data: {
       'amount': amount,

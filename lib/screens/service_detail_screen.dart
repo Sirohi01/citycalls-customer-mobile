@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/catalog_providers.dart';
 import '../providers/customer_providers.dart';
 import '../models/catalog_models.dart';
-import '../theme/app_theme.dart';
 import '../widgets/media_gallery.dart';
 import '../models/booking_models.dart';
 import 'booking/product_select_screen.dart';
+import '../widgets/state_views.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Home" — Service Detail.
 // The pin-code coverage check here is the same gate the Booking flow itself
@@ -523,7 +523,12 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                   ),
                 ),
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Failed to load service: $err')),
+                error: (err, _) => Center(
+                  child: AppErrorView(
+                    error: err,
+                    onRetry: () => ref.invalidate(serviceDetailProvider(widget.serviceId)),
+                  ),
+                ),
               ),
             ),
 

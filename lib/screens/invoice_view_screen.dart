@@ -4,6 +4,7 @@ import '../models/finance_models.dart';
 import '../providers/finance_providers.dart';
 import '../providers/service_request_providers.dart';
 import '../theme/app_theme.dart';
+import '../widgets/state_views.dart';
 import '../widgets/status_badge.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Estimates & Payments" —
@@ -24,12 +25,20 @@ class InvoiceViewScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Invoice'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
       body: invoice.when(
         data: (inv) {
-          if (inv == null) return const Center(child: Text('No invoice found for this request yet.', style: TextStyle(color: AppColors.neutral500)));
+          if (inv == null) {
+            return const AppEmptyView(
+              icon: Icons.receipt_long_outlined,
+              title: 'No invoice yet',
+              subtitle: 'Your bill appears here once the work is done and the invoice is raised.',
+            );
+          }
           final payments = ref.watch(paymentsForInvoiceProvider(inv.id));
+          final notes = ref.watch(invoiceNotesProvider(inv.id)).valueOrNull ?? const <InvoiceNote>[];
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(invoiceForRequestProvider(requestId));
               ref.invalidate(paymentsForInvoiceProvider(inv.id));
+              ref.invalidate(invoiceNotesProvider(inv.id));
             },
             child: ListView(
               padding: const EdgeInsets.all(20),
@@ -71,6 +80,28 @@ class InvoiceViewScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                // Credit/debit notes adjust an already-issued bill. They were
+                // only ever visible in the admin panel, so a customer could
+                // see their outstanding amount change with no explanation.
+                if (notes.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Adjustments', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        const SizedBox(height: 10),
+                        for (final note in notes) _noteRow(note),
+                      ],
+                    ),
+                  ),
+                ],
                 if (inv.outstanding > 0 && inv.status != 'CANCELLED') ...[
                   const SizedBox(height: 16),
                   FilledButton.icon(
@@ -133,14 +164,64 @@ class InvoiceViewScreen extends ConsumerWidget {
                               .toList(),
                         ),
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (_, __) => const Text('Failed to load payment history', style: TextStyle(color: AppColors.neutral500)),
+                  error: (err, __) => AppErrorView(
+                    error: err,
+                    compact: true,
+                    onRetry: () => ref.invalidate(paymentsForInvoiceProvider(inv.id)),
+                  ),
                 ),
               ],
             ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Failed to load invoice: $err')),
+        error: (err, _) => Center(
+          child: AppErrorView(error: err, onRetry: () => ref.invalidate(invoiceForRequestProvider(requestId))),
+        ),
+      ),
+    );
+  }
+
+  // A credit note reduces what the customer owes, a debit note increases it —
+  // signed and coloured accordingly so the direction is unmistakable.
+  Widget _noteRow(InvoiceNote note) {
+    final color = note.isCredit ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            note.isCredit ? Icons.trending_down_rounded : Icons.trending_up_rounded,
+            size: 18,
+            color: color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  note.isCredit ? 'Credit note ${note.number}' : 'Debit note ${note.number}',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                if (note.reason.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      note.reason,
+                      style: const TextStyle(fontSize: 12, color: AppColors.neutral500, height: 1.35),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '${note.isCredit ? '-' : '+'}₹${note.amount.toStringAsFixed(0)}',
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: color),
+          ),
+        ],
       ),
     );
   }

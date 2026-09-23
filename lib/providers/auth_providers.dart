@@ -1,19 +1,19 @@
-  import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/api_client.dart';
 import '../data/auth_repository.dart';
 import '../data/customer_repository.dart';
 import '../models/auth_models.dart';
 
-// const String _apiBaseUrl = String.fromEnvironment(
-//   'API_BASE_URL',
-//   defaultValue: 'http://192.168.0.164:4000/api/v1',
-// );
-    // defaultValue: 'http://10.65.92.146:4000/api/v1',
-
-
+// The one place the API base URL is configured (ApiClient deliberately has no
+// default of its own). Override per build without editing this file:
+//
+//   flutter run --dart-define=API_BASE_URL=http://<host>:4000/api/v1
+//
+// The fallback below is a LAN address for local development and changes with
+// whatever network the dev machine is on — it is not a deployable default.
 const String _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://172.31.85.146:4000/api/v1',
+  defaultValue: 'http://192.168.1.7:4000/api/v1',
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -26,6 +26,10 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final customerRepositoryProvider = Provider<CustomerRepository>((ref) {
   return CustomerRepository(ref.watch(apiClientProvider));
+});
+
+final activeSessionsProvider = FutureProvider<List<AuthSession>>((ref) async {
+  return ref.watch(authRepositoryProvider).listSessions();
 });
 
 enum AuthStep { enterMobile, otpSent, loggedIn }

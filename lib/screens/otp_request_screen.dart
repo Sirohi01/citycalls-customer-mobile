@@ -7,7 +7,11 @@ import '../widgets/auth_background.dart';
 import 'otp_verify_screen.dart';
 
 class OtpRequestScreen extends ConsumerStatefulWidget {
-  const OtpRequestScreen({super.key});
+  // Set when the user landed here because their session expired mid-use
+  // (api_client.dart's refresh failed) rather than by opening the app logged
+  // out — they need to be told why they're suddenly back at login.
+  final bool sessionExpired;
+  const OtpRequestScreen({super.key, this.sessionExpired = false});
 
   @override
   ConsumerState<OtpRequestScreen> createState() => _OtpRequestScreenState();
@@ -29,6 +33,14 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
     _focusNode.addListener(() {
       setState(() => _isFocused = _focusNode.hasFocus);
     });
+    if (widget.sessionExpired) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your session expired. Please sign in again.')),
+        );
+      });
+    }
   }
 
   @override
@@ -251,7 +263,15 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
               children: [
                 Icon(Icons.shield_outlined, color: AppColors.lime500.withValues(alpha: 0.8), size: 18),
                 const SizedBox(width: 8),
-                Text('Secure Login. Your data is safe with us.', style: TextStyle(color: AppColors.slate400.withValues(alpha: 0.8), fontSize: 12)),
+                // Flexible so the line wraps rather than overflowing once the
+                // device's text-scale setting is turned up — at large scales
+                // this string is wider than a narrow phone's card.
+                Flexible(
+                  child: Text(
+                    'Secure Login. Your data is safe with us.',
+                    style: TextStyle(color: AppColors.slate400.withValues(alpha: 0.8), fontSize: 12),
+                  ),
+                ),
               ],
             ),
           ],

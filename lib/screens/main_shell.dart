@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../app_navigator.dart';
+import '../providers/notification_providers.dart';
 import '../providers/push_providers.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart';
@@ -32,19 +34,53 @@ class _MainShellState extends ConsumerState<MainShell> {
   void initState() {
     super.initState();
     ref.read(pushNotificationServiceProvider).initialize();
+    pendingShellTab.addListener(_applyPendingTab);
+    // A push may have been tapped while this shell was still being built
+    // (cold start via getInitialMessage), so consume anything already queued.
+    _applyPendingTab();
+  }
+
+  @override
+  void dispose() {
+    pendingShellTab.removeListener(_applyPendingTab);
+    super.dispose();
+  }
+
+  // Tab switch requested from outside the widget tree — see app_navigator.dart.
+  void _applyPendingTab() {
+    final requested = pendingShellTab.value;
+    if (requested == null) return;
+    pendingShellTab.value = null;
+    if (!mounted) return;
+    setState(() => _index = requested);
+    ref.invalidate(unreadNotificationCountProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen(foregroundPushMessageProvider, (previous, next) {
       final message = next.valueOrNull;
-      final title = message?.notification?.title;
-      final body = message?.notification?.body;
+      if (message == null) return;
+      // A push IS a new notification — the Alerts badge and list have to
+      // reflect it without waiting for the user to pull-to-refresh.
+      ref.invalidate(unreadNotificationCountProvider);
+      ref.invalidate(myNotificationsProvider);
+
+      final title = message.notification?.title;
+      final body = message.notification?.body;
       if (body == null) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(title != null ? '$title: $body' : body)),
+        SnackBar(
+          content: Text(title != null ? '$title: $body' : body),
+          action: SnackBarAction(
+            label: 'View',
+            onPressed: () => setState(() => _index = ShellTab.alerts),
+          ),
+        ),
       );
     });
+
+    final unreadCount = ref.watch(unreadNotificationCountProvider).valueOrNull ?? 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -69,7 +105,17 @@ class _MainShellState extends ConsumerState<MainShell> {
           child: SafeArea(
             child: BottomNavigationBar(
               currentIndex: _index,
-              onTap: (i) => setState(() => _index = i),
+              onTap: (i) {
+                // Captured before setState — comparing _index afterwards
+                // would just be comparing i to itself.
+                final leavingAlerts = _index == ShellTab.alerts && i != ShellTab.alerts;
+                setState(() => _index = i);
+                // Opening Alerts marks rows read as they're tapped, and
+                // leaving it is the natural moment to re-sync the count.
+                if (i == ShellTab.alerts || leavingAlerts) {
+                  ref.invalidate(unreadNotificationCountProvider);
+                }
+              },
               backgroundColor: AppColors.white,
               elevation: 0,
               type: BottomNavigationBarType.fixed,
@@ -133,14 +179,14 @@ class _MainShellState extends ConsumerState<MainShell> {
                       child: Icon(Icons.grid_view_rounded)),
                   label: 'Bookings',
                 ),
-                const BottomNavigationBarItem(
+                BottomNavigationBarItem(
                   // The image uses a bell for Alerts
                   icon: Padding(
-                      padding: EdgeInsets.only(bottom: 4, top: 8),
-                      child: Icon(Icons.notifications_none)),
+                      padding: const EdgeInsets.only(bottom: 4, top: 8),
+                      child: _UnreadBadge(count: unreadCount, child: const Icon(Icons.notifications_none))),
                   activeIcon: Padding(
-                      padding: EdgeInsets.only(bottom: 4, top: 8),
-                      child: Icon(Icons.notifications)),
+                      padding: const EdgeInsets.only(bottom: 4, top: 8),
+                      child: _UnreadBadge(count: unreadCount, child: const Icon(Icons.notifications))),
                   label: 'Alerts',
                 ),
                 const BottomNavigationBarItem(
@@ -157,6 +203,41 @@ class _MainShellState extends ConsumerState<MainShell> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _UnreadBadge extends StatelessWidget {
+  final int count;
+  final Widget child;
+  const _UnreadBadge({required this.count, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0) return child;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        child,
+        Positioned(
+          right: -6,
+          top: -4,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            constraints: const BoxConstraints(minWidth: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEF4444),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.white, width: 1.5),
+            ),
+            child: Text(
+              count > 99 ? '99+' : '$count',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w700, height: 1.3),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
