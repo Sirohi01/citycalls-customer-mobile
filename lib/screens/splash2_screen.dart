@@ -70,37 +70,22 @@ class _Splash2ScreenState extends State<Splash2Screen> {
                 ],
               ),
             ),
-            // Center Image — the illustration itself has a light background
-            // baked in, so it's framed as a deliberate floating card (rounded
-            // corners + shadow) instead of a stray white rectangle sitting on
-            // the black scaffold. AspectRatio matches the source image
-            // (1536x1024) exactly so BoxFit.cover never crops it. Given only
-            // a slim horizontal inset (unlike the 24px around the rest of the
-            // page) so it renders bigger.
+            // Center Image — transparent-background PNG, so it sits directly
+            // on the black scaffold. Given only a slim horizontal inset
+            // (unlike the 24px around the rest of the page) so it renders
+            // bigger.
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
+                // Scaled down a little so the illustration doesn't crowd the
+                // heading and buttons.
                 child: Center(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          blurRadius: 24,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: AspectRatio(
-                        aspectRatio: 1536 / 1024,
-                        child: Image.asset(
-                          'assets/login/splash22.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                  child: FractionallySizedBox(
+                    widthFactor: 0.85,
+                    heightFactor: 0.85,
+                    child: Image.asset(
+                      'assets/login/splash22.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),

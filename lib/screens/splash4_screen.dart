@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../data/intro_storage.dart';
 import '../theme/app_theme.dart';
 
 class Splash4Screen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _Splash4ScreenState extends State<Splash4Screen> {
   }
 
   void _goNext() {
+    IntroStorage.markSeen();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => widget.nextScreen),
@@ -88,9 +90,15 @@ class _Splash4ScreenState extends State<Splash4Screen> {
                           ),
                         ),
                       ),
-                      Image.asset(
-                        'assets/login/splace4_dark.png',
-                        fit: BoxFit.contain,
+                      // Scaled down a little so the illustration doesn't crowd the
+                      // heading and buttons.
+                      FractionallySizedBox(
+                        widthFactor: 0.85,
+                        heightFactor: 0.85,
+                        child: Image.asset(
+                          'assets/login/splace4_dark.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ],
                   ),

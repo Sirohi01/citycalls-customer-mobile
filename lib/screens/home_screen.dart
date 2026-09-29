@@ -84,8 +84,9 @@ class HomeScreen extends ConsumerWidget {
                                     !c.label.toLowerCase().contains('bliss') &&
                                     !c.label.toLowerCase().contains('salon'))
                                 .toList();
-                            if (displayCats.isEmpty)
+                            if (displayCats.isEmpty) {
                               return const SizedBox.shrink();
+                            }
                             return Column(
                               children: [
                                 for (final c in displayCats)
@@ -341,22 +342,36 @@ class _HeroBannerState extends State<_HeroBanner> {
 
 IconData _iconForCategory(String label) {
   final l = label.toLowerCase();
-  if (l.contains('ac') || l.contains('air')) return Icons.ac_unit_rounded;
-  if (l.contains('electric')) return Icons.bolt_rounded;
-  if (l.contains('plumb')) return Icons.plumbing_rounded;
-  if (l.contains('clean')) return Icons.cleaning_services_rounded;
-  if (l.contains('paint')) return Icons.format_paint_rounded;
-  if (l.contains('carpent') || l.contains('wood'))
+  if (l.contains('ac') || l.contains('air')) {
+    return Icons.ac_unit_rounded;
+  }
+  if (l.contains('electric')) {
+    return Icons.bolt_rounded;
+  }
+  if (l.contains('plumb')) {
+    return Icons.plumbing_rounded;
+  }
+  if (l.contains('clean')) {
+    return Icons.cleaning_services_rounded;
+  }
+  if (l.contains('paint')) {
+    return Icons.format_paint_rounded;
+  }
+  if (l.contains('carpent') || l.contains('wood')) {
     return Icons.carpenter_rounded;
-  if (l.contains('pest')) return Icons.pest_control_rounded;
+  }
+  if (l.contains('pest')) {
+    return Icons.pest_control_rounded;
+  }
   if (l.contains('beauty') ||
       l.contains('salon') ||
       l.contains('bliss') ||
       l.contains('spa')) {
     return Icons.spa_rounded;
   }
-  if (l.contains('appliance') || l.contains('repair'))
+  if (l.contains('appliance') || l.contains('repair')) {
     return Icons.build_rounded;
+  }
   return Icons.miscellaneous_services_rounded;
 }
 

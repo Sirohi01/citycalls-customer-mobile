@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/intro_storage.dart';
 import '../providers/auth_providers.dart';
 import 'otp_request_screen.dart';
 import 'profile_setup_screen.dart';
@@ -68,6 +69,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _resolveDestination() async {
     final stopwatch = Stopwatch()..start();
     Widget destination;
+    // Intro (splash2-4) is shown once; a valid session also implies it was
+    // already seen (covers users who updated from a build without the flag).
+    var skipIntro = await IntroStorage.isSeen();
     try {
       final customer = await ref
           .read(customerRepositoryProvider)
@@ -76,6 +80,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       destination = customer.needsProfileSetup
           ? const ProfileSetupScreen()
           : const MainShell();
+      skipIntro = true;
     } catch (_) {
       destination = const OtpRequestScreen();
     }
@@ -87,7 +92,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     SplashScreen.bootstrapping = false;
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => Splash2Screen(nextScreen: destination)),
+      MaterialPageRoute(
+          builder: (_) =>
+              skipIntro ? destination : Splash2Screen(nextScreen: destination)),
     );
   }
 
