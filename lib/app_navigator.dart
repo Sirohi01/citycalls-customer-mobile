@@ -14,8 +14,8 @@ NavigatorState? get appNavigator => appNavigatorKey.currentState;
 abstract final class ShellTab {
   static const home = 0;
   static const salon = 1;
-  static const bookings = 2;
-  static const alerts = 3;
+  static const helpNow = 2;
+  static const bookings = 3;
   static const profile = 4;
 }
 

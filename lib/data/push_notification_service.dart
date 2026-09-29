@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../app_navigator.dart';
 import '../screens/my_complaints_screen.dart';
+import '../screens/notifications_screen.dart';
 import 'customer_repository.dart';
 
 // Registers this device's FCM token with the backend so
@@ -55,33 +56,40 @@ class PushNotificationService {
   void _openFor(RemoteMessage message) {
     final navigator = appNavigator;
     if (navigator == null) return;
-    final triggerKey = (message.data['triggerKey'] ?? '').toString().toLowerCase();
+    final triggerKey =
+        (message.data['triggerKey'] ?? '').toString().toLowerCase();
 
     // Complaints aren't a tab, and MyComplaintsScreen has its own AppBar, so
     // it's safe to push as a route.
     if (triggerKey.contains('complaint')) {
-      navigator.push(MaterialPageRoute(builder: (_) => const MyComplaintsScreen()));
+      navigator
+          .push(MaterialPageRoute(builder: (_) => const MyComplaintsScreen()));
       return;
     }
 
-    // Everything else lives in a bottom tab. Unwind to the shell and switch
-    // tabs rather than pushing the tab's screen on top of the stack — those
-    // screens have no back affordance of their own.
-    pendingShellTab.value = _tabFor(triggerKey);
+    // Booking-related pushes go to the Bookings tab. Unwind to the shell and
+    // switch tabs rather than pushing MyServicesScreen on top of the stack —
+    // it has no back affordance of its own.
+    if (_isBookingTrigger(triggerKey)) {
+      pendingShellTab.value = ShellTab.bookings;
+      navigator.popUntil((route) => route.isFirst);
+      return;
+    }
+
+    // Everything else opens the notifications list. It's no longer a bottom
+    // tab, but it has its own back button, so it's safe to push as a route.
     navigator.popUntil((route) => route.isFirst);
+    navigator
+        .push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
   }
 
-  int _tabFor(String triggerKey) {
-    if (triggerKey.contains('service_request') ||
-        triggerKey.contains('estimate') ||
-        triggerKey.contains('invoice') ||
-        triggerKey.contains('payment') ||
-        triggerKey.contains('visit') ||
-        triggerKey.contains('technician')) {
-      return ShellTab.bookings;
-    }
-    return ShellTab.alerts;
-  }
+  bool _isBookingTrigger(String triggerKey) =>
+      triggerKey.contains('service_request') ||
+      triggerKey.contains('estimate') ||
+      triggerKey.contains('invoice') ||
+      triggerKey.contains('payment') ||
+      triggerKey.contains('visit') ||
+      triggerKey.contains('technician');
 
   Future<void> _registerSafely(String token) async {
     try {

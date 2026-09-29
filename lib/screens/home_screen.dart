@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../app_navigator.dart';
 import '../providers/customer_providers.dart';
 import '../providers/service_request_providers.dart';
 import '../providers/catalog_providers.dart';
@@ -49,63 +50,73 @@ class HomeScreen extends ConsumerWidget {
             bottom: false,
             child: Column(
               children: [
-            const CustomTopBar(),
-            Expanded(
-              child: RefreshIndicator(
-                color: const Color(0xFF16A34A),
-                onRefresh: () async {
-                  ref.invalidate(myProfileProvider);
-                  ref.invalidate(myServiceRequestsProvider);
-                  ref.invalidate(serviceCategoriesProvider);
-                  ref.invalidate(servicesByCategoryProvider);
-                },
-                child: ListView(
-                  padding: const EdgeInsets.only(top: 0, bottom: 24),
-                  children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: _HeroBanner(),
-              ),
-              const SizedBox(height: 7), // Reduced spacing
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(horizontal: 16),
-              //   child: _StatsCard(
-              //       activeCount: activeCount,
-              //       completedCount: completedCount),
-              // ),
-              // const SizedBox(height: 12),
-              const _TopCategoriesSection(),
-              const SizedBox(height: 16),
-              categories.when(
-                data: (cats) {
-                  final displayCats = cats.where((c) => !c.label.toLowerCase().contains('bliss') && !c.label.toLowerCase().contains('salon')).toList();
-                  if (displayCats.isEmpty) return const SizedBox.shrink();
-                  return Column(
-                    children: [
-                      for (final c in displayCats)
-                        if (c.label.toLowerCase().contains('appliance') ||
-                            c.label.toLowerCase().contains('cleaning') ||
-                            c.label.toLowerCase().contains('pest'))
-                          _ApplianceServiceList(category: c)
-                        else
-                          _CategoryServiceRail(category: c)
-                    ],
-                  );
-                },
-                loading: () => const SizedBox.shrink(),
-                error: (err, __) => AppErrorView(
-                  error: err,
-                  compact: true,
-                  onRetry: () => ref.invalidate(serviceCategoriesProvider),
+                const CustomTopBar(),
+                Expanded(
+                  child: RefreshIndicator(
+                    color: const Color(0xFF16A34A),
+                    onRefresh: () async {
+                      ref.invalidate(myProfileProvider);
+                      ref.invalidate(myServiceRequestsProvider);
+                      ref.invalidate(serviceCategoriesProvider);
+                      ref.invalidate(servicesByCategoryProvider);
+                    },
+                    child: ListView(
+                      padding: const EdgeInsets.only(top: 0, bottom: 24),
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: _HeroBanner(),
+                        ),
+                        const SizedBox(height: 7), // Reduced spacing
+                        // Padding(
+                        //   padding: const EdgeInsets.symmetric(horizontal: 16),
+                        //   child: _StatsCard(
+                        //       activeCount: activeCount,
+                        //       completedCount: completedCount),
+                        // ),
+                        // const SizedBox(height: 12),
+                        const _TopCategoriesSection(),
+                        const SizedBox(height: 16),
+                        categories.when(
+                          data: (cats) {
+                            final displayCats = cats
+                                .where((c) =>
+                                    !c.label.toLowerCase().contains('bliss') &&
+                                    !c.label.toLowerCase().contains('salon'))
+                                .toList();
+                            if (displayCats.isEmpty)
+                              return const SizedBox.shrink();
+                            return Column(
+                              children: [
+                                for (final c in displayCats)
+                                  if (c.label
+                                          .toLowerCase()
+                                          .contains('appliance') ||
+                                      c.label
+                                          .toLowerCase()
+                                          .contains('cleaning') ||
+                                      c.label.toLowerCase().contains('pest'))
+                                    _ApplianceServiceList(category: c)
+                                  else
+                                    _CategoryServiceRail(category: c)
+                              ],
+                            );
+                          },
+                          loading: () => const SizedBox.shrink(),
+                          error: (err, __) => AppErrorView(
+                            error: err,
+                            compact: true,
+                            onRetry: () =>
+                                ref.invalidate(serviceCategoriesProvider),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-              ),
-            ],
-          ),
-        ),
         ],
       ),
     );
@@ -212,7 +223,8 @@ class _HeroBannerState extends State<_HeroBanner> {
                       child: Image(
                         image: (slide['imageUrl'] as String).startsWith('http')
                             ? NetworkImage(slide['imageUrl'] as String)
-                            : AssetImage(slide['imageUrl'] as String) as ImageProvider,
+                            : AssetImage(slide['imageUrl'] as String)
+                                as ImageProvider,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -220,7 +232,8 @@ class _HeroBannerState extends State<_HeroBanner> {
                     // Content
                     Positioned.fill(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -333,7 +346,8 @@ IconData _iconForCategory(String label) {
   if (l.contains('plumb')) return Icons.plumbing_rounded;
   if (l.contains('clean')) return Icons.cleaning_services_rounded;
   if (l.contains('paint')) return Icons.format_paint_rounded;
-  if (l.contains('carpent') || l.contains('wood')) return Icons.carpenter_rounded;
+  if (l.contains('carpent') || l.contains('wood'))
+    return Icons.carpenter_rounded;
   if (l.contains('pest')) return Icons.pest_control_rounded;
   if (l.contains('beauty') ||
       l.contains('salon') ||
@@ -341,7 +355,8 @@ IconData _iconForCategory(String label) {
       l.contains('spa')) {
     return Icons.spa_rounded;
   }
-  if (l.contains('appliance') || l.contains('repair')) return Icons.build_rounded;
+  if (l.contains('appliance') || l.contains('repair'))
+    return Icons.build_rounded;
   return Icons.miscellaneous_services_rounded;
 }
 
@@ -365,27 +380,30 @@ String formatServiceDuration(int minutes) {
   return '$hours hr $rest min';
 }
 
-class _TopCategoriesSection extends ConsumerStatefulWidget {
+// Grid shows up to 2 rows of 4 (8 slots). Categories beyond that are reached
+// via the 8th slot turning into a "More Services" card instead of trying to
+// cram them all in, or an expand/collapse toggle.
+const _maxGridSlots = 8;
+
+class _TopCategoriesSection extends ConsumerWidget {
   const _TopCategoriesSection();
 
   @override
-  ConsumerState<_TopCategoriesSection> createState() => _TopCategoriesSectionState();
-}
-
-class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(serviceCategoriesProvider);
 
     return categories.when(
       data: (cats) {
-        final displayCats = cats.where((c) => !c.label.toLowerCase().contains('bliss') && !c.label.toLowerCase().contains('salon')).toList();
+        final displayCats = cats
+            .where((c) =>
+                !c.label.toLowerCase().contains('bliss') &&
+                !c.label.toLowerCase().contains('salon'))
+            .toList();
         if (displayCats.isEmpty) return const SizedBox.shrink();
 
-        final itemsToShow = _expanded ? displayCats.length : (displayCats.length > 4 ? 3 : displayCats.length);
-        final showMoreBtn = !_expanded && displayCats.length > 4;
+        final showMoreCard = displayCats.length > _maxGridSlots;
+        final itemsToShow =
+            showMoreCard ? _maxGridSlots - 1 : displayCats.length;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +411,7 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Top Categories',
+                'Our Categories',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
@@ -411,11 +429,15 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
                 alignment: WrapAlignment.start,
                 children: [
                   for (int i = 0; i < itemsToShow; i++)
-                    _buildCategoryItem(displayCats[i], i),
-                  if (showMoreBtn) _buildMoreButton(),
-                  if (_expanded && displayCats.length > 4) _buildLessButton(),
+                    _buildCategoryItem(context, ref, displayCats[i], i),
+                  if (showMoreCard) _buildMoreCard(context),
                 ],
               ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _HelpNowBanner(),
             ),
           ],
         );
@@ -423,7 +445,8 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
       loading: () => const SizedBox(
         height: 120,
         child: Center(
-          child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF16A34A)),
+          child: CircularProgressIndicator(
+              strokeWidth: 2.5, color: Color(0xFF16A34A)),
         ),
       ),
       error: (err, __) => AppErrorView(
@@ -434,7 +457,8 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
     );
   }
 
-  Widget _buildCategoryItem(ServiceCategory category, int index) {
+  Widget _buildCategoryItem(BuildContext context, WidgetRef ref,
+      ServiceCategory category, int index) {
     // 4 items per row with 12px spacing -> 3 * 12 = 36px total spacing
     // Plus 32px horizontal padding -> 68px total padding/spacing
     final width = (MediaQuery.of(context).size.width - 68) / 4;
@@ -458,40 +482,60 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade200, width: 1),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2))
                 ],
               ),
               child: ref.watch(masterMediaProvider(category.id)).when(
-                data: (media) {
-                  final img = media.where((m) => m.category == 'CATALOG_IMAGE').firstOrNull;
-                  if (img != null) {
-                    final url = ref.read(catalogRepositoryProvider).resolveMediaUrl(img);
-                    return Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Image.network(
-                        url,
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Icon(_iconForCategory(category.label), color: iconColor, size: 30),
-                      ),
-                    );
-                  }
-                  return Center(
-                    child: Icon(_iconForCategory(category.label), color: iconColor, size: 30),
-                  );
-                },
-                loading: () => const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                error: (_, __) => Center(child: Icon(_iconForCategory(category.label), color: iconColor, size: 30)),
-              ),
+                    data: (media) {
+                      final img = media
+                          .where((m) => m.category == 'CATALOG_IMAGE')
+                          .firstOrNull;
+                      if (img != null) {
+                        final url = ref
+                            .read(catalogRepositoryProvider)
+                            .resolveMediaUrl(img);
+                        return Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Image.network(
+                            url,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                                _iconForCategory(category.label),
+                                color: iconColor,
+                                size: 30),
+                          ),
+                        );
+                      }
+                      return Center(
+                        child: Icon(_iconForCategory(category.label),
+                            color: iconColor, size: 30),
+                      );
+                    },
+                    loading: () => const Center(
+                        child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2))),
+                    error: (_, __) => Center(
+                        child: Icon(_iconForCategory(category.label),
+                            color: iconColor, size: 30)),
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               category.label,
               textAlign: TextAlign.center,
               maxLines: 2,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Color(0xFF334155)),
+              style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                  color: Color(0xFF334155)),
             ),
           ],
         ),
@@ -499,15 +543,13 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
     );
   }
 
-  Widget _buildMoreButton() {
+  Widget _buildMoreCard(BuildContext context) {
     final width = (MediaQuery.of(context).size.width - 68) / 4;
-    
+
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _expanded = true;
-        });
-      },
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ServiceBrowseScreen()),
+      ),
       child: SizedBox(
         width: width,
         child: Column(
@@ -520,58 +562,81 @@ class _TopCategoriesSectionState extends ConsumerState<_TopCategoriesSection> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade200, width: 1),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2))
                 ],
               ),
               child: const Center(
-                child: Icon(Icons.more_horiz_rounded, color: Colors.grey, size: 30),
+                child: Icon(Icons.more_horiz_rounded,
+                    color: Colors.grey, size: 30),
               ),
             ),
             const SizedBox(height: 8),
             const Text(
               'More\nServices',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Color(0xFF334155)),
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                  color: Color(0xFF334155)),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildLessButton() {
-    final width = (MediaQuery.of(context).size.width - 68) / 4;
-    
+class _HelpNowBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _expanded = false;
-        });
-      },
-      child: SizedBox(
-        width: width,
-        child: Column(
+      onTap: () => pendingShellTab.value = ShellTab.helpNow,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEDE9FE),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
           children: [
             Container(
-              height: width,
-              width: width,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200, width: 1),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                color: Color(0xFF1E293B),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.headset_mic_rounded,
+                  color: Colors.white, size: 24),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'HelpNow.',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A)),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'On-demand assistance for your everyday needs',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF64748B),
+                        height: 1.3),
+                  ),
                 ],
               ),
-              child: const Center(
-                child: Icon(Icons.unfold_less_rounded, color: Colors.grey, size: 30),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Show\nLess',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.2, color: Color(0xFF334155)),
             ),
           ],
         ),
@@ -618,8 +683,8 @@ class _CategoryServiceRail extends ConsumerWidget {
                         ),
                       ),
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 4, horizontal: 2),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                         child: Text(
                           'View all',
                           style: TextStyle(
@@ -799,7 +864,8 @@ class _ApplianceServiceList extends ConsumerStatefulWidget {
   const _ApplianceServiceList({required this.category});
 
   @override
-  ConsumerState<_ApplianceServiceList> createState() => _ApplianceServiceListState();
+  ConsumerState<_ApplianceServiceList> createState() =>
+      _ApplianceServiceListState();
 }
 
 class _ApplianceServiceListState extends ConsumerState<_ApplianceServiceList> {
@@ -807,14 +873,16 @@ class _ApplianceServiceListState extends ConsumerState<_ApplianceServiceList> {
 
   @override
   Widget build(BuildContext context) {
-    final servicesAsync = ref.watch(servicesByCategoryProvider(widget.category.id));
-    
+    final servicesAsync =
+        ref.watch(servicesByCategoryProvider(widget.category.id));
+
     return servicesAsync.when(
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
-        
-        final itemsToShow = _expanded ? items.length : (items.length > 4 ? 4 : items.length);
-        
+
+        final itemsToShow =
+            _expanded ? items.length : (items.length > 4 ? 4 : items.length);
+
         return Padding(
           padding: const EdgeInsets.only(top: 8, bottom: 8),
           child: Column(
@@ -838,7 +906,8 @@ class _ApplianceServiceListState extends ConsumerState<_ApplianceServiceList> {
                       InkWell(
                         onTap: () => setState(() => _expanded = !_expanded),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 2),
                           child: Text(
                             _expanded ? 'View less' : 'View all',
                             style: const TextStyle(
@@ -856,10 +925,12 @@ class _ApplianceServiceListState extends ConsumerState<_ApplianceServiceList> {
               ListView.separated(
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                 itemCount: itemsToShow,
                 separatorBuilder: (_, __) => const SizedBox(height: 4),
-                itemBuilder: (context, i) => _ApplianceServiceCard(service: items[i]),
+                itemBuilder: (context, i) =>
+                    _ApplianceServiceCard(service: items[i]),
               ),
             ],
           ),
@@ -882,7 +953,9 @@ class _ApplianceServiceCard extends ConsumerWidget {
     final thumbnailUrl = media.maybeWhen(
       data: (files) {
         final images = files.where((f) => !f.isVideo);
-        return images.isEmpty ? null : catalogRepo.resolveMediaUrl(images.first);
+        return images.isEmpty
+            ? null
+            : catalogRepo.resolveMediaUrl(images.first);
       },
       orElse: () => null,
     );
@@ -893,7 +966,10 @@ class _ApplianceServiceCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Material(
@@ -901,7 +977,8 @@ class _ApplianceServiceCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ServiceDetailScreen(serviceId: service.id))),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => ServiceDetailScreen(serviceId: service.id))),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
@@ -915,10 +992,14 @@ class _ApplianceServiceCard extends ConsumerWidget {
                     child: thumbnailUrl != null
                         ? Image.network(
                             thumbnailUrl,
-                            fit: BoxFit.contain, // So the appliance image fits nicely without cropping
-                            errorBuilder: (_, __, ___) => const Icon(Icons.build_outlined, color: AppColors.neutral500),
+                            fit: BoxFit
+                                .contain, // So the appliance image fits nicely without cropping
+                            errorBuilder: (_, __, ___) => const Icon(
+                                Icons.build_outlined,
+                                color: AppColors.neutral500),
                           )
-                        : const Icon(Icons.build_outlined, color: AppColors.neutral500),
+                        : const Icon(Icons.build_outlined,
+                            color: AppColors.neutral500),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -926,9 +1007,20 @@ class _ApplianceServiceCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(service.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF1E293B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(service.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              color: Color(0xFF1E293B)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 4),
-                      Text('Starting at ₹${service.pricing.basePrice.toStringAsFixed(0)}', style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(
+                          'Starting at ₹${service.pricing.basePrice.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
@@ -936,14 +1028,19 @@ class _ApplianceServiceCard extends ConsumerWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.schedule, color: Color(0xFF16A34A), size: 15),
+                    const Icon(Icons.schedule,
+                        color: Color(0xFF16A34A), size: 15),
                     const SizedBox(width: 4),
                     Text(
                       formatServiceDuration(service.expectedDurationMinutes),
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5, color: Color(0xFF334155)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12.5,
+                          color: Color(0xFF334155)),
                     ),
                     const SizedBox(width: 10),
-                    const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+                    const Icon(Icons.chevron_right,
+                        color: Color(0xFF94A3B8), size: 20),
                   ],
                 ),
               ],

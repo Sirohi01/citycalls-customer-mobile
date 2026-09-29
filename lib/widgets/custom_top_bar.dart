@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../providers/customer_providers.dart';
+import '../providers/location_providers.dart';
 import '../models/customer_models.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/service_browse_screen.dart';
@@ -49,7 +50,8 @@ class _HeaderRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             child: const Padding(
               padding: EdgeInsets.all(4.0),
-              child: Icon(Icons.menu_rounded, size: 28, color: Color(0xFF0F172A)),
+              child:
+                  Icon(Icons.menu_rounded, size: 28, color: Color(0xFF0F172A)),
             ),
           ),
           Image.asset(
@@ -68,7 +70,8 @@ class _HeaderRow extends StatelessWidget {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  const Icon(Icons.notifications_none_rounded, size: 26, color: Color(0xFF0F172A)),
+                  const Icon(Icons.notifications_none_rounded,
+                      size: 26, color: Color(0xFF0F172A)),
                   Positioned(
                     top: 2,
                     right: 2,
@@ -98,6 +101,8 @@ class _LocationRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentLocation = ref.watch(currentLocationProvider);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: profile.when(
@@ -106,9 +111,17 @@ class _LocationRow extends ConsumerWidget {
           final addresses = c.addresses;
           final primary = addresses.isEmpty
               ? null
-              : addresses.firstWhere((a) => a.isDefault, orElse: () => addresses.first);
+              : addresses.firstWhere((a) => a.isDefault,
+                  orElse: () => addresses.first);
 
-          final locationText = primary == null ? 'Select Location' : '${primary.city}, ${primary.state}';
+          final savedText = primary == null
+              ? 'Select Location'
+              : '${primary.city}, ${primary.state}';
+          final locationText = currentLocation.when(
+            data: (current) => current ?? savedText,
+            loading: () => 'Fetching location...',
+            error: (_, __) => savedText,
+          );
 
           // The chevron here used to be decoration on a non-tappable Row —
           // it looked like a location switcher and did nothing. It now opens
@@ -121,7 +134,8 @@ class _LocationRow extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on, color: Color(0xFF16A34A), size: 18),
+                  const Icon(Icons.location_on,
+                      color: Color(0xFF16A34A), size: 18),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
@@ -135,7 +149,8 @@ class _LocationRow extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF0F172A), size: 18),
+                  const Icon(Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF0F172A), size: 18),
                 ],
               ),
             ),
@@ -161,7 +176,8 @@ class _LocationPickerSheet extends ConsumerStatefulWidget {
   const _LocationPickerSheet({required this.customer});
 
   @override
-  ConsumerState<_LocationPickerSheet> createState() => _LocationPickerSheetState();
+  ConsumerState<_LocationPickerSheet> createState() =>
+      _LocationPickerSheetState();
 }
 
 class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
@@ -189,7 +205,8 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
       if (!mounted) return;
       setState(() => _saving = null);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Couldn't change your location. Please try again.")),
+        const SnackBar(
+            content: Text("Couldn't change your location. Please try again.")),
       );
     }
   }
@@ -205,11 +222,41 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Your location', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+            const Text('Your location',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             const Text(
               'Used to find the branch that serves you.',
               style: TextStyle(fontSize: 12.5, color: AppColors.neutral500),
+            ),
+            const SizedBox(height: 14),
+            InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                ref.invalidate(currentLocationProvider);
+                Navigator.pop(context);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF16A34A)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.my_location, size: 20, color: Color(0xFF16A34A)),
+                    SizedBox(width: 12),
+                    Text(
+                      'Use current location',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                        color: Color(0xFF16A34A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 14),
             if (addresses.isEmpty)
@@ -222,7 +269,8 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
               )
             else
               ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
+                constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.45),
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: addresses.length,
@@ -243,7 +291,8 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
               },
               icon: const Icon(Icons.add_location_alt_outlined, size: 18),
               label: const Text('Manage addresses'),
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(46)),
+              style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(46)),
             ),
           ],
         ),
@@ -271,7 +320,9 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
         child: Row(
           children: [
             Icon(
-              selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
               size: 20,
               color: selected ? const Color(0xFF16A34A) : AppColors.neutral500,
             ),
@@ -281,8 +332,11 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    address.label?.isNotEmpty == true ? address.label! : '${address.city}, ${address.state}',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                    address.label?.isNotEmpty == true
+                        ? address.label!
+                        : '${address.city}, ${address.state}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 13.5),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -291,13 +345,19 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
                         .join(', '),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: AppColors.neutral500, height: 1.35),
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.neutral500,
+                        height: 1.35),
                   ),
                 ],
               ),
             ),
             if (busy)
-              const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+              const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2)),
           ],
         ),
       ),
@@ -334,7 +394,8 @@ class _SearchBar extends StatelessWidget {
         child: Row(
           children: [
             const SizedBox(width: 4),
-            const Icon(Icons.search_rounded, color: Color(0xFF16A34A), size: 20),
+            const Icon(Icons.search_rounded,
+                color: Color(0xFF16A34A), size: 20),
             const SizedBox(width: 10),
             const Expanded(
               child: Text(
@@ -365,7 +426,8 @@ class _SearchBar extends StatelessWidget {
                   color: const Color(0xFF16A34A).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.mic_none_rounded, color: Color(0xFF16A34A), size: 16),
+                child: const Icon(Icons.mic_none_rounded,
+                    color: Color(0xFF16A34A), size: 16),
               ),
             ),
           ],

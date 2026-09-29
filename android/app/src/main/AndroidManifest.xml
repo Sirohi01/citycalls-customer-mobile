@@ -3,6 +3,8 @@
          android/app/src/debug/AndroidManifest.xml) — without this, release
          builds have no network access at all. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="CityCalls"
         android:name="${applicationName}"

@@ -5,6 +5,7 @@ import '../app_navigator.dart';
 import '../providers/notification_providers.dart';
 import '../providers/push_providers.dart';
 import '../theme/app_theme.dart';
+import 'help_now_screen.dart';
 import 'home_screen.dart';
 import 'my_services_screen.dart';
 import 'notifications_screen.dart';
@@ -23,12 +24,12 @@ class _MainShellState extends ConsumerState<MainShell> {
   int _index = 0;
 
   List<Widget> get _tabs => [
-    const HomeScreen(),
-    _BlissSalonTab(onBack: () => setState(() => _index = 0)),
-    const MyServicesScreen(),
-    const NotificationsScreen(),
-    const ProfileScreen(),
-  ];
+        const HomeScreen(),
+        _BlissSalonTab(onBack: () => setState(() => _index = 0)),
+        const HelpNowScreen(),
+        const MyServicesScreen(),
+        const ProfileScreen(),
+      ];
 
   @override
   void initState() {
@@ -74,13 +75,12 @@ class _MainShellState extends ConsumerState<MainShell> {
           content: Text(title != null ? '$title: $body' : body),
           action: SnackBarAction(
             label: 'View',
-            onPressed: () => setState(() => _index = ShellTab.alerts),
+            onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationsScreen())),
           ),
         ),
       );
     });
-
-    final unreadCount = ref.watch(unreadNotificationCountProvider).valueOrNull ?? 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -105,17 +105,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           child: SafeArea(
             child: BottomNavigationBar(
               currentIndex: _index,
-              onTap: (i) {
-                // Captured before setState — comparing _index afterwards
-                // would just be comparing i to itself.
-                final leavingAlerts = _index == ShellTab.alerts && i != ShellTab.alerts;
-                setState(() => _index = i);
-                // Opening Alerts marks rows read as they're tapped, and
-                // leaving it is the natural moment to re-sync the count.
-                if (i == ShellTab.alerts || leavingAlerts) {
-                  ref.invalidate(unreadNotificationCountProvider);
-                }
-              },
+              onTap: (i) => setState(() => _index = i),
               backgroundColor: AppColors.white,
               elevation: 0,
               type: BottomNavigationBarType.fixed,
@@ -143,31 +133,70 @@ class _MainShellState extends ConsumerState<MainShell> {
                 ),
                 BottomNavigationBarItem(
                   icon: Padding(
-                      padding: const EdgeInsets.only(bottom: 4, top: 4),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.pink.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.spa_outlined, color: Colors.pink, size: 20),
+                    padding: const EdgeInsets.only(bottom: 4, top: 4),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.pink.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
                       ),
+                      child: const Icon(Icons.spa_outlined,
+                          color: Colors.pink, size: 20),
+                    ),
                   ),
                   activeIcon: Padding(
-                      padding: const EdgeInsets.only(bottom: 4, top: 4),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.pink,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(color: Colors.pink.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3)),
-                          ],
-                        ),
-                        child: const Icon(Icons.spa, color: Colors.white, size: 20),
+                    padding: const EdgeInsets.only(bottom: 4, top: 4),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.pink,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.pink.withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3)),
+                        ],
                       ),
+                      child:
+                          const Icon(Icons.spa, color: Colors.white, size: 20),
+                    ),
                   ),
                   label: 'Salon',
+                ),
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: const EdgeInsets.only(bottom: 4, top: 4),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.support_agent_outlined,
+                          color: Color(0xFFF59E0B), size: 20),
+                    ),
+                  ),
+                  activeIcon: Padding(
+                    padding: const EdgeInsets.only(bottom: 4, top: 4),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                              color: const Color(0xFFF59E0B)
+                                  .withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3)),
+                        ],
+                      ),
+                      child: const Icon(Icons.support_agent,
+                          color: Colors.white, size: 20),
+                    ),
+                  ),
+                  label: 'HelpNow',
                 ),
                 const BottomNavigationBarItem(
                   // The image uses a 4-square grid for Services
@@ -178,16 +207,6 @@ class _MainShellState extends ConsumerState<MainShell> {
                       padding: EdgeInsets.only(bottom: 4, top: 8),
                       child: Icon(Icons.grid_view_rounded)),
                   label: 'Bookings',
-                ),
-                BottomNavigationBarItem(
-                  // The image uses a bell for Alerts
-                  icon: Padding(
-                      padding: const EdgeInsets.only(bottom: 4, top: 8),
-                      child: _UnreadBadge(count: unreadCount, child: const Icon(Icons.notifications_none))),
-                  activeIcon: Padding(
-                      padding: const EdgeInsets.only(bottom: 4, top: 8),
-                      child: _UnreadBadge(count: unreadCount, child: const Icon(Icons.notifications))),
-                  label: 'Alerts',
                 ),
                 const BottomNavigationBarItem(
                   icon: Padding(
@@ -207,41 +226,6 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 }
 
-class _UnreadBadge extends StatelessWidget {
-  final int count;
-  final Widget child;
-  const _UnreadBadge({required this.count, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    if (count <= 0) return child;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        child,
-        Positioned(
-          right: -6,
-          top: -4,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-            constraints: const BoxConstraints(minWidth: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEF4444),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.white, width: 1.5),
-            ),
-            child: Text(
-              count > 99 ? '99+' : '$count',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w700, height: 1.3),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _BlissSalonTab extends ConsumerWidget {
   final VoidCallback? onBack;
   const _BlissSalonTab({this.onBack});
@@ -253,14 +237,25 @@ class _BlissSalonTab extends ConsumerWidget {
 
     return categoriesAsync.when(
       data: (cats) {
-        final blissCat = cats.where((c) => c.label.toLowerCase().contains('bliss') || c.label.toLowerCase().contains('salon')).firstOrNull;
+        final blissCat = cats
+            .where((c) =>
+                c.label.toLowerCase().contains('bliss') ||
+                c.label.toLowerCase().contains('salon'))
+            .firstOrNull;
         if (blissCat != null) {
-          return ServiceBrowseScreen(initialCategoryId: blissCat.id, title: 'Salon Services', onBack: onBack);
+          return ServiceBrowseScreen(
+              initialCategoryId: blissCat.id,
+              title: 'Salon Services',
+              onBack: onBack);
         }
-        return const Scaffold(body: Center(child: Text('Salon services not available')));
+        return const Scaffold(
+            body: Center(child: Text('Salon services not available')));
       },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator(color: Color(0xFF16A34A)))),
-      error: (_, __) => const Scaffold(body: Center(child: Text('Error loading salon services'))),
+      loading: () => const Scaffold(
+          body: Center(
+              child: CircularProgressIndicator(color: Color(0xFF16A34A)))),
+      error: (_, __) => const Scaffold(
+          body: Center(child: Text('Error loading salon services'))),
     );
   }
 }
