@@ -84,7 +84,9 @@ flutter:
     - assets/images/logocalls.png
     - assets/login/splace.png
     - assets/login/splace3.png
+    - assets/login/splace3_dark.png
     - assets/login/splace4.png
+    - assets/login/splace4_dark.png
     - assets/login/splash2.png
     - assets/login/splash22.png
     - assets/home/

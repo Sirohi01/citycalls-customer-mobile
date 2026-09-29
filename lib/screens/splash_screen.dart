@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
-import '../theme/app_theme.dart';
 import 'otp_request_screen.dart';
 import 'profile_setup_screen.dart';
 import 'main_shell.dart';
@@ -9,6 +8,13 @@ import 'splash2_screen.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
+
+  // main.dart's global sessionExpired listener checks this before redirecting
+  // — without it, a fresh install with no refresh token fails getMyProfile()
+  // almost instantly, and that listener yanks SplashScreen off the navigator
+  // well before its own minDisplay wait in _resolveDestination below, so the
+  // splash barely flashes on screen.
+  static bool bootstrapping = true;
 
   @override
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
@@ -19,6 +25,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final AnimationController _controller;
   late final Animation<double> _fade;
   late final Animation<double> _scale;
+  late final Animation<Offset> _logoSlide;
+  late final Animation<Offset> _taglineSlide;
+  late final Animation<double> _taglineFade;
 
   @override
   void initState() {
@@ -28,12 +37,25 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _scale = Tween<double>(begin: 0.2, end: 1.0).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-    
+    // Logo rises up as if emerging from behind the bottom edge.
+    _logoSlide = Tween<Offset>(begin: const Offset(0, 0.8), end: Offset.zero)
+        .animate(CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic)));
+    // Tagline drifts up from below and fades in after the logo settles.
+    _taglineSlide = Tween<Offset>(begin: const Offset(0, 0.6), end: Offset.zero)
+        .animate(CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic)));
+    _taglineFade = CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.5, 1.0, curve: Curves.easeOut));
+
     // Add delay so animation doesn't finish while app is still loading
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) _controller.forward();
     });
-    
+
     _resolveDestination();
   }
 
@@ -47,8 +69,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final stopwatch = Stopwatch()..start();
     Widget destination;
     try {
-      final customer =
-          await ref.read(customerRepositoryProvider).getMyProfile().timeout(const Duration(seconds: 3));
+      final customer = await ref
+          .read(customerRepositoryProvider)
+          .getMyProfile()
+          .timeout(const Duration(seconds: 3));
       destination = customer.needsProfileSetup
           ? const ProfileSetupScreen()
           : const MainShell();
@@ -56,10 +80,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       destination = const OtpRequestScreen();
     }
 
-    const minDisplay = Duration(seconds: 4);
+    const minDisplay = Duration(seconds: 6);
     final remaining = minDisplay - stopwatch.elapsed;
     if (remaining > Duration.zero) await Future.delayed(remaining);
 
+    SplashScreen.bootstrapping = false;
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => Splash2Screen(nextScreen: destination)),
@@ -89,24 +114,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 scale: _scale,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/images/logo.png',
-                    height: 80,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 12),
-                  RichText(
-                    text: const TextSpan(
-                      children: [
-                        TextSpan(text: 'Your City. Your Services. ', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-                        TextSpan(text: 'On Call.', style: TextStyle(color: AppColors.lime500, fontSize: 16, fontWeight: FontWeight.w600)),
-                      ]
+                  children: [
+                    SlideTransition(
+                      position: _logoSlide,
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        height: 80,
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    SlideTransition(
+                      position: _taglineSlide,
+                      child: FadeTransition(
+                        opacity: _taglineFade,
+                        child: RichText(
+                          text: const TextSpan(children: [
+                            TextSpan(
+                                text: 'Built for brand services. ',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600)),
+                            // TextSpan(text: 'On Call.', style: TextStyle(color: AppColors.lime500, fontSize: 16, fontWeight: FontWeight.w600)),
+                          ]),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
             ),
           ],
         ),

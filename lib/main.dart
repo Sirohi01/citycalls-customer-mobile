@@ -26,7 +26,8 @@ class CityCallsCustomerApp extends ConsumerStatefulWidget {
   const CityCallsCustomerApp({super.key});
 
   @override
-  ConsumerState<CityCallsCustomerApp> createState() => _CityCallsCustomerAppState();
+  ConsumerState<CityCallsCustomerApp> createState() =>
+      _CityCallsCustomerAppState();
 }
 
 class _CityCallsCustomerAppState extends ConsumerState<CityCallsCustomerApp> {
@@ -55,10 +56,16 @@ class _CityCallsCustomerAppState extends ConsumerState<CityCallsCustomerApp> {
   void _onSessionExpired() {
     if (!_apiClient.sessionExpired.value) return;
     _apiClient.sessionExpired.value = false;
+    // SplashScreen's own _resolveDestination() already handles a missing/
+    // expired session on first load (and honors its minDisplay timing) —
+    // redirecting here too would yank the splash off screen before it's had
+    // time to show.
+    if (SplashScreen.bootstrapping) return;
     final navigator = appNavigator;
     if (navigator == null) return;
     navigator.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const OtpRequestScreen(sessionExpired: true)),
+      MaterialPageRoute(
+          builder: (_) => const OtpRequestScreen(sessionExpired: true)),
       (route) => false,
     );
   }

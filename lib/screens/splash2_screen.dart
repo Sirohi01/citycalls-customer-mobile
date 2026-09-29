@@ -25,102 +25,119 @@ class _Splash2ScreenState extends State<Splash2Screen> {
     );
   }
 
+  // Pushed (not replaced) so Splash3Screen's Previous button has this route
+  // to pop back to.
   void _goNextStep() {
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => Splash3Screen(nextScreen: widget.nextScreen)),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+          builder: (_) => Splash3Screen(nextScreen: widget.nextScreen)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-          child: Column(
-            children: [
-              // Logo
-              const SizedBox(height: 16),
-              Image.asset(
-                'assets/images/logocalls.png',
-                height: 48, // matching roughly the text height (42)
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 24),
-              // Titles
-              const Text('All Services', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.black, letterSpacing: -0.5)),
-              const SizedBox(height: 4),
-              const Text('At Your Fingertips', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.lime500)),
-              const SizedBox(height: 16),
-              // Center Image
-              Expanded(
-                child: Transform.scale(
-                  scale: 1.40,
-                  child: Image.asset(
-                    'assets/login/splash22.png',
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              child: Column(
+                children: [
+                  // Logo
+                  const SizedBox(height: 56),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 48,
                     fit: BoxFit.contain,
                   ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              // Description
-              const Text(
-                'Book trusted professionals for AC repair,\ncleaning, pest control, beauty services\nand more.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.5,
-                  color: AppColors.neutral500,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 48),
-              // Bottom Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: _goNext,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      minimumSize: Size.zero,
-                    ),
-                    child: const Text('Skip', style: TextStyle(color: AppColors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                  ),
-                  // Dots
-                  Row(
-                    children: [
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.lime500, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
-                    ],
-                  ),
-                  FilledButton(
-                    onPressed: _goNextStep,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.lime500,
-                      minimumSize: Size.zero,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Next', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 24),
+                  // Titles
+                  const Text('All Services',
+                      style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -0.5)),
+                  const SizedBox(height: 4),
+                  const Text('At Your Fingertips',
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.lime500)),
                 ],
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+            // Center Image — the illustration itself has a light background
+            // baked in, so it's framed as a deliberate floating card (rounded
+            // corners + shadow) instead of a stray white rectangle sitting on
+            // the black scaffold. AspectRatio matches the source image
+            // (1536x1024) exactly so BoxFit.cover never crops it. Given only
+            // a slim horizontal inset (unlike the 24px around the rest of the
+            // page) so it renders bigger.
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: AspectRatio(
+                        aspectRatio: 1536 / 1024,
+                        child: Image.asset(
+                          'assets/login/splash22.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton(
+                  onPressed: _goNextStep,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.lime500,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Next',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600)),
+                      SizedBox(width: 6),
+                      Icon(Icons.arrow_forward_ios_rounded,
+                          size: 12, color: Colors.white),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

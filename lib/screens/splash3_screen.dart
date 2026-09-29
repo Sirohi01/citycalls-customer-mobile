@@ -25,102 +25,162 @@ class _Splash3ScreenState extends State<Splash3Screen> {
     );
   }
 
+  // Pushed (not replaced) so Splash4Screen's Previous button has this route
+  // to pop back to.
   void _goNextStep() {
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => Splash4Screen(nextScreen: widget.nextScreen)),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+          builder: (_) => Splash4Screen(nextScreen: widget.nextScreen)),
     );
+  }
+
+  // Splash2Screen pushes (not replaces) this route, so this pops right back
+  // to it.
+  void _goPrevious() {
+    if (!mounted) return;
+    Navigator.of(context).maybePop();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-          child: Column(
-            children: [
-              // Logo
-              const SizedBox(height: 16),
-              Image.asset(
-                'assets/images/logocalls.png',
-                height: 48, 
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 24),
-              // Titles
-              const Text('Verified Professionals', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: AppColors.black, letterSpacing: -0.5)),
-              const SizedBox(height: 4),
-              const Text('You Can Trust', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.lime500)),
-              const SizedBox(height: 16),
-              // Center Image
-              Expanded(
-                child: Transform.scale(
-                  scale: 1.1,
-                  child: Image.asset(
-                    'assets/login/splace3.png',
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 56),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 48,
                     fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 24),
+                  const Text('Verified Professionals',
+                      style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -0.5)),
+                  const SizedBox(height: 4),
+                  const Text('You Can Trust',
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.lime500)),
+                ],
+              ),
+            ),
+            // Center Image — splace3_dark.png is a background-removed cutout
+            // of splace3.png (which has an opaque white background, wrong
+            // for a black scaffold) with a soft green glow behind it to
+            // match the trust-badge look.
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Center(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 220,
+                        height: 220,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.lime500.withValues(alpha: 0.35),
+                              AppColors.lime500.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Image.asset(
+                        'assets/login/splace3_dark.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
-              // Description
-              const Text(
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
                 'We verify every professional to ensure\nquality service at your home.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
                   height: 1.5,
-                  color: AppColors.neutral500,
+                  color: AppColors.slate400,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 48),
-              // Bottom Row
-              Row(
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton(
-                    onPressed: _goNext,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                  OutlinedButton(
+                    onPressed: _goPrevious,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: AppColors.slate700),
                       minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 9),
                     ),
-                    child: const Text('Skip', style: TextStyle(color: AppColors.black, fontSize: 16, fontWeight: FontWeight.w600)),
-                  ),
-                  // Dots
-                  Row(
-                    children: [
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.neutral200, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.lime500, shape: BoxShape.circle)),
-                    ],
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.arrow_back_ios_rounded,
+                            size: 12, color: Colors.white),
+                        SizedBox(width: 6),
+                        Text('Previous',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600)),
+                      ],
+                    ),
                   ),
                   FilledButton(
                     onPressed: _goNextStep,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.lime500,
                       minimumSize: Size.zero,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 9),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Next', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white),
+                        Text('Next',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600)),
+                        SizedBox(width: 6),
+                        Icon(Icons.arrow_forward_ios_rounded,
+                            size: 12, color: Colors.white),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
