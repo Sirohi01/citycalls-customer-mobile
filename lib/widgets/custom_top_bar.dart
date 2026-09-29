@@ -9,21 +9,27 @@ import '../screens/service_browse_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../theme/app_theme.dart';
 
-class CustomTopBar extends ConsumerWidget {
+/// Fixed header: menu, logo and notifications.
+class CustomTopBar extends StatelessWidget {
   const CustomTopBar({super.key});
+
+  @override
+  Widget build(BuildContext context) => _HeaderRow();
+}
+
+/// Location picker + search bar. Lives inside the home screen's scroll view
+/// so it scrolls away with the content while [CustomTopBar] stays pinned.
+class TopBarLocationSearch extends ConsumerWidget {
+  const TopBarLocationSearch({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(myProfileProvider);
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-      ),
+    return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         children: [
-          _HeaderRow(),
           const SizedBox(height: 8),
           _LocationRow(profile: profile),
           const SizedBox(height: 12),
@@ -50,13 +56,28 @@ class _HeaderRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             child: const Padding(
               padding: EdgeInsets.all(4.0),
-              child:
-                  Icon(Icons.menu_rounded, size: 28, color: Color(0xFF0F172A)),
+              child: Icon(Icons.menu_rounded, size: 28, color: Colors.white),
             ),
           ),
-          Image.asset(
-            'assets/images/logocalls.png',
-            height: 32, // Adjusted height for top bar
+          // The logo asset has dark "Calls" lettering, which disappears on
+          // the dark header — so the wordmark is drawn as text instead.
+          const Text.rich(
+            TextSpan(
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+                height: 1,
+              ),
+              children: [
+                TextSpan(
+                    text: 'City', style: TextStyle(color: Color(0xFF8BD450))),
+                TextSpan(
+                    text: 'Calls',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w500)),
+              ],
+            ),
           ),
           InkWell(
             onTap: () {
@@ -71,7 +92,7 @@ class _HeaderRow extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   const Icon(Icons.notifications_none_rounded,
-                      size: 26, color: Color(0xFF0F172A)),
+                      size: 26, color: Colors.white),
                   Positioned(
                     top: 2,
                     right: 2,
@@ -79,9 +100,10 @@ class _HeaderRow extends StatelessWidget {
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF16A34A),
+                        color: const Color(0xFFEF4444),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
+                        border: Border.all(
+                            color: const Color(0xFF0B0B0B), width: 1.5),
                       ),
                     ),
                   ),
@@ -134,23 +156,22 @@ class _LocationRow extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on,
-                      color: Color(0xFF16A34A), size: 18),
+                  const Icon(Icons.location_on, color: Colors.white, size: 20),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       locationText,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                   const SizedBox(width: 4),
                   const Icon(Icons.keyboard_arrow_down_rounded,
-                      color: Color(0xFF0F172A), size: 18),
+                      color: Colors.white, size: 20),
                 ],
               ),
             ),
@@ -376,43 +397,38 @@ class _SearchBar extends StatelessWidget {
           MaterialPageRoute(builder: (_) => const ServiceBrowseScreen()),
         );
       },
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
-            const SizedBox(width: 4),
             const Icon(Icons.search_rounded,
-                color: Color(0xFF16A34A), size: 20),
-            const SizedBox(width: 10),
+                color: Color(0xFF334155), size: 24),
+            const SizedBox(width: 12),
             const Expanded(
               child: Text(
-                'Search "AC Repair", "Cleaning"...',
+                'Search for “AC Repair”, “Home Cleaning”...',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Color(0xFF64748B),
-                  fontSize: 13,
+                  fontSize: 13.5,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-            Container(
-              height: 18,
-              width: 1.2,
-              color: const Color(0xFFE2E8F0),
-              margin: const EdgeInsets.symmetric(horizontal: 10),
-            ),
+            const SizedBox(width: 8),
             InkWell(
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -421,13 +437,13 @@ class _SearchBar extends StatelessWidget {
               },
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.1),
+                padding: const EdgeInsets.all(7),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFDCFCE7),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.mic_none_rounded,
-                    color: Color(0xFF16A34A), size: 16),
+                child: const Icon(Icons.mic_rounded,
+                    color: Color(0xFF16A34A), size: 18),
               ),
             ),
           ],

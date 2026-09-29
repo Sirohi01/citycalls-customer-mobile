@@ -4,14 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_navigator.dart';
 import '../providers/notification_providers.dart';
 import '../providers/push_providers.dart';
-import '../theme/app_theme.dart';
-import 'help_now_screen.dart';
 import 'home_screen.dart';
 import 'my_services_screen.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
-import 'service_browse_screen.dart';
-import '../providers/catalog_providers.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
@@ -25,8 +21,8 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   List<Widget> get _tabs => [
         const HomeScreen(),
-        _BlissSalonTab(onBack: () => setState(() => _index = 0)),
-        const HelpNowScreen(),
+        const SalonHomeScreen(),
+        const HelpNowHomeScreen(),
         const MyServicesScreen(),
         const ProfileScreen(),
       ];
@@ -93,131 +89,60 @@ class _MainShellState extends ConsumerState<MainShell> {
         body: IndexedStack(index: _index, children: _tabs),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: Colors.white,
+            border: const Border(top: BorderSide(color: Color(0xFFF1F5F9))),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12,
                 offset: const Offset(0, -4),
               ),
             ],
           ),
           child: SafeArea(
-            child: BottomNavigationBar(
-              currentIndex: _index,
-              onTap: (i) => setState(() => _index = i),
-              backgroundColor: AppColors.white,
-              elevation: 0,
-              type: BottomNavigationBarType.fixed,
-              // The exact green color from the image
-              selectedItemColor: const Color(0xFF16A34A),
-              unselectedItemColor: const Color(0xFF9CA3AF),
-              selectedLabelStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            child: SizedBox(
+              height: 62,
+              child: Row(
+                children: [
+                  _NavItem(
+                    icon: Icons.home_outlined,
+                    activeIcon: Icons.home_rounded,
+                    label: 'Home',
+                    selected: _index == 0,
+                    onTap: () => setState(() => _index = 0),
+                  ),
+                  _NavItem(
+                    icon: Icons.spa_outlined,
+                    activeIcon: Icons.spa_rounded,
+                    label: 'Salon',
+                    brandColor: const Color(0xFFEC4899),
+                    selected: _index == 1,
+                    onTap: () => setState(() => _index = 1),
+                  ),
+                  _NavItem(
+                    icon: Icons.support_agent_outlined,
+                    activeIcon: Icons.support_agent_rounded,
+                    label: 'HelpNow',
+                    brandColor: const Color(0xFFF97316),
+                    selected: _index == 2,
+                    onTap: () => setState(() => _index = 2),
+                  ),
+                  _NavItem(
+                    icon: Icons.grid_view_outlined,
+                    activeIcon: Icons.grid_view_rounded,
+                    label: 'Bookings',
+                    selected: _index == 3,
+                    onTap: () => setState(() => _index = 3),
+                  ),
+                  _NavItem(
+                    icon: Icons.person_outline_rounded,
+                    activeIcon: Icons.person_rounded,
+                    label: 'Profile',
+                    selected: _index == 4,
+                    onTap: () => setState(() => _index = 4),
+                  ),
+                ],
               ),
-              unselectedLabelStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-              iconSize: 24,
-              items: [
-                const BottomNavigationBarItem(
-                  icon: Padding(
-                      padding: EdgeInsets.only(bottom: 4, top: 8),
-                      child: Icon(Icons.home_outlined)),
-                  activeIcon: Padding(
-                      padding: EdgeInsets.only(bottom: 4, top: 8),
-                      child: Icon(Icons.home)),
-                  label: 'Home',
-                ),
-                BottomNavigationBarItem(
-                  icon: Padding(
-                    padding: const EdgeInsets.only(bottom: 4, top: 4),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.pink.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.spa_outlined,
-                          color: Colors.pink, size: 20),
-                    ),
-                  ),
-                  activeIcon: Padding(
-                    padding: const EdgeInsets.only(bottom: 4, top: 4),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.pink,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.pink.withValues(alpha: 0.3),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3)),
-                        ],
-                      ),
-                      child:
-                          const Icon(Icons.spa, color: Colors.white, size: 20),
-                    ),
-                  ),
-                  label: 'Salon',
-                ),
-                BottomNavigationBarItem(
-                  icon: Padding(
-                    padding: const EdgeInsets.only(bottom: 4, top: 4),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.support_agent_outlined,
-                          color: Color(0xFFF59E0B), size: 20),
-                    ),
-                  ),
-                  activeIcon: Padding(
-                    padding: const EdgeInsets.only(bottom: 4, top: 4),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                              color: const Color(0xFFF59E0B)
-                                  .withValues(alpha: 0.3),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3)),
-                        ],
-                      ),
-                      child: const Icon(Icons.support_agent,
-                          color: Colors.white, size: 20),
-                    ),
-                  ),
-                  label: 'HelpNow',
-                ),
-                const BottomNavigationBarItem(
-                  // The image uses a 4-square grid for Services
-                  icon: Padding(
-                      padding: EdgeInsets.only(bottom: 4, top: 8),
-                      child: Icon(Icons.grid_view_outlined)),
-                  activeIcon: Padding(
-                      padding: EdgeInsets.only(bottom: 4, top: 8),
-                      child: Icon(Icons.grid_view_rounded)),
-                  label: 'Bookings',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Padding(
-                      padding: EdgeInsets.only(bottom: 4, top: 8),
-                      child: Icon(Icons.person_outline)),
-                  activeIcon: Padding(
-                      padding: EdgeInsets.only(bottom: 4, top: 8),
-                      child: Icon(Icons.person)),
-                  label: 'Profile',
-                ),
-              ],
             ),
           ),
         ),
@@ -226,36 +151,69 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 }
 
-class _BlissSalonTab extends ConsumerWidget {
-  final VoidCallback? onBack;
-  const _BlissSalonTab({this.onBack});
+const _kNavGreen = Color(0xFF16A34A);
+const _kNavIdle = Color(0xFF94A3B8);
+
+// One tab: icon + label, always visible. The selected tab gets a short
+// coloured bar along the top edge, a filled icon and a bold label. Salon and
+// HelpNow ([brandColor]) always show in their own colour; the rest are grey
+// until selected, then green.
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final Color? brandColor;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.brandColor,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // We import providers from service_browse_screen conceptually or provider file
-    final categoriesAsync = ref.watch(serviceCategoriesProvider);
+  Widget build(BuildContext context) {
+    final activeColor = brandColor ?? _kNavGreen;
+    final color = selected ? activeColor : (brandColor ?? _kNavIdle);
 
-    return categoriesAsync.when(
-      data: (cats) {
-        final blissCat = cats
-            .where((c) =>
-                c.label.toLowerCase().contains('bliss') ||
-                c.label.toLowerCase().contains('salon'))
-            .firstOrNull;
-        if (blissCat != null) {
-          return ServiceBrowseScreen(
-              initialCategoryId: blissCat.id,
-              title: 'Salon Services',
-              onBack: onBack);
-        }
-        return const Scaffold(
-            body: Center(child: Text('Salon services not available')));
-      },
-      loading: () => const Scaffold(
-          body: Center(
-              child: CircularProgressIndicator(color: Color(0xFF16A34A)))),
-      error: (_, __) => const Scaffold(
-          body: Center(child: Text('Error loading salon services'))),
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              width: selected ? 28 : 0,
+              height: 3,
+              decoration: BoxDecoration(
+                color: activeColor,
+                borderRadius:
+                    const BorderRadius.vertical(bottom: Radius.circular(3)),
+              ),
+            ),
+            const Spacer(),
+            Icon(selected ? activeIcon : icon, color: color, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: color,
+              ),
+            ),
+            const Spacer(),
+          ],
+        ),
+      ),
     );
   }
 }
