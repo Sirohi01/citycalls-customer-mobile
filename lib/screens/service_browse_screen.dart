@@ -9,7 +9,9 @@ class ServiceBrowseScreen extends ConsumerStatefulWidget {
   final String? initialCategoryId;
   final String title;
   final VoidCallback? onBack;
-  const ServiceBrowseScreen({super.key, this.initialCategoryId, this.title = 'All Categories', this.onBack});
+  // Pre-filled search text, e.g. from voice search on the home screen.
+  final String? initialQuery;
+  const ServiceBrowseScreen({super.key, this.initialCategoryId, this.title = 'All Categories', this.onBack, this.initialQuery});
 
   @override
   ConsumerState<ServiceBrowseScreen> createState() => _ServiceBrowseScreenState();
@@ -17,8 +19,8 @@ class ServiceBrowseScreen extends ConsumerStatefulWidget {
 
 class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
   late String? _selectedCategoryId = widget.initialCategoryId;
-  final _searchController = TextEditingController();
-  String _query = '';
+  late final _searchController = TextEditingController(text: widget.initialQuery?.trim() ?? '');
+  late String _query = (widget.initialQuery ?? '').trim().toLowerCase();
 
   @override
   void dispose() {

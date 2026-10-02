@@ -8,6 +8,13 @@ final myProfileProvider = FutureProvider<Customer>((ref) async {
   return ref.watch(customerRepositoryProvider).getMyProfile();
 });
 
+// Current profile photo URL (null when none is set). Invalidate after
+// uploading or removing a photo.
+final profilePhotoUrlProvider = FutureProvider<String?>((ref) async {
+  final customer = await ref.watch(myProfileProvider.future);
+  return ref.watch(customerRepositoryProvider).getProfilePhotoUrl(customer.id);
+});
+
 class ProfileSetupNotifier extends StateNotifier<AsyncValue<Customer>?> {
   final Ref _ref;
   ProfileSetupNotifier(this._ref) : super(null);
@@ -20,7 +27,8 @@ class ProfileSetupNotifier extends StateNotifier<AsyncValue<Customer>?> {
   }) async {
     state = const AsyncValue.loading();
     try {
-      final profile = await _ref.read(customerRepositoryProvider).getMyProfile();
+      final profile =
+          await _ref.read(customerRepositoryProvider).getMyProfile();
       final updated = await _ref.read(customerRepositoryProvider).updateProfile(
             profile.id,
             name: name,
@@ -34,6 +42,7 @@ class ProfileSetupNotifier extends StateNotifier<AsyncValue<Customer>?> {
   }
 }
 
-final profileSetupProvider = StateNotifierProvider<ProfileSetupNotifier, AsyncValue<Customer>?>((ref) {
+final profileSetupProvider =
+    StateNotifierProvider<ProfileSetupNotifier, AsyncValue<Customer>?>((ref) {
   return ProfileSetupNotifier(ref);
 });

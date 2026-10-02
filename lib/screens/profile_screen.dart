@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/profile_avatar.dart';
 import '../models/customer_models.dart';
 import '../providers/auth_providers.dart';
 import '../providers/customer_providers.dart';
@@ -95,16 +96,7 @@ class ProfileScreen extends ConsumerWidget {
                                 height: 64,
                                 child: Stack(
                                   children: [
-                                    Container(
-                                      width: 64,
-                                      height: 64,
-                                      decoration: const BoxDecoration(color: Color(0xFF0F5132), shape: BoxShape.circle),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        customer.name.isNotEmpty ? customer.name[0].toUpperCase() : '?',
-                                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-                                      ),
-                                    ),
+                                    const ProfileAvatar(size: 64),
                                     Positioned(
                                       bottom: 0,
                                       right: 0,

@@ -8,6 +8,7 @@ import '../screens/edit_profile_screen.dart';
 import '../screens/service_browse_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../theme/app_theme.dart';
+import 'voice_search_sheet.dart';
 
 /// Fixed header: menu, logo and notifications.
 class CustomTopBar extends StatelessWidget {
@@ -430,11 +431,7 @@ class _SearchBar extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             InkWell(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Voice search coming soon')),
-                );
-              },
+              onTap: () => startVoiceSearch(context),
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 padding: const EdgeInsets.all(7),

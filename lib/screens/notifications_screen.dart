@@ -17,6 +17,21 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   final List<String> _filters = ['All', 'Unread', 'Service', 'Payment', 'Invoice'];
 
+  Future<void> _markAllRead() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final count = await ref.read(notificationActionsProvider).markAllRead();
+      messenger.showSnackBar(SnackBar(
+        content: Text(count == 0
+            ? 'You have no unread notifications'
+            : 'Marked $count notification${count == 1 ? '' : 's'} as read'),
+      ));
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(
+          content: Text("Couldn't mark notifications as read. Please try again.")));
+    }
+  }
+
   IconData _getIconForSubject(String? subject) {
     if (subject == null) return Icons.notifications;
     final lower = subject.toLowerCase();
@@ -116,9 +131,35 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       ),
                     ),
                   ),
-                  InkWell(
-                    onTap: () {},
-                    borderRadius: BorderRadius.circular(12),
+                  PopupMenuButton<String>(
+                    tooltip: 'More',
+                    position: PopupMenuPosition.under,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    onSelected: (v) {
+                      if (v == 'read_all') _markAllRead();
+                      if (v == 'settings') {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (_) => const NotificationPreferencesScreen()));
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'read_all',
+                        child: Row(children: [
+                          Icon(Icons.done_all_rounded, size: 20, color: Color(0xFF16A34A)),
+                          SizedBox(width: 10),
+                          Text('Mark all as read'),
+                        ]),
+                      ),
+                      PopupMenuItem(
+                        value: 'settings',
+                        child: Row(children: [
+                          Icon(Icons.tune_rounded, size: 20, color: Color(0xFF475569)),
+                          SizedBox(width: 10),
+                          Text('Notification settings'),
+                        ]),
+                      ),
+                    ],
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(

@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/catalog_providers.dart';
 import '../providers/customer_providers.dart';
+import '../providers/favourites_providers.dart';
+import 'favourites_screen.dart';
 import '../models/catalog_models.dart';
 import '../widgets/media_gallery.dart';
 import '../models/media_models.dart';
@@ -125,8 +127,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                         ),
                       ),
                     ),
-                    _RoundButton(
-                        icon: Icons.favorite_border_rounded, onTap: () {}),
+                    _FavouriteButton(serviceId: widget.serviceId),
                   ],
                 ),
               ),
@@ -707,6 +708,61 @@ class _RoundButton extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(9),
           child: Icon(icon, size: 20, color: const Color(0xFF0F172A)),
+        ),
+      ),
+    );
+  }
+}
+
+// Heart in the top bar: saves / removes this service from My Favourites.
+class _FavouriteButton extends ConsumerWidget {
+  final String serviceId;
+  const _FavouriteButton({required this.serviceId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isFav =
+        ref.watch(favouritesProvider).valueOrNull?.contains(serviceId) ?? false;
+    return Material(
+      color: isFav ? const Color(0xFFFEF2F2) : Colors.white,
+      shape: CircleBorder(
+        side: BorderSide(
+            color: isFav ? const Color(0xFFFECACA) : const Color(0xFFE2E8F0)),
+      ),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          final navigator = Navigator.of(context);
+          final added =
+              await ref.read(favouritesProvider.notifier).toggle(serviceId);
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(
+              content: Text(
+                  added ? 'Added to favourites' : 'Removed from favourites'),
+              action: added
+                  ? SnackBarAction(
+                      label: 'View',
+                      onPressed: () => navigator.push(MaterialPageRoute(
+                          builder: (_) => const FavouritesScreen())),
+                    )
+                  : null,
+            ));
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(9),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            transitionBuilder: (child, anim) =>
+                ScaleTransition(scale: anim, child: child),
+            child: Icon(
+              isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              key: ValueKey(isFav),
+              size: 20,
+              color: isFav ? const Color(0xFFEF4444) : const Color(0xFF0F172A),
+            ),
+          ),
         ),
       ),
     );

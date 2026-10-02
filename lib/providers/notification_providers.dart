@@ -7,7 +7,8 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
   return NotificationRepository(ref.watch(apiClientProvider));
 });
 
-final myNotificationsProvider = FutureProvider<List<AppNotification>>((ref) async {
+final myNotificationsProvider =
+    FutureProvider<List<AppNotification>>((ref) async {
   return ref.watch(notificationRepositoryProvider).listMyNotifications();
 });
 
@@ -27,6 +28,19 @@ class NotificationActions {
     await _ref.read(notificationRepositoryProvider).markRead(id);
     _ref.invalidate(myNotificationsProvider);
     _ref.invalidate(unreadNotificationCountProvider);
+  }
+
+  // The backend has no bulk "read all" endpoint, so mark each unread one.
+  // Returns how many were marked.
+  Future<int> markAllRead() async {
+    final repo = _ref.read(notificationRepositoryProvider);
+    final unread = (await _ref.read(myNotificationsProvider.future))
+        .where((n) => !n.isRead)
+        .toList();
+    await Future.wait(unread.map((n) => repo.markRead(n.id)));
+    _ref.invalidate(myNotificationsProvider);
+    _ref.invalidate(unreadNotificationCountProvider);
+    return unread.length;
   }
 }
 

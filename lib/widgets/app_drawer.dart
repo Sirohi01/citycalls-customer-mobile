@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/customer_providers.dart';
 import '../providers/auth_providers.dart';
@@ -6,6 +7,8 @@ import '../providers/push_providers.dart';
 import '../providers/realtime_providers.dart';
 import '../screens/profile_screen.dart';
 import '../screens/support_screen.dart';
+import '../screens/favourites_screen.dart';
+import 'profile_avatar.dart';
 import '../screens/otp_request_screen.dart';
 import '../screens/service_browse_screen.dart';
 
@@ -49,19 +52,30 @@ class AppDrawer extends ConsumerWidget {
                       color: Color(0xFF0F172A),
                     ),
                   ),
-                  Row(
-                    children: [
-                      const Icon(Icons.headset_mic_outlined,
-                          size: 18, color: Color(0xFF0F172A)),
-                      const SizedBox(width: 4),
-                      const Text(
-                        'Support',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF0F172A)),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const SupportScreen()));
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      child: Row(
+                        children: [
+                          Icon(Icons.headset_mic_outlined,
+                              size: 18, color: Color(0xFF0F172A)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Support',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0F172A)),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
@@ -93,21 +107,7 @@ class AppDrawer extends ConsumerWidget {
                             color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: CircleAvatar(
-                            radius: 30,
-                            backgroundColor: const Color(0xFFF1F5F9),
-                            child: ClipOval(
-                              child: Image.network(
-                                'https://api.dicebear.com/7.x/notionists/png?seed=rohit', // Avatar
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                    Icons.person,
-                                    color: Color(0xFF94A3B8)),
-                              ),
-                            ),
-                          ),
+                          child: const ProfileAvatar(size: 60),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -168,7 +168,8 @@ class AppDrawer extends ConsumerWidget {
                     onTap: () {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const ServiceBrowseScreen(title: 'All Categories')));
+                          builder: (_) => const ServiceBrowseScreen(
+                              title: 'All Categories')));
                     },
                   ),
                   _MenuListItem(
@@ -178,6 +179,15 @@ class AppDrawer extends ConsumerWidget {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(MaterialPageRoute(
                           builder: (_) => const ProfileScreen()));
+                    },
+                  ),
+                  _MenuListItem(
+                    icon: Icons.favorite_border_rounded,
+                    title: 'My Favourites',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const FavouritesScreen()));
                     },
                   ),
                   _MenuListItem(
@@ -256,8 +266,7 @@ class AppDrawer extends ConsumerWidget {
                                       fontWeight: FontWeight.w700,
                                       color: Color(0xFF0F172A))),
                               SizedBox(height: 4),
-                              Text(
-                                  'Refer your friends and earn exciting rewards!',
+                              Text('Share CityCalls with your friends & family',
                                   style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w500,
@@ -267,7 +276,7 @@ class AppDrawer extends ConsumerWidget {
                         ),
                         const SizedBox(width: 12),
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () => _shareApp(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4FA021),
                             elevation: 0,
@@ -365,4 +374,23 @@ class _MenuListItem extends StatelessWidget {
       ),
     );
   }
+}
+
+// Play Store listing for this app (applicationId com.citycalls.customer).
+const _kPlayStoreUrl =
+    'https://play.google.com/store/apps/details?id=com.citycalls.customer';
+
+// Opens the system share sheet (WhatsApp, SMS, etc.) with an invite message.
+// There is no referral/rewards backend yet, so this is a plain invite.
+Future<void> _shareApp(BuildContext context) async {
+  final box = context.findRenderObject() as RenderBox?;
+  await Share.share(
+    'I use CityCalls to book trusted professionals for home services '
+    '— AC repair, cleaning, pest control, salon at home and more. '
+    'Download the app: $_kPlayStoreUrl',
+    subject: 'Try CityCalls',
+    // iPad needs an anchor for the share popover.
+    sharePositionOrigin:
+        box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+  );
 }

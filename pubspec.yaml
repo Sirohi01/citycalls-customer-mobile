@@ -47,6 +47,8 @@ dependencies:
   firebase_messaging: ^15.1.6
   geolocator: ^13.0.2
   geocoding: ^4.0.0
+  share_plus: ^10.1.4
+  speech_to_text: ^7.4.0
 
 dev_dependencies:
   flutter_test:

@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>CityCalls uses the camera so you can take a profile photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CityCalls needs access to your photos so you can choose a profile photo.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>CityCalls uses the microphone so you can search for services by voice.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>CityCalls converts your voice into text to search for services.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>CityCalls uses your location to show services available near you.</string>
 	<key>CFBundleDevelopmentRegion</key>

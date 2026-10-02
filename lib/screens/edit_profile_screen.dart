@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/customer_models.dart';
 import '../providers/customer_providers.dart';
 import '../providers/auth_providers.dart';
+import '../widgets/profile_avatar.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -15,6 +17,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   bool _saving = false;
+  bool _photoBusy = false;
   String? _error;
 
   @override
@@ -30,6 +33,80 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  // Camera / gallery / remove sheet for the profile photo.
+  Future<void> _changePhoto(String customerId) async {
+    final hasPhoto = ref.read(profilePhotoUrlProvider).valueOrNull != null;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheet) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 8, 20, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Profile photo',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined, color: Color(0xFF16A34A)),
+                title: const Text('Take a photo'),
+                onTap: () => Navigator.pop(sheet, 'camera'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF16A34A)),
+                title: const Text('Choose from gallery'),
+                onTap: () => Navigator.pop(sheet, 'gallery'),
+              ),
+              if (hasPhoto)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  title: const Text('Remove photo', style: TextStyle(color: Colors.red)),
+                  onTap: () => Navigator.pop(sheet, 'remove'),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = ref.read(customerRepositoryProvider);
+    try {
+      if (choice == 'remove') {
+        setState(() => _photoBusy = true);
+        await repo.removeProfilePhoto(customerId);
+        messenger.showSnackBar(const SnackBar(content: Text('Profile photo removed')));
+      } else {
+        // Resized + re-encoded as JPEG so it stays well under the 5 MB limit.
+        final image = await ImagePicker().pickImage(
+          source: choice == 'camera' ? ImageSource.camera : ImageSource.gallery,
+          maxWidth: 1024,
+          maxHeight: 1024,
+          imageQuality: 85,
+        );
+        if (image == null || !mounted) return;
+        setState(() => _photoBusy = true);
+        await repo.uploadProfilePhoto(customerId, image);
+        messenger.showSnackBar(const SnackBar(content: Text('Profile photo updated')));
+      }
+      ref.invalidate(profilePhotoUrlProvider);
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(
+          content: Text("Couldn't update your photo. Please try again.")));
+    } finally {
+      if (mounted) setState(() => _photoBusy = false);
+    }
   }
 
   Future<void> _saveChanges() async {
@@ -142,20 +219,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               height: 80,
                               child: Stack(
                                 children: [
-                                  Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0F5132),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: const Color(0xFFE6F4EA), width: 4),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
-                                      style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+                                  GestureDetector(
+                                    onTap: _photoBusy ? null : () => _changePhoto(profile.id),
+                                    child: const ProfileAvatar(
+                                      size: 80,
+                                      borderWidth: 4,
+                                      borderColor: Color(0xFFE6F4EA),
                                     ),
                                   ),
+                                  if (_photoBusy)
+                                    Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black38,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                                      ),
+                                    ),
                                   Positioned(
                                     bottom: 0,
                                     right: 0,
@@ -182,9 +268,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   const Text('Tap to change your profile photo', style: TextStyle(color: Colors.black54, fontSize: 12)),
                                   const SizedBox(height: 12),
                                   InkWell(
-                                    onTap: () {
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile photo change is coming soon!')));
-                                    },
+                                    onTap: _photoBusy ? null : () => _changePhoto(profile.id),
                                     borderRadius: BorderRadius.circular(20),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
