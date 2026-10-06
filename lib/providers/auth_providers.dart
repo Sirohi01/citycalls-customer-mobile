@@ -13,8 +13,10 @@ import '../models/auth_models.dart';
 // whatever network the dev machine is on — it is not a deployable default.
 const String _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  // defaultValue: 'http://192.168.0.164:4000/api/v1',
-  defaultValue: 'https://api.citycalls.in/api/v1',
+  // Local API (this Mac's current LAN IP) — the live server doesn't have the
+  // home-banner route yet. Switch back to the live URL before a release build.
+  defaultValue: 'http://10.46.203.146:4000/api/v1',
+  // defaultValue: 'https://api.citycalls.in/api/v1',
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
