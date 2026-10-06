@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/remembered_login_storage.dart';
 import '../providers/auth_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_background.dart';
@@ -30,6 +31,7 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
     _focusNode.addListener(() {
       setState(() => _isFocused = _focusNode.hasFocus);
     });
+    _loadRememberedMobile();
     if (widget.sessionExpired) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -39,6 +41,18 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
         );
       });
     }
+  }
+
+  // Last "Remember me" login: pre-fill its number with the box ticked.
+  Future<void> _loadRememberedMobile() async {
+    final mobile = await RememberedLoginStorage.readMobile();
+    if (!mounted || mobile == null || _mobileController.text.isNotEmpty) {
+      return;
+    }
+    setState(() {
+      _mobileController.text = mobile;
+      _rememberMe = true;
+    });
   }
 
   @override
@@ -207,8 +221,7 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
                       borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                onPressed:
-                    (authState.isLoading || !_rememberMe) ? null : _submit,
+                onPressed: authState.isLoading ? null : _submit,
                 child: authState.isLoading
                     ? const SizedBox(
                         height: 20,
@@ -250,7 +263,9 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      ref.read(authProvider.notifier).requestOtp(_mobileController.text.trim());
+      ref
+          .read(authProvider.notifier)
+          .requestOtp(_mobileController.text.trim(), rememberMe: _rememberMe);
     }
   }
 }

@@ -45,6 +45,8 @@ class AuthState {
   final AuthUser? user;
   final String? signupName;
   final String? signupEmail;
+  // From the login screen's "Remember me"; signup flows keep the default.
+  final bool rememberMe;
 
   const AuthState({
     this.step = AuthStep.enterMobile,
@@ -54,6 +56,7 @@ class AuthState {
     this.user,
     this.signupName,
     this.signupEmail,
+    this.rememberMe = true,
   });
 
   AuthState copyWith({
@@ -64,6 +67,7 @@ class AuthState {
     AuthUser? user,
     String? signupName,
     String? signupEmail,
+    bool? rememberMe,
   }) {
     return AuthState(
       step: step ?? this.step,
@@ -73,6 +77,7 @@ class AuthState {
       user: user ?? this.user,
       signupName: signupName ?? this.signupName,
       signupEmail: signupEmail ?? this.signupEmail,
+      rememberMe: rememberMe ?? this.rememberMe,
     );
   }
 }
@@ -82,13 +87,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._repository) : super(const AuthState());
 
   Future<void> requestOtp(String mobile,
-      {String? signupName, String? signupEmail}) async {
+      {String? signupName, String? signupEmail, bool rememberMe = true}) async {
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
       mobile: mobile,
       signupName: signupName,
       signupEmail: signupEmail,
+      rememberMe: rememberMe,
     );
     try {
       await _repository.requestOtp(mobile);
@@ -107,7 +113,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (mobile == null) return;
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final result = await _repository.verifyOtp(mobile, otp);
+      final result = await _repository.verifyOtp(mobile, otp,
+          rememberMe: state.rememberMe);
       state = state.copyWith(
           isLoading: false, step: AuthStep.loggedIn, user: result.user);
     } on AuthException catch (e) {

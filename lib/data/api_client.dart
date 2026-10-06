@@ -24,6 +24,13 @@ class ApiClient {
   // would fail and log a perfectly valid session out.
   Future<bool>? _refreshInFlight;
 
+  // "Remember me" off: the tokens live only in memory for this app run, so
+  // the next cold start lands on login. On (the default), they're kept in
+  // secure storage and the session survives restarts.
+  bool _persistTokens = true;
+  String? _memoryAccessToken;
+  String? _memoryRefreshToken;
+
   // No default here on purpose — the actual base URL is configured in one
   // place only, auth_providers.dart's `_apiBaseUrl`, so there's never a
   // question of which value is actually in effect.
@@ -36,7 +43,7 @@ class ApiClient {
         )) {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await _storage.read(key: _accessTokenKey);
+        final token = await readAccessToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
@@ -76,7 +83,7 @@ class ApiClient {
   }
 
   Future<bool> _doRefresh() async {
-    final refreshToken = await _storage.read(key: _refreshTokenKey);
+    final refreshToken = await readRefreshToken();
     if (refreshToken == null) {
       await _endSession();
       return false;
@@ -104,28 +111,45 @@ class ApiClient {
   }
 
   Future<Response<dynamic>> _retry(RequestOptions options) async {
-    final token = await _storage.read(key: _accessTokenKey);
+    final token = await readAccessToken();
     options.headers['Authorization'] = 'Bearer $token';
     options.extra[_retriedFlag] = true;
     return dio.fetch(options);
   }
 
-  Future<void> saveTokens({required String accessToken, required String refreshToken}) async {
-    await _storage.write(key: _accessTokenKey, value: accessToken);
-    await _storage.write(key: _refreshTokenKey, value: refreshToken);
+  // [persist] is set at login from the "Remember me" checkbox; a refresh
+  // omits it and keeps whichever mode the session started in.
+  Future<void> saveTokens({required String accessToken, required String refreshToken, bool? persist}) async {
+    if (persist != null) _persistTokens = persist;
+    if (_persistTokens) {
+      _memoryAccessToken = null;
+      _memoryRefreshToken = null;
+      await _storage.write(key: _accessTokenKey, value: accessToken);
+      await _storage.write(key: _refreshTokenKey, value: refreshToken);
+    } else {
+      _memoryAccessToken = accessToken;
+      _memoryRefreshToken = refreshToken;
+      // Drop any session an earlier "remembered" login left on disk.
+      await _storage.delete(key: _accessTokenKey);
+      await _storage.delete(key: _refreshTokenKey);
+    }
   }
 
   Future<void> clearTokens() async {
+    _memoryAccessToken = null;
+    _memoryRefreshToken = null;
     await _storage.delete(key: _accessTokenKey);
     await _storage.delete(key: _refreshTokenKey);
   }
 
-  Future<String?> readRefreshToken() => _storage.read(key: _refreshTokenKey);
+  Future<String?> readRefreshToken() async =>
+      _memoryRefreshToken ?? await _storage.read(key: _refreshTokenKey);
 
   // Sockets authenticate via a handshake `auth: {token}` payload (socket.io
   // has no header concept to intercept the way Dio's interceptor does above),
   // so SocketService needs the raw token, not just Dio's auto-attached header.
-  Future<String?> readAccessToken() => _storage.read(key: _accessTokenKey);
+  Future<String?> readAccessToken() async =>
+      _memoryAccessToken ?? await _storage.read(key: _accessTokenKey);
 
   // LOCAL-provider file URLs (files.model.ts) are API-relative (e.g.
   // "/uploads/...") — served by citycalls-api itself, not a CDN, so they need

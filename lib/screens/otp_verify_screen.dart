@@ -155,7 +155,8 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
             else
               GestureDetector(
                 onTap: () {
-                  ref.read(authProvider.notifier).requestOtp(authState.mobile!);
+                  ref.read(authProvider.notifier).requestOtp(authState.mobile!,
+                      rememberMe: authState.rememberMe);
                   _startTimer();
                 },
                 child: const Text(
