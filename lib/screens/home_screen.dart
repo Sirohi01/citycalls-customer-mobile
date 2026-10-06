@@ -49,6 +49,7 @@ class HomeScreen extends ConsumerWidget {
                   ref.invalidate(myServiceRequestsProvider);
                   ref.invalidate(serviceCategoriesProvider);
                   ref.invalidate(servicesByCategoryProvider);
+                  ref.invalidate(homeBannersProvider);
                 },
                 child: ListView(
                   padding: const EdgeInsets.only(top: 0, bottom: 24),
@@ -68,7 +69,7 @@ class HomeScreen extends ConsumerWidget {
                           TopBarLocationSearch(),
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: _HeroBanner(),
+                            child: _HomeTopBanner(),
                           ),
                         ],
                       ),
@@ -120,36 +121,96 @@ typedef _HeroSlide = ({
   String title1,
   String title2,
   String subtitle,
+  // Asset path (bundled fallback) or http(s) URL (from the API).
   String? image,
   IconData icon,
+  String button,
 });
 
+// Bundled copy of the home banners — shown until the API answers, and if it
+// fails or has no active banners (admin → Customer App → Home Banner).
 const List<_HeroSlide> _homeHeroSlides = [
   (
     tag: 'Trusted Professionals',
-    title1: 'Home Services',
-    title2: 'At Your Doorstep',
-    subtitle: 'Verified experts for a cleaner,\nsafer and better home.',
-    image: 'assets/home/hero_appliances.png',
-    icon: Icons.home_repair_service_rounded,
-  ),
-  (
-    tag: 'Limited Offer',
-    title1: 'Flat 20% Off',
-    title2: 'On AC Repair',
-    subtitle: 'Beat the summer heat with\nour expert technicians.',
-    image: 'assets/home/hero_appliances.png',
+    title1: 'AC Service',
+    title2: '& Repair',
+    subtitle: 'Expert technicians for cooling,\ngas refill and installation.',
+    image: 'assets/home_top_bannar/ac-bannar.png',
     icon: Icons.ac_unit_rounded,
+    button: 'Book a Service',
   ),
   (
-    tag: 'Best Seller',
-    title1: 'Deep Cleaning',
-    title2: 'Starts at ₹999',
-    subtitle: 'Give your home the shine\nit deserves today.',
-    image: 'assets/home/hero_appliances.png',
+    tag: 'Doorstep Service',
+    title1: 'Washing Machine',
+    title2: 'Repair',
+    subtitle: 'Front-load, top-load and\nsemi-automatic — all brands.',
+    image: 'assets/home_top_bannar/wosing-bannar.png',
+    icon: Icons.local_laundry_service_rounded,
+    button: 'Book a Service',
+  ),
+  (
+    tag: 'Brand Experts',
+    title1: 'Refrigerator',
+    title2: 'Repair',
+    subtitle: 'Cooling issues, gas refill\nand compressor repair.',
+    image: 'assets/home_top_bannar/frez-bannar.png',
+    icon: Icons.kitchen_rounded,
+    button: 'Book a Service',
+  ),
+  (
+    tag: 'Pure Water',
+    title1: 'RO Purifier',
+    title2: 'Service',
+    subtitle: 'Filter change, repair and\nregular maintenance.',
+    image: 'assets/home_top_bannar/ro-bannar.png',
+    icon: Icons.water_drop_rounded,
+    button: 'Book a Service',
+  ),
+  (
+    tag: 'Same Day Visit',
+    title1: 'TV Repair',
+    title2: '& Installation',
+    subtitle: 'LED, LCD and Smart TV\nrepair and wall mounting.',
+    image: 'assets/home_top_bannar/tv-bannar.png',
+    icon: Icons.tv_rounded,
+    button: 'Book a Service',
+  ),
+  (
+    tag: 'Deep Cleaning',
+    title1: 'Kitchen Chimney',
+    title2: 'Service',
+    subtitle: 'Deep cleaning and repair\nfor a smoke-free kitchen.',
+    image: 'assets/home_top_bannar/chemni-bannar.png',
     icon: Icons.cleaning_services_rounded,
+    button: 'Book a Service',
   ),
 ];
+
+// Home-screen top banner: the admin-managed banners from the API, or the
+// bundled ones while loading / on error / when none are active.
+class _HomeTopBanner extends ConsumerWidget {
+  const _HomeTopBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final banners = ref.watch(homeBannersProvider).valueOrNull;
+    if (banners == null || banners.isEmpty) return const _HeroBanner();
+    return _HeroBanner(
+      slides: [
+        for (final b in banners)
+          (
+            tag: b.tagLine,
+            title1: b.titleLine1,
+            title2: b.titleLine2,
+            subtitle: b.description,
+            image: b.imageUrl,
+            icon: Icons.home_repair_service_rounded,
+            button: b.buttonText,
+          ),
+      ],
+    );
+  }
+}
 
 class _HeroBanner extends StatefulWidget {
   final List<_HeroSlide> slides;
@@ -254,19 +315,30 @@ class _HeroBannerState extends State<_HeroBanner> {
     final image = slide.image;
     return Stack(
       children: [
-        // Photo on the right half, faded into the dark card. Without a photo,
-        // a large glowing icon fills that space instead.
+        // Full-bleed banner photo (dark on the left, so the text below stays
+        // readable). Without a photo, a large glowing icon fills the right
+        // side instead.
         if (image != null)
-          Positioned(
-            top: 0,
-            bottom: 0,
-            right: 0,
-            width: MediaQuery.of(context).size.width * 0.55,
-            child: Image.asset(
-              image,
-              fit: BoxFit.cover,
-              alignment: Alignment.centerRight,
-            ),
+          Positioned.fill(
+            child: image.startsWith('http')
+                ? Image.network(
+                    image,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.centerRight,
+                    // Fade the photo in over the dark card instead of popping.
+                    frameBuilder: (_, child, frame, syncLoaded) =>
+                        AnimatedOpacity(
+                      opacity: syncLoaded || frame != null ? 1 : 0,
+                      duration: const Duration(milliseconds: 300),
+                      child: child,
+                    ),
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  )
+                : Image.asset(
+                    image,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.centerRight,
+                  ),
           )
         else ...[
           Positioned(
@@ -377,21 +449,21 @@ class _HeroBannerState extends State<_HeroBanner> {
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => ServiceBrowseScreen(
                           initialCategoryId: widget.categoryId))),
-                  child: const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 8, 10, 8),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 10, 8),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Book a Service',
-                          style: TextStyle(
+                          slide.button,
+                          style: const TextStyle(
                             color: Color(0xFF0F172A),
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(width: 6),
-                        Icon(Icons.chevron_right_rounded,
+                        const SizedBox(width: 6),
+                        const Icon(Icons.chevron_right_rounded,
                             size: 18, color: Color(0xFF0F172A)),
                       ],
                     ),
@@ -1173,6 +1245,7 @@ class SalonHomeScreen extends StatelessWidget {
           subtitle: 'Trained beauticians with\nhygienic, branded products.',
           image: null,
           icon: Icons.spa_rounded,
+          button: 'Book a Service',
         ),
         (
           tag: 'Trending',
@@ -1181,6 +1254,7 @@ class SalonHomeScreen extends StatelessWidget {
           subtitle: 'Fresh looks without\nstepping out of home.',
           image: null,
           icon: Icons.content_cut_rounded,
+          button: 'Book a Service',
         ),
         (
           tag: 'Pamper Yourself',
@@ -1189,6 +1263,7 @@ class SalonHomeScreen extends StatelessWidget {
           subtitle: 'Skin care and spa rituals\nbooked in a few taps.',
           image: null,
           icon: Icons.face_retouching_natural_rounded,
+          button: 'Book a Service',
         ),
       ],
     );
@@ -1214,6 +1289,7 @@ class HelpNowHomeScreen extends StatelessWidget {
           subtitle: 'Verified experts at your door\nright when you need them.',
           image: null,
           icon: Icons.support_agent_rounded,
+          button: 'Book a Service',
         ),
         (
           tag: 'Emergency',
@@ -1222,6 +1298,7 @@ class HelpNowHomeScreen extends StatelessWidget {
           subtitle: 'Leaks, wiring, breakdowns —\nfixed fast and safely.',
           image: null,
           icon: Icons.bolt_rounded,
+          button: 'Book a Service',
         ),
         (
           tag: 'On Demand',
@@ -1230,6 +1307,7 @@ class HelpNowHomeScreen extends StatelessWidget {
           subtitle: 'Kitchen, bathroom or sofa —\ncleaned when it suits you.',
           image: null,
           icon: Icons.cleaning_services_rounded,
+          button: 'Book a Service',
         ),
       ],
     );

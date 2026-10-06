@@ -77,3 +77,40 @@ class CoverageResult {
         branchId: json['branchId'] as String?);
   }
 }
+
+// One slide of the home-screen top banner, managed in admin → Customer App →
+// Home Banner (citycalls-api src/modules/customer-app/home-banners).
+class HomeBanner {
+  final String id;
+  final String tagLine;
+  final String titleLine1;
+  final String titleLine2;
+  final String description;
+  final String buttonText;
+  final String imageUrl;
+  final String? altText;
+
+  HomeBanner({
+    required this.id,
+    required this.tagLine,
+    required this.titleLine1,
+    required this.titleLine2,
+    required this.description,
+    required this.buttonText,
+    required this.imageUrl,
+    this.altText,
+  });
+
+  factory HomeBanner.fromJson(Map<String, dynamic> json, String imageUrl) {
+    return HomeBanner(
+      id: json['_id'] as String,
+      tagLine: json['tagLine'] as String? ?? '',
+      titleLine1: json['titleLine1'] as String? ?? '',
+      titleLine2: json['titleLine2'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      buttonText: json['buttonText'] as String? ?? 'Book a Service',
+      imageUrl: imageUrl,
+      altText: json['altText'] as String?,
+    );
+  }
+}

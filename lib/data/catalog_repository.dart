@@ -44,5 +44,23 @@ class CatalogRepository {
     return (res.data['data'] as List).map((f) => MediaFile.fromJson(f as Map<String, dynamic>)).toList();
   }
 
+  // Public (no login needed) — only active banners that have an image, in
+  // admin order.
+  Future<List<HomeBanner>> listHomeBanners() async {
+    final res = await _client.dio.get('/public/customer-app/home-banners');
+    return (res.data['data'] as List)
+        .cast<Map<String, dynamic>>()
+        .map((b) => HomeBanner.fromJson(b, _bannerImageUrl(b['image'] as String)))
+        .toList();
+  }
+
+  // Cloudinary originals are ~1600px PNGs; ask for a phone-sized, auto-format
+  // copy instead. Local uploads are served as-is.
+  String _bannerImageUrl(String url) {
+    final resolved = _client.resolveUrl(url);
+    if (!resolved.contains('res.cloudinary.com')) return resolved;
+    return resolved.replaceFirst('/image/upload/', '/image/upload/w_1000,f_auto,q_auto/');
+  }
+
   String resolveMediaUrl(MediaFile file) => file.provider == 'LOCAL' ? '${_client.apiOrigin}${file.url}' : file.url;
 }

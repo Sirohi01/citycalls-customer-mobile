@@ -93,6 +93,7 @@ flutter:
     - assets/login/splace4_dark.png
     - assets/login/splash22.png
     - assets/home/
+    - assets/home_top_bannar/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -33,3 +33,7 @@ final masterMediaProvider =
     FutureProvider.family<List<MediaFile>, String>((ref, masterId) async {
   return ref.watch(catalogRepositoryProvider).getMasterMedia(masterId);
 });
+
+final homeBannersProvider = FutureProvider<List<HomeBanner>>((ref) async {
+  return ref.watch(catalogRepositoryProvider).listHomeBanners();
+});
