@@ -10,7 +10,11 @@ import '../models/catalog_models.dart';
 // final POST /service-requests submit.
 class BookingRepository {
   final ApiClient _client;
-  BookingRepository(this._client);
+  // Server the services come from (see auth_providers' catalog client), so a
+  // service's diagnostics are looked up where that service actually lives.
+  final ApiTarget _catalogClient;
+  BookingRepository(this._client, {required ApiTarget catalogClient})
+      : _catalogClient = catalogClient;
 
   Future<List<CustomerProductSummary>> listProducts(String customerId) async {
     final res = await _client.dio.get('/customers/$customerId/products');
@@ -34,7 +38,7 @@ class BookingRepository {
   // not the full global SYMPTOM master list, which mixes in every other
   // appliance's issues too.
   Future<List<ServiceCategory>> listServiceSymptoms(String serviceId) async {
-    final res = await _client.dio.get('/services/$serviceId/diagnostics');
+    final res = await _catalogClient.dio.get('/services/$serviceId/diagnostics');
     final symptoms = res.data['data']['symptoms'] as List;
     return symptoms.map((m) => ServiceCategory.fromJson(m as Map<String, dynamic>)).toList();
   }

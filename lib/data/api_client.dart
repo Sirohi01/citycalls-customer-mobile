@@ -3,11 +3,20 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class ApiClient {
+// What a repository needs from a server connection. Lets one repository talk
+// to a different server than the rest of the app (see SecondaryApiClient).
+abstract class ApiTarget {
+  Dio get dio;
+  String get apiOrigin;
+  String resolveUrl(String url);
+}
+
+class ApiClient implements ApiTarget {
   static const String _accessTokenKey = 'citycalls_access_token';
   static const String _refreshTokenKey = 'citycalls_refresh_token';
   static const String _retriedFlag = 'citycalls_retried_after_refresh';
 
+  @override
   final Dio dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
@@ -155,10 +164,65 @@ class ApiClient {
   // "/uploads/...") — served by citycalls-api itself, not a CDN, so they need
   // this origin prefixed. CLOUDINARY urls are already absolute. Mirrors
   // citycalls-admin-web's useFiles.ts resolveFileUrl().
+  @override
   String get apiOrigin => dio.options.baseUrl.replaceFirst(RegExp(r'/api/v1/?$'), '');
 
   // Same rule as resolveMediaUrl() in catalog_repository.dart, but for bare
   // URL strings that don't arrive wrapped in a File document — ServiceVisit's
   // beforeImages/afterImages are plain string arrays, not File refs.
+  @override
+  String resolveUrl(String url) => url.startsWith('http') ? url : '$apiOrigin$url';
+
+  // Lets a SecondaryApiClient renew the shared session after a 401.
+  Future<bool> refreshSession() => _refreshAccessToken();
+}
+
+// A second server that reuses [ApiClient]'s login: requests carry the same
+// access token, and a 401 renews the session through the primary server once
+// and retries. It never ends the session itself — if the other server still
+// says 401, that request just fails and the user stays logged in.
+class SecondaryApiClient implements ApiTarget {
+  static const String _retriedFlag = 'citycalls_secondary_retried';
+
+  @override
+  final Dio dio;
+  final ApiClient _session;
+
+  SecondaryApiClient({required String baseUrl, required ApiClient session})
+      : _session = session,
+        dio = Dio(BaseOptions(
+          baseUrl: baseUrl,
+          headers: {'Content-Type': 'application/json'},
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        )) {
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final token = await _session.readAccessToken();
+        if (token != null) options.headers['Authorization'] = 'Bearer $token';
+        handler.next(options);
+      },
+      onError: (error, handler) async {
+        if (error.response?.statusCode != 401 ||
+            error.requestOptions.extra[_retriedFlag] == true) {
+          return handler.next(error);
+        }
+        if (!await _session.refreshSession()) return handler.next(error);
+        final options = error.requestOptions;
+        options.headers['Authorization'] = 'Bearer ${await _session.readAccessToken()}';
+        options.extra[_retriedFlag] = true;
+        try {
+          handler.resolve(await dio.fetch(options));
+        } on DioException catch (e) {
+          handler.next(e);
+        }
+      },
+    ));
+  }
+
+  @override
+  String get apiOrigin => dio.options.baseUrl.replaceFirst(RegExp(r'/api/v1/?$'), '');
+
+  @override
   String resolveUrl(String url) => url.startsWith('http') ? url : '$apiOrigin$url';
 }

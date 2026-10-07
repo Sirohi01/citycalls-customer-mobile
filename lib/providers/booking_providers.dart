@@ -7,7 +7,10 @@ import 'customer_providers.dart';
 import 'catalog_providers.dart';
 
 final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
-  return BookingRepository(ref.watch(apiClientProvider));
+  return BookingRepository(
+    ref.watch(apiClientProvider),
+    catalogClient: ref.watch(catalogApiClientProvider),
+  );
 });
 
 final customerProductsProvider = FutureProvider<List<CustomerProductSummary>>((ref) async {

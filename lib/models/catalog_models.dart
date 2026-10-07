@@ -77,3 +77,37 @@ class CoverageResult {
         branchId: json['branchId'] as String?);
   }
 }
+
+// One slide of an admin-managed top banner (admin → Customer App → Salon /
+// HelpNow Banner; citycalls-api src/modules/customer-app/*-banners).
+class AppBanner {
+  final String id;
+  final String tagLine;
+  final String titleLine1;
+  final String titleLine2;
+  final String description;
+  final String buttonText;
+  final String imageUrl;
+
+  AppBanner({
+    required this.id,
+    required this.tagLine,
+    required this.titleLine1,
+    required this.titleLine2,
+    required this.description,
+    required this.buttonText,
+    required this.imageUrl,
+  });
+
+  factory AppBanner.fromJson(Map<String, dynamic> json, String imageUrl) {
+    return AppBanner(
+      id: json['_id'] as String,
+      tagLine: json['tagLine'] as String? ?? '',
+      titleLine1: json['titleLine1'] as String? ?? '',
+      titleLine2: json['titleLine2'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      buttonText: json['buttonText'] as String? ?? 'Book a Service',
+      imageUrl: imageUrl,
+    );
+  }
+}

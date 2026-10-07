@@ -1225,6 +1225,7 @@ class SalonHomeScreen extends StatelessWidget {
     return const _CategoryLanding(
       keywords: ['salon', 'saloon', 'bliss', 'beauty'],
       title: 'Salon Services',
+      bannerPath: '/public/customer-app/salon-banners',
       accent: Color(0xFFF472B6),
       headerColor: Color(0xFF1A0712),
       cardColor: Color(0xFF2A0D1E),
@@ -1311,7 +1312,11 @@ class _CategoryLanding extends ConsumerWidget {
   final Color accent;
   final Color headerColor;
   final Color cardColor;
+  // Bundled slides — shown until the API answers, and if it fails or has no
+  // active banners.
   final List<_HeroSlide> slides;
+  // Public API path of this tab's admin-managed banners, if it has any.
+  final String? bannerPath;
 
   const _CategoryLanding({
     required this.keywords,
@@ -1320,7 +1325,27 @@ class _CategoryLanding extends ConsumerWidget {
     required this.headerColor,
     required this.cardColor,
     required this.slides,
+    this.bannerPath,
   });
+
+  List<_HeroSlide> _bannerSlides(WidgetRef ref) {
+    final path = bannerPath;
+    if (path == null) return slides;
+    final banners = ref.watch(appBannersProvider(path)).valueOrNull;
+    if (banners == null || banners.isEmpty) return slides;
+    return [
+      for (final b in banners)
+        (
+          tag: b.tagLine,
+          title1: b.titleLine1,
+          title2: b.titleLine2,
+          subtitle: b.description,
+          image: b.imageUrl,
+          icon: slides.first.icon,
+          button: b.buttonText,
+        ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1351,6 +1376,9 @@ class _CategoryLanding extends ConsumerWidget {
                 onRefresh: () async {
                   ref.invalidate(serviceCategoriesProvider);
                   ref.invalidate(servicesByCategoryProvider);
+                  if (bannerPath != null) {
+                    ref.invalidate(appBannersProvider(bannerPath!));
+                  }
                 },
                 child: ListView(
                   padding: const EdgeInsets.only(bottom: 24),
@@ -1364,7 +1392,7 @@ class _CategoryLanding extends ConsumerWidget {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: _HeroBanner(
-                              slides: slides,
+                              slides: _bannerSlides(ref),
                               accent: accent,
                               cardColor: cardColor,
                               categoryId: category?.id,
