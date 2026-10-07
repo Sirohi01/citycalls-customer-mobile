@@ -49,7 +49,6 @@ class HomeScreen extends ConsumerWidget {
                   ref.invalidate(myServiceRequestsProvider);
                   ref.invalidate(serviceCategoriesProvider);
                   ref.invalidate(servicesByCategoryProvider);
-                  ref.invalidate(homeBannersProvider);
                 },
                 child: ListView(
                   padding: const EdgeInsets.only(top: 0, bottom: 24),
@@ -69,14 +68,37 @@ class HomeScreen extends ConsumerWidget {
                           TopBarLocationSearch(),
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: _HomeTopBanner(),
+                            child: _HeroBanner(),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 8),
                     const _TopCategoriesSection(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
+                    // Divider + heading so the promo carousel reads as its
+                    // own section rather than part of the category grid.
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      indent: 16,
+                      endIndent: 16,
+                      color: Color(0xFFE2E8F0),
+                    ),
+                    const SizedBox(height: 8),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'Offers & Deals',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       child: _PromoBanner(),
@@ -127,8 +149,7 @@ typedef _HeroSlide = ({
   String button,
 });
 
-// Bundled copy of the home banners — shown until the API answers, and if it
-// fails or has no active banners (admin → Customer App → Home Banner).
+// Static home top banners, bundled with the app (assets/home_top_bannar/).
 const List<_HeroSlide> _homeHeroSlides = [
   (
     tag: 'Trusted Professionals',
@@ -185,32 +206,6 @@ const List<_HeroSlide> _homeHeroSlides = [
     button: 'Book a Service',
   ),
 ];
-
-// Home-screen top banner: the admin-managed banners from the API, or the
-// bundled ones while loading / on error / when none are active.
-class _HomeTopBanner extends ConsumerWidget {
-  const _HomeTopBanner();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final banners = ref.watch(homeBannersProvider).valueOrNull;
-    if (banners == null || banners.isEmpty) return const _HeroBanner();
-    return _HeroBanner(
-      slides: [
-        for (final b in banners)
-          (
-            tag: b.tagLine,
-            title1: b.titleLine1,
-            title2: b.titleLine2,
-            subtitle: b.description,
-            image: b.imageUrl,
-            icon: Icons.home_repair_service_rounded,
-            button: b.buttonText,
-          ),
-      ],
-    );
-  }
-}
 
 class _HeroBanner extends StatefulWidget {
   final List<_HeroSlide> slides;
@@ -706,11 +701,8 @@ const _categoryIconColors = [
   Color(0xFFEA580C),
 ];
 
-// Service.expectedDurationMinutes rendered for a customer. Replaces the
-// star rating that used to sit in this slot, which was computed from the
-// service NAME's length — Service carries no rating field at all, and the
-// backend has no rating-aggregate endpoint, so there was nothing real to
-// show there.
+// Service.expectedDurationMinutes rendered for a customer (service detail
+// and favourites; the home grid cards no longer show it).
 String formatServiceDuration(int minutes) {
   if (minutes < 60) return '$minutes min';
   final hours = minutes ~/ 60;
@@ -719,10 +711,15 @@ String formatServiceDuration(int minutes) {
   return '$hours hr $rest min';
 }
 
-// Grid shows up to 2 rows of 4 (8 slots). Categories beyond that are reached
-// via the 8th slot turning into a "More Services" card instead of trying to
+// Grid shows up to 3 rows of 3 (9 slots). Categories beyond that are reached
+// via the 9th slot turning into a "More Services" card instead of trying to
 // cram them all in, or an expand/collapse toggle.
-const _maxGridSlots = 8;
+const _maxGridSlots = 9;
+const _categoryGridSpacing = 12.0;
+
+// 3 tiles per row: screen minus 16px side padding and two 12px gaps.
+double _categoryTileWidth(BuildContext context) =>
+    (MediaQuery.of(context).size.width - 32 - 2 * _categoryGridSpacing) / 3;
 
 class _TopCategoriesSection extends ConsumerWidget {
   const _TopCategoriesSection();
@@ -763,8 +760,8 @@ class _TopCategoriesSection extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Wrap(
-                spacing: 8,
-                runSpacing: 12,
+                spacing: _categoryGridSpacing,
+                runSpacing: 14,
                 alignment: WrapAlignment.start,
                 children: [
                   for (int i = 0; i < itemsToShow; i++)
@@ -793,9 +790,7 @@ class _TopCategoriesSection extends ConsumerWidget {
 
   Widget _buildCategoryItem(BuildContext context, WidgetRef ref,
       ServiceCategory category, int index) {
-    // 4 items per row with 12px spacing -> 3 * 12 = 36px total spacing
-    // Plus 32px horizontal padding -> 68px total padding/spacing
-    final width = (MediaQuery.of(context).size.width - 68) / 4;
+    final width = _categoryTileWidth(context);
     final iconColor = _categoryIconColors[index % _categoryIconColors.length];
 
     return GestureDetector(
@@ -843,13 +838,13 @@ class _TopCategoriesSection extends ConsumerWidget {
                             errorBuilder: (context, error, stackTrace) => Icon(
                                 _iconForCategory(category.label),
                                 color: iconColor,
-                                size: 30),
+                                size: 38),
                           ),
                         );
                       }
                       return Center(
                         child: Icon(_iconForCategory(category.label),
-                            color: iconColor, size: 30),
+                            color: iconColor, size: 38),
                       );
                     },
                     loading: () => const Center(
@@ -859,7 +854,7 @@ class _TopCategoriesSection extends ConsumerWidget {
                             child: CircularProgressIndicator(strokeWidth: 2))),
                     error: (_, __) => Center(
                         child: Icon(_iconForCategory(category.label),
-                            color: iconColor, size: 30)),
+                            color: iconColor, size: 38)),
                   ),
             ),
             const SizedBox(height: 8),
@@ -868,7 +863,7 @@ class _TopCategoriesSection extends ConsumerWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   height: 1.2,
                   color: Color(0xFF334155)),
@@ -880,7 +875,7 @@ class _TopCategoriesSection extends ConsumerWidget {
   }
 
   Widget _buildMoreCard(BuildContext context) {
-    final width = (MediaQuery.of(context).size.width - 68) / 4;
+    final width = _categoryTileWidth(context);
 
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
@@ -906,7 +901,7 @@ class _TopCategoriesSection extends ConsumerWidget {
               ),
               child: const Center(
                 child: Icon(Icons.more_horiz_rounded,
-                    color: Colors.grey, size: 30),
+                    color: Colors.grey, size: 38),
               ),
             ),
             const SizedBox(height: 8),
@@ -914,7 +909,7 @@ class _TopCategoriesSection extends ConsumerWidget {
               'More\nServices',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   height: 1.2,
                   color: Color(0xFF334155)),
@@ -929,7 +924,7 @@ class _TopCategoriesSection extends ConsumerWidget {
 // One block per category below the promo banner: the category name, a
 // "View more" link when it has more than [_homeServicesPerCategory] services,
 // and the first few services as list cards.
-const _homeServicesPerCategory = 5;
+const _homeServicesPerCategory = 6;
 
 class _CategoryServiceSection extends ConsumerWidget {
   final ServiceCategory category;
@@ -987,7 +982,17 @@ class _CategoryServiceSection extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 6),
+          // Thin rule just under the name / "View more" row, same style as
+          // the one above "Offers & Deals".
+          const SizedBox(height: 4),
+          const Divider(
+            height: 1,
+            thickness: 1,
+            indent: 16,
+            endIndent: 16,
+            color: Color(0xFFE2E8F0),
+          ),
+          const SizedBox(height: 10),
           servicesAsync.when(
             data: (items) {
               if (items.isEmpty) {
@@ -1062,156 +1067,142 @@ class _ServiceGridCard extends ConsumerWidget {
       },
       orElse: () => null,
     );
-    final placeholder = Center(
-      child: Icon(Icons.home_repair_service_rounded,
-          color: accent.withValues(alpha: 0.6), size: 34),
-    );
-
-    return Container(
+    // No photo: a wash of the category's accent with its service icon, so the
+    // card keeps the same shape and the text still sits on a dark fade.
+    final placeholder = DecoratedBox(
       decoration: BoxDecoration(
-        // Soft wash of the category's accent colour.
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color.alphaBlend(accent.withValues(alpha: 0.10), Colors.white),
-            Color.alphaBlend(accent.withValues(alpha: 0.03), Colors.white),
+            Color.alphaBlend(accent.withValues(alpha: 0.35), Colors.white),
+            accent,
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.15), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
+      child: Align(
+        alignment: const Alignment(0, -0.35),
+        child: Icon(Icons.home_repair_service_rounded,
+            color: Colors.white.withValues(alpha: 0.85), size: 32),
+      ),
+    );
+
+    return AspectRatio(
+      aspectRatio: 1.15,
+      child: Container(
+        decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => ServiceDetailScreen(serviceId: service.id))),
-          child: Padding(
-            padding: const EdgeInsets.all(6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        height: 62,
-                        width: double.infinity,
-                        color: Colors.white,
-                        padding: const EdgeInsets.all(4),
-                        child: thumbnailUrl != null
-                            ? Image.network(
-                                thumbnailUrl,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => placeholder,
-                              )
-                            : placeholder,
-                      ),
-                    ),
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: accent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.schedule_rounded,
-                                size: 11, color: accent),
-                            const SizedBox(width: 3),
-                            Text(
-                              formatServiceDuration(
-                                  service.expectedDurationMinutes),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: accent,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: SizedBox(
-                    // Fixed two-line height keeps every card in a row equal.
-                    height: 29,
-                    child: Text(
-                      service.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11.5,
-                        height: 1.25,
-                        color: Color(0xFF1E293B),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.10),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Material(
+            color: const Color(0xFFE2E8F0),
+            child: InkWell(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => ServiceDetailScreen(serviceId: service.id))),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Full-bleed photo.
+                  thumbnailUrl != null
+                      ? Image.network(
+                          thumbnailUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => placeholder,
+                        )
+                      : placeholder,
+                  // Dark fade at the bottom so the white text always reads,
+                  // whatever the photo looks like.
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0x00000000),
+                          Color(0x26000000),
+                          Color(0xD9000000),
+                        ],
+                        stops: [0.25, 0.45, 1.0],
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  Positioned(
+                    left: 9,
+                    right: 9,
+                    bottom: 8,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          service.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            height: 1.2,
+                            shadows: [
+                              Shadow(color: Color(0x66000000), blurRadius: 4),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text(
-                              'Starting at',
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                height: 1.1,
-                                color: Color(0xFF64748B),
-                                fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Starting at',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      height: 1.1,
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          Colors.white.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                  Text(
+                                    '₹${service.pricing.basePrice.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      fontSize: 13.5,
+                                      height: 1.2,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            Text(
-                              '₹${service.pricing.basePrice.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                fontSize: 13.5,
-                                height: 1.2,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF16A34A),
+                                shape: BoxShape.circle,
                               ),
+                              child: const Icon(Icons.arrow_forward_rounded,
+                                  color: Colors.white, size: 14),
                             ),
                           ],
                         ),
-                      ),
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF16A34A),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.arrow_forward_rounded,
-                            color: Colors.white, size: 14),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
