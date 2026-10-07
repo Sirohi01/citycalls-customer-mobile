@@ -60,16 +60,14 @@ class HomeScreen extends ConsumerWidget {
                     //       completedCount: completedCount),
                     // ),
                     // const SizedBox(height: 12),
+                    // No bottom padding: the banner ends the header block,
+                    // with no strip of header colour beneath it.
                     Container(
                       color: _kHeroDark,
-                      padding: const EdgeInsets.only(bottom: 20),
                       child: const Column(
                         children: [
                           TopBarLocationSearch(),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: _HeroBanner(),
-                          ),
+                          _HeroBanner(),
                         ],
                       ),
                     ),
@@ -265,13 +263,10 @@ class _HeroBannerState extends State<_HeroBanner> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      // Edge to edge across the screen — no side margin or rounded corners.
       height: 190,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
         color: widget.cardColor,
-        border: widget.lightCard
-            ? Border.all(color: widget.accent.withValues(alpha: 0.18))
-            : null,
         boxShadow: widget.lightCard
             ? [
                 BoxShadow(
@@ -284,8 +279,7 @@ class _HeroBannerState extends State<_HeroBanner> {
       ),
       child: Stack(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+          ClipRect(
             child: PageView.builder(
               controller: _pageController,
               onPageChanged: (index) => setState(() => _currentPage = index),
@@ -326,8 +320,16 @@ class _HeroBannerState extends State<_HeroBanner> {
     final accent = widget.accent;
     final card = widget.cardColor;
     final light = widget.lightCard;
-    final titleColor = light ? const Color(0xFF3B0A24) : Colors.white;
-    final subtitleColor = light ? const Color(0xFF6B4A5C) : Colors.white;
+    // Light cards: near-black titles tinted with the tab's accent (plum on
+    // Salon, dark brown on HelpNow).
+    final titleColor = light
+        ? Color.alphaBlend(
+            accent.withValues(alpha: 0.22), const Color(0xFF111111))
+        : Colors.white;
+    final subtitleColor = light
+        ? Color.alphaBlend(
+            accent.withValues(alpha: 0.18), const Color(0xFF4B5563))
+        : Colors.white;
     final image = slide.image;
     return Stack(
       children: [
@@ -1326,9 +1328,15 @@ class HelpNowHomeScreen extends StatelessWidget {
     return const _CategoryLanding(
       keywords: ['help'],
       title: 'HelpNow Services',
-      accent: Color(0xFFFB923C),
-      headerColor: Color(0xFF1A0F05),
-      cardColor: Color(0xFF2A1808),
+      bannerPath: '/public/customer-app/helpnow-banners',
+      // Yellow header (HelpNow's uniform colour) with dark text, and the
+      // light banner card — the banner photos are white on the left.
+      accent: Color(0xFFD97706),
+      pageColor: Color(0xFFFFFBEB),
+      headerColor: Color(0xFFFACC15),
+      headerForeground: Color(0xFF3B2A06),
+      cardColor: Color(0xFFFEF3C7),
+      lightCard: true,
       slides: [
         (
           tag: 'Quick Support',
@@ -1453,19 +1461,15 @@ class _CategoryLanding extends ConsumerWidget {
                   children: [
                     Container(
                       color: headerColor,
-                      padding: const EdgeInsets.only(bottom: 20),
                       child: Column(
                         children: [
                           TopBarLocationSearch(foreground: headerForeground),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: _HeroBanner(
-                              slides: _bannerSlides(ref),
-                              accent: accent,
-                              cardColor: cardColor,
-                              categoryId: category?.id,
-                              lightCard: lightCard,
-                            ),
+                          _HeroBanner(
+                            slides: _bannerSlides(ref),
+                            accent: accent,
+                            cardColor: cardColor,
+                            categoryId: category?.id,
+                            lightCard: lightCard,
                           ),
                         ],
                       ),
