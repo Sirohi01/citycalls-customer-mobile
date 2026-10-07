@@ -10,18 +10,21 @@ import '../screens/notifications_screen.dart';
 import '../theme/app_theme.dart';
 import 'voice_search_sheet.dart';
 
-/// Fixed header: menu, logo and notifications.
+/// Fixed header: menu, logo and notifications. [foreground] is the icon and
+/// text colour — white on the dark headers, dark on a light one.
 class CustomTopBar extends StatelessWidget {
-  const CustomTopBar({super.key});
+  final Color foreground;
+  const CustomTopBar({super.key, this.foreground = Colors.white});
 
   @override
-  Widget build(BuildContext context) => _HeaderRow();
+  Widget build(BuildContext context) => _HeaderRow(foreground: foreground);
 }
 
 /// Location picker + search bar. Lives inside the home screen's scroll view
 /// so it scrolls away with the content while [CustomTopBar] stays pinned.
 class TopBarLocationSearch extends ConsumerWidget {
-  const TopBarLocationSearch({super.key});
+  final Color foreground;
+  const TopBarLocationSearch({super.key, this.foreground = Colors.white});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,7 +35,7 @@ class TopBarLocationSearch extends ConsumerWidget {
       child: Column(
         children: [
           const SizedBox(height: 8),
-          _LocationRow(profile: profile),
+          _LocationRow(profile: profile, foreground: foreground),
           const SizedBox(height: 12),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
@@ -45,8 +48,15 @@ class TopBarLocationSearch extends ConsumerWidget {
 }
 
 class _HeaderRow extends StatelessWidget {
+  final Color foreground;
+  const _HeaderRow({required this.foreground});
+
   @override
   Widget build(BuildContext context) {
+    // The lime "City" washes out on a light header; use the brand green there.
+    final cityColor = foreground == Colors.white
+        ? const Color(0xFF8BD450)
+        : const Color(0xFF16A34A);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -55,28 +65,27 @@ class _HeaderRow extends StatelessWidget {
           InkWell(
             onTap: () => Scaffold.of(context).openDrawer(),
             borderRadius: BorderRadius.circular(20),
-            child: const Padding(
-              padding: EdgeInsets.all(4.0),
-              child: Icon(Icons.menu_rounded, size: 28, color: Colors.white),
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Icon(Icons.menu_rounded, size: 28, color: foreground),
             ),
           ),
           // The logo asset has dark "Calls" lettering, which disappears on
           // the dark header — so the wordmark is drawn as text instead.
-          const Text.rich(
+          Text.rich(
             TextSpan(
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
                 height: 1,
               ),
               children: [
-                TextSpan(
-                    text: 'City', style: TextStyle(color: Color(0xFF8BD450))),
+                TextSpan(text: 'City', style: TextStyle(color: cityColor)),
                 TextSpan(
                     text: 'Calls',
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w500)),
+                        color: foreground, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -92,8 +101,8 @@ class _HeaderRow extends StatelessWidget {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  const Icon(Icons.notifications_none_rounded,
-                      size: 26, color: Colors.white),
+                  Icon(Icons.notifications_none_rounded,
+                      size: 26, color: foreground),
                   Positioned(
                     top: 2,
                     right: 2,
@@ -120,7 +129,8 @@ class _HeaderRow extends StatelessWidget {
 
 class _LocationRow extends ConsumerWidget {
   final AsyncValue profile;
-  const _LocationRow({required this.profile});
+  final Color foreground;
+  const _LocationRow({required this.profile, required this.foreground});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -157,22 +167,22 @@ class _LocationRow extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on, color: Colors.white, size: 20),
+                  Icon(Icons.location_on, color: foreground, size: 20),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       locationText,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: foreground,
                       ),
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down_rounded,
-                      color: Colors.white, size: 20),
+                  Icon(Icons.keyboard_arrow_down_rounded,
+                      color: foreground, size: 20),
                 ],
               ),
             ),

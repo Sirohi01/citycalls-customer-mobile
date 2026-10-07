@@ -212,12 +212,16 @@ class _HeroBanner extends StatefulWidget {
   final Color accent;
   final Color cardColor;
   final String? categoryId;
+  // Light card (e.g. the Salon tab): dark titles, an accent-filled button
+  // and a thin accent border, for banner photos that are light on the left.
+  final bool lightCard;
 
   const _HeroBanner({
     this.slides = _homeHeroSlides,
     this.accent = _kHeroLime,
     this.cardColor = const Color(0xFF151515),
     this.categoryId,
+    this.lightCard = false,
   });
 
   @override
@@ -265,6 +269,18 @@ class _HeroBannerState extends State<_HeroBanner> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: widget.cardColor,
+        border: widget.lightCard
+            ? Border.all(color: widget.accent.withValues(alpha: 0.18))
+            : null,
+        boxShadow: widget.lightCard
+            ? [
+                BoxShadow(
+                  color: widget.accent.withValues(alpha: 0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : null,
       ),
       child: Stack(
         children: [
@@ -292,7 +308,9 @@ class _HeroBannerState extends State<_HeroBanner> {
                   decoration: BoxDecoration(
                     color: isActive
                         ? widget.accent
-                        : Colors.white.withValues(alpha: 0.85),
+                        : widget.lightCard
+                            ? widget.accent.withValues(alpha: 0.25)
+                            : Colors.white.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(10),
                   ),
                 );
@@ -307,6 +325,9 @@ class _HeroBannerState extends State<_HeroBanner> {
   Widget _buildSlide(BuildContext context, _HeroSlide slide) {
     final accent = widget.accent;
     final card = widget.cardColor;
+    final light = widget.lightCard;
+    final titleColor = light ? const Color(0xFF3B0A24) : Colors.white;
+    final subtitleColor = light ? const Color(0xFF6B4A5C) : Colors.white;
     final image = slide.image;
     return Stack(
       children: [
@@ -373,12 +394,36 @@ class _HeroBannerState extends State<_HeroBanner> {
               gradient: LinearGradient(
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
-                colors: [
-                  card,
-                  card.withValues(alpha: image != null ? 0.85 : 0.6),
-                  card.withValues(alpha: 0.0),
-                ],
-                stops: const [0.0, 0.45, 0.7],
+                // A light card's photos are already light on the left, so
+                // only a soft wash goes over them — a heavy one makes the
+                // whole banner look washed-out white.
+                // On a light card the text side gets a soft white wash
+                // (not the pink card colour) so the dark text stands out.
+                colors: light && image != null
+                    ? [
+                        Colors.white.withValues(alpha: 0.75),
+                        Colors.white.withValues(alpha: 0.45),
+                        Colors.white.withValues(alpha: 0.0),
+                      ]
+                    // Dark cards: the photos are already dark on the left, so
+                    // a lighter fade keeps the white text readable without
+                    // blacking out half the photo.
+                    : image != null
+                        ? [
+                            card.withValues(alpha: 0.8),
+                            card.withValues(alpha: 0.45),
+                            card.withValues(alpha: 0.0),
+                          ]
+                        : [
+                            card,
+                            card.withValues(alpha: 0.6),
+                            card.withValues(alpha: 0.0),
+                          ],
+                stops: light && image != null
+                    ? const [0.0, 0.42, 0.65]
+                    : image != null
+                        ? const [0.0, 0.38, 0.62]
+                        : const [0.0, 0.45, 0.7],
               ),
             ),
           ),
@@ -407,8 +452,8 @@ class _HeroBannerState extends State<_HeroBanner> {
               const SizedBox(height: 10),
               Text(
                 slide.title1,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: titleColor,
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   height: 1.1,
@@ -428,8 +473,8 @@ class _HeroBannerState extends State<_HeroBanner> {
               const SizedBox(height: 6),
               Text(
                 slide.subtitle,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: subtitleColor,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   height: 1.3,
@@ -437,7 +482,7 @@ class _HeroBannerState extends State<_HeroBanner> {
               ),
               const Spacer(),
               Material(
-                color: Colors.white,
+                color: light ? accent : Colors.white,
                 shape: const StadiumBorder(),
                 child: InkWell(
                   customBorder: const StadiumBorder(),
@@ -451,15 +496,20 @@ class _HeroBannerState extends State<_HeroBanner> {
                       children: [
                         Text(
                           slide.button,
-                          style: const TextStyle(
-                            color: Color(0xFF0F172A),
+                          style: TextStyle(
+                            color: light
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(width: 6),
-                        const Icon(Icons.chevron_right_rounded,
-                            size: 18, color: Color(0xFF0F172A)),
+                        Icon(Icons.chevron_right_rounded,
+                            size: 18,
+                            color: light
+                                ? Colors.white
+                                : const Color(0xFF0F172A)),
                       ],
                     ),
                   ),
@@ -1226,9 +1276,15 @@ class SalonHomeScreen extends StatelessWidget {
       keywords: ['salon', 'saloon', 'bliss', 'beauty'],
       title: 'Salon Services',
       bannerPath: '/public/customer-app/salon-banners',
-      accent: Color(0xFFF472B6),
-      headerColor: Color(0xFF1A0712),
-      cardColor: Color(0xFF2A0D1E),
+      // Soft blush theme: very light pink page and header, deep-rose text,
+      // and a light banner card that blends into the banner photos' light
+      // pink left side.
+      accent: Color(0xFFDB2777),
+      pageColor: Color(0xFFFFF0F6),
+      headerColor: Color(0xFFF9D3E4),
+      headerForeground: Color(0xFF831843),
+      cardColor: Color(0xFFF7C6DB),
+      lightCard: true,
       slides: [
         (
           tag: 'Salon at Home',
@@ -1310,8 +1366,12 @@ class _CategoryLanding extends ConsumerWidget {
   final List<String> keywords;
   final String title;
   final Color accent;
+  final Color pageColor;
   final Color headerColor;
+  // Top bar / location text and icons; dark when [headerColor] is light.
+  final Color headerForeground;
   final Color cardColor;
+  final bool lightCard;
   // Bundled slides — shown until the API answers, and if it fails or has no
   // active banners.
   final List<_HeroSlide> slides;
@@ -1322,8 +1382,11 @@ class _CategoryLanding extends ConsumerWidget {
     required this.keywords,
     required this.title,
     required this.accent,
+    this.pageColor = const Color(0xFFF8FAFC),
     required this.headerColor,
+    this.headerForeground = Colors.white,
     required this.cardColor,
+    this.lightCard = false,
     required this.slides,
     this.bannerPath,
   });
@@ -1355,10 +1418,13 @@ class _CategoryLanding extends ConsumerWidget {
         .firstOrNull;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: pageColor,
       drawer: const AppDrawer(),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
+        // Dark status-bar icons over a light header, light over a dark one.
+        value: headerForeground == Colors.white
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
         child: Column(
           children: [
             Container(
@@ -1368,7 +1434,9 @@ class _CategoryLanding extends ConsumerWidget {
                   BoxShadow(color: headerColor, offset: const Offset(0, 1))
                 ],
               ),
-              child: const SafeArea(bottom: false, child: CustomTopBar()),
+              child: SafeArea(
+                  bottom: false,
+                  child: CustomTopBar(foreground: headerForeground)),
             ),
             Expanded(
               child: RefreshIndicator(
@@ -1388,7 +1456,7 @@ class _CategoryLanding extends ConsumerWidget {
                       padding: const EdgeInsets.only(bottom: 20),
                       child: Column(
                         children: [
-                          const TopBarLocationSearch(),
+                          TopBarLocationSearch(foreground: headerForeground),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: _HeroBanner(
@@ -1396,6 +1464,7 @@ class _CategoryLanding extends ConsumerWidget {
                               accent: accent,
                               cardColor: cardColor,
                               categoryId: category?.id,
+                              lightCard: lightCard,
                             ),
                           ),
                         ],
@@ -1417,10 +1486,12 @@ class _CategoryLanding extends ConsumerWidget {
                           const SizedBox(width: 8),
                           Text(
                             title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
+                              color: headerForeground == Colors.white
+                                  ? const Color(0xFF0F172A)
+                                  : headerForeground,
                               letterSpacing: -0.2,
                             ),
                           ),
