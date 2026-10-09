@@ -47,7 +47,6 @@ class _ReopenRequestScreenState extends ConsumerState<ReopenRequestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
       appBar: AppBar(title: const Text('Reopen Request'), centerTitle: false),
       body: Padding(
         padding: const EdgeInsets.all(20),

@@ -29,7 +29,6 @@ class MyComplaintsScreen extends ConsumerWidget {
     final complaints = ref.watch(myComplaintsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
       appBar: AppBar(title: const Text('My Complaints'), centerTitle: false),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RaiseComplaintScreen())),

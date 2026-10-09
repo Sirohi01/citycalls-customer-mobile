@@ -18,6 +18,30 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell> {
   int _index = 0;
+  // Tabs visited before the current one, most recent last. The phone's back
+  // button walks back through these one at a time instead of closing the app.
+  final List<int> _tabHistory = [];
+
+  void _selectTab(int index) {
+    if (index == _index) return;
+    setState(() {
+      _tabHistory
+        ..remove(_index)
+        ..add(_index);
+      _index = index;
+    });
+  }
+
+  // Back: previous tab first, then Home, and only then let the app close.
+  void _handleBack() {
+    setState(() {
+      if (_tabHistory.isNotEmpty) {
+        _index = _tabHistory.removeLast();
+      } else {
+        _index = 0;
+      }
+    });
+  }
 
   List<Widget> get _tabs => [
         const HomeScreen(),
@@ -49,7 +73,7 @@ class _MainShellState extends ConsumerState<MainShell> {
     if (requested == null) return;
     pendingShellTab.value = null;
     if (!mounted) return;
-    setState(() => _index = requested);
+    _selectTab(requested);
     ref.invalidate(unreadNotificationCountProvider);
   }
 
@@ -85,63 +109,71 @@ class _MainShellState extends ConsumerState<MainShell> {
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
-      child: Scaffold(
-        body: IndexedStack(index: _index, children: _tabs),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: const Border(top: BorderSide(color: Color(0xFFF1F5F9))),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 12,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            child: SizedBox(
-              height: 62,
-              child: Row(
-                children: [
-                  _NavItem(
-                    icon: Icons.home_outlined,
-                    activeIcon: Icons.home_rounded,
-                    label: 'Home',
-                    selected: _index == 0,
-                    onTap: () => setState(() => _index = 0),
-                  ),
-                  _NavItem(
-                    icon: Icons.spa_outlined,
-                    activeIcon: Icons.spa_rounded,
-                    label: 'Salon',
-                    brandColor: const Color(0xFFEC4899),
-                    selected: _index == 1,
-                    onTap: () => setState(() => _index = 1),
-                  ),
-                  _NavItem(
-                    icon: Icons.support_agent_outlined,
-                    activeIcon: Icons.support_agent_rounded,
-                    label: 'HelpNow',
-                    brandColor: const Color(0xFFF97316),
-                    selected: _index == 2,
-                    onTap: () => setState(() => _index = 2),
-                  ),
-                  _NavItem(
-                    icon: Icons.grid_view_outlined,
-                    activeIcon: Icons.grid_view_rounded,
-                    label: 'Bookings',
-                    selected: _index == 3,
-                    onTap: () => setState(() => _index = 3),
-                  ),
-                  _NavItem(
-                    icon: Icons.person_outline_rounded,
-                    activeIcon: Icons.person_rounded,
-                    label: 'Profile',
-                    selected: _index == 4,
-                    onTap: () => setState(() => _index = 4),
-                  ),
-                ],
+      // Pushed screens (service detail, booking steps…) pop on their own
+      // before this is reached; here back only switches tabs.
+      child: PopScope(
+        canPop: _tabHistory.isEmpty && _index == 0,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _handleBack();
+        },
+        child: Scaffold(
+          body: IndexedStack(index: _index, children: _tabs),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: const Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 12,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: SizedBox(
+                height: 62,
+                child: Row(
+                  children: [
+                    _NavItem(
+                      icon: Icons.home_outlined,
+                      activeIcon: Icons.home_rounded,
+                      label: 'Home',
+                      selected: _index == 0,
+                      onTap: () => _selectTab(0),
+                    ),
+                    _NavItem(
+                      icon: Icons.spa_outlined,
+                      activeIcon: Icons.spa_rounded,
+                      label: 'Salon',
+                      brandColor: const Color(0xFFEC4899),
+                      selected: _index == 1,
+                      onTap: () => _selectTab(1),
+                    ),
+                    _NavItem(
+                      icon: Icons.support_agent_outlined,
+                      activeIcon: Icons.support_agent_rounded,
+                      label: 'HelpNow',
+                      brandColor: const Color(0xFFF97316),
+                      selected: _index == 2,
+                      onTap: () => _selectTab(2),
+                    ),
+                    _NavItem(
+                      icon: Icons.grid_view_outlined,
+                      activeIcon: Icons.grid_view_rounded,
+                      label: 'Bookings',
+                      selected: _index == 3,
+                      onTap: () => _selectTab(3),
+                    ),
+                    _NavItem(
+                      icon: Icons.person_outline_rounded,
+                      activeIcon: Icons.person_rounded,
+                      label: 'Profile',
+                      selected: _index == 4,
+                      onTap: () => _selectTab(4),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

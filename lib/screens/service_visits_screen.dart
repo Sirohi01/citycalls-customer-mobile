@@ -23,7 +23,6 @@ class ServiceVisitsScreen extends ConsumerWidget {
     final visits = ref.watch(serviceVisitsProvider(requestId));
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
       appBar: AppBar(
         title: const Text('Work Details'),
         centerTitle: false,
@@ -90,9 +89,7 @@ class _VisitCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
-        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

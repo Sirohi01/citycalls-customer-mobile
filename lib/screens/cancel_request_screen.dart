@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/service_request_providers.dart';
-import '../theme/app_theme.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Reschedule/Cancel" — Cancel
 // confirmation (policy-aware messaging). No cancellation-policy endpoint
@@ -51,7 +50,6 @@ class _CancelRequestScreenState extends ConsumerState<CancelRequestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
       appBar: AppBar(title: const Text('Cancel Request'), centerTitle: false),
       body: Padding(
         padding: const EdgeInsets.all(20),

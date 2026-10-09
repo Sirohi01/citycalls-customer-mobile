@@ -21,8 +21,7 @@ class InvoiceViewScreen extends ConsumerWidget {
     final invoice = ref.watch(invoiceForRequestProvider(requestId));
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
-      appBar: AppBar(title: const Text('Invoice'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
+      appBar: AppBar(title: const Text('Invoice')),
       body: invoice.when(
         data: (inv) {
           if (inv == null) {
@@ -48,7 +47,7 @@ class InvoiceViewScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Row(
                     children: [
@@ -69,7 +68,7 @@ class InvoiceViewScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Column(
                     children: [
@@ -90,7 +89,7 @@ class InvoiceViewScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: AppColors.white,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +134,7 @@ class InvoiceViewScreen extends ConsumerWidget {
                                     decoration: BoxDecoration(
                                       color: AppColors.white,
                                       borderRadius: BorderRadius.circular(14),
-                                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
                                     ),
                                     child: Row(
                                       children: [

@@ -5,10 +5,7 @@ import '../models/media_models.dart';
 import 'auth_providers.dart';
 
 final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
-  return CatalogRepository(
-    ref.watch(catalogApiClientProvider),
-    bannerClient: ref.watch(apiClientProvider),
-  );
+  return CatalogRepository(ref.watch(catalogApiClientProvider));
 });
 
 final serviceCategoriesProvider =
@@ -41,4 +38,8 @@ final masterMediaProvider =
 final appBannersProvider =
     FutureProvider.family<List<AppBanner>, String>((ref, path) async {
   return ref.watch(catalogRepositoryProvider).listBanners(path);
+});
+
+final supportContactProvider = FutureProvider<SupportContact>((ref) async {
+  return ref.watch(catalogRepositoryProvider).getSupportContact();
 });

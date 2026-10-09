@@ -32,7 +32,6 @@ class ComplaintDetailScreen extends ConsumerWidget {
     final complaint = ref.watch(complaintDetailProvider(complaintId));
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
       appBar: AppBar(title: const Text('Complaint'), centerTitle: false),
       body: complaint.when(
         data: (c) => RefreshIndicator(
@@ -138,9 +137,7 @@ class ComplaintDetailScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3)),
-        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: child,
     );

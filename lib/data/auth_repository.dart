@@ -53,6 +53,8 @@ class AuthRepository {
       }
     }
     await _client.clearTokens();
+    // The last number is kept on purpose: the login screen offers it back
+    // ("Continue with +91 …") next to "Use a different number".
   }
 
   // Every device currently signed in to this account. Self-scoped
@@ -94,11 +96,8 @@ class AuthRepository {
         refreshToken: loginResponse.refreshToken,
         persist: rememberMe,
       );
-      if (rememberMe) {
-        await RememberedLoginStorage.saveMobile(mobile);
-      } else {
-        await RememberedLoginStorage.clear();
-      }
+      // Last number used on this phone, offered back on the login screen.
+      await RememberedLoginStorage.saveMobile(mobile);
       return loginResponse;
     } on DioException catch (e) {
       throw _toAuthException(e, 'Incorrect or expired OTP.');

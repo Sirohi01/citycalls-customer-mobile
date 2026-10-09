@@ -3,13 +3,11 @@ import '../models/catalog_models.dart';
 import '../models/media_models.dart';
 
 // One repository class per module, per docs/12-frontend-data-contracts.md §3.
-// Categories, services and their media come from [_client]; the tab banners
-// from [_bannerClient] (they can be different servers — see auth_providers).
+// Categories, services, their media and the tab banners all come from
+// [_client] — the live server (see auth_providers' catalog client).
 class CatalogRepository {
   final ApiTarget _client;
-  final ApiTarget _bannerClient;
-  CatalogRepository(this._client, {required ApiTarget bannerClient})
-      : _bannerClient = bannerClient;
+  CatalogRepository(this._client);
 
   Future<List<ServiceCategory>> listCategories() async {
     final res = await _client.dio.get('/masters/SERVICE_CATEGORY', queryParameters: {'active': true, 'limit': 100});
@@ -52,7 +50,7 @@ class CatalogRepository {
   // '/public/customer-app/salon-banners' — only active ones with an image,
   // in admin order.
   Future<List<AppBanner>> listBanners(String path) async {
-    final res = await _bannerClient.dio.get(path);
+    final res = await _client.dio.get(path);
     return (res.data['data'] as List)
         .cast<Map<String, dynamic>>()
         .map((b) => AppBanner.fromJson(b, _bannerImageUrl(b['image'] as String)))
@@ -62,9 +60,18 @@ class CatalogRepository {
   // Cloudinary originals are large; ask for a phone-sized, auto-format copy.
   // Local uploads are served as-is.
   String _bannerImageUrl(String url) {
-    final resolved = _bannerClient.resolveUrl(url);
+    final resolved = _client.resolveUrl(url);
     if (!resolved.contains('res.cloudinary.com')) return resolved;
     return resolved.replaceFirst('/image/upload/', '/image/upload/w_1000,f_auto,q_auto/');
+  }
+
+  // Public contact details shown on Help & Support.
+  Future<SupportContact> getSupportContact() async {
+    final res = await _client.dio.get('/public/websites/city-calls/social-links');
+    final data = res.data['data'];
+    return data is Map<String, dynamic>
+        ? SupportContact.fromJson(data)
+        : SupportContact.fallback;
   }
 
   String resolveMediaUrl(MediaFile file) => file.provider == 'LOCAL' ? '${_client.apiOrigin}${file.url}' : file.url;

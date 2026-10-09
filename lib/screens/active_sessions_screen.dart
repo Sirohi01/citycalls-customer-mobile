@@ -84,7 +84,6 @@ class _ActiveSessionsScreenState extends ConsumerState<ActiveSessionsScreen> {
     final sessions = ref.watch(activeSessionsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
       appBar: AppBar(title: const Text('Signed-in Devices'), centerTitle: false),
       body: sessions.when(
         data: (items) {
@@ -133,9 +132,7 @@ class _ActiveSessionsScreenState extends ConsumerState<ActiveSessionsScreen> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         children: [

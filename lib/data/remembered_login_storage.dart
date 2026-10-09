@@ -1,7 +1,8 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// The mobile number from the last login made with "Remember me" ticked —
-/// pre-filled (with the box ticked) the next time the login screen opens.
+/// The mobile number of the last successful login on this phone. After a
+/// logout the login screen offers it back ("Continue with +91 …") alongside
+/// "Use a different number".
 class RememberedLoginStorage {
   static const _key = 'citycalls_remembered_mobile';
   static const _storage = FlutterSecureStorage();

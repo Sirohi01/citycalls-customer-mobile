@@ -43,12 +43,7 @@ class _ProformaReviewScreenState extends ConsumerState<ProformaReviewScreen> {
     final proforma = ref.watch(proformaForRequestProvider(widget.requestId));
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
-      appBar: AppBar(
-          title: const Text('Review Bill'),
-          centerTitle: false,
-          backgroundColor: AppColors.neutral100,
-          surfaceTintColor: AppColors.neutral100),
+      appBar: AppBar(title: const Text('Review Bill')),
       body: proforma.when(
         data: (p) {
           if (p == null) {
@@ -67,12 +62,7 @@ class _ProformaReviewScreenState extends ConsumerState<ProformaReviewScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3))
-                    ],
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Row(
                     children: [
@@ -108,12 +98,7 @@ class _ProformaReviewScreenState extends ConsumerState<ProformaReviewScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.white,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2))
-                      ],
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
                     child: ListView.separated(
                       itemCount: p.items.length,
@@ -153,12 +138,7 @@ class _ProformaReviewScreenState extends ConsumerState<ProformaReviewScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2))
-                    ],
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Column(
                     children: [

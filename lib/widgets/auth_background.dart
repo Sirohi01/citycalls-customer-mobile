@@ -130,6 +130,10 @@ InputDecoration authFieldDecoration(
     labelText: label,
     labelStyle: TextStyle(
         color: AppColors.slate300.withValues(alpha: 0.8), fontSize: 14),
+    // Set explicitly so the app theme's dark focused-label colour never
+    // lands on this dark background.
+    floatingLabelStyle: const TextStyle(color: AppColors.lime400),
+    hintStyle: TextStyle(color: AppColors.slate400.withValues(alpha: 0.7)),
     prefixIcon: icon != null
         ? Padding(
             padding: const EdgeInsets.only(left: 16, right: 12),
@@ -162,6 +166,10 @@ InputDecoration authFieldDecoration(
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
       borderSide: const BorderSide(color: AppColors.red400, width: 1.5),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: AppColors.red400, width: 2),
     ),
   );
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app_navigator.dart';
 import 'package:flutter/services.dart';
 import '../main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +12,7 @@ class BookingSuccessScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFFF6F7F9),
       body: Stack(
         children: [
           // Background soft gradient to mimic waves
@@ -184,6 +185,8 @@ class BookingSuccessScreen extends ConsumerWidget {
                           InkWell(
                             onTap: () {
                               ref.invalidate(myServiceRequestsProvider);
+                              // The new shell opens straight on the Bookings tab.
+                              pendingShellTab.value = ShellTab.bookings;
                               Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(builder: (_) => const MainShell()),
                                 (route) => false,
@@ -201,7 +204,7 @@ class BookingSuccessScreen extends ConsumerWidget {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   SizedBox(width: 20), // Balance the icon space
-                                  Text('Go to My Services', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                                  Text('Go to My Bookings', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                                   Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                                 ],
                               ),

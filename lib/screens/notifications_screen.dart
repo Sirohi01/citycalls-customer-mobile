@@ -68,7 +68,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final notificationsAsync = ref.watch(myNotificationsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFFF6F7F9),
       body: Stack(
         children: [
           // Top Background Glow (like All Categories)
@@ -83,9 +83,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFFF6EAF6),
-                    Color(0xFFECF1FD),
-                    Color(0xFFFAFAFA),
+                    Color(0xFFE8F6EC),
+                    Color(0xFFF2F8F3),
+                    Color(0xFFF6F7F9),
                   ],
                   stops: [0.0, 0.5, 1.0],
                 ),

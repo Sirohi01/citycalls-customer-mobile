@@ -30,7 +30,7 @@ class _ProductSelectScreenState extends ConsumerState<ProductSelectScreen> {
     final products = ref.watch(customerProductsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFFF6F7F9),
       body: Stack(
         children: [
           // Background Gradient matching the UI
@@ -45,9 +45,9 @@ class _ProductSelectScreenState extends ConsumerState<ProductSelectScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFFF6EAF6),
-                    Color(0xFFECF1FD),
-                    Color(0xFFFAFAFA),
+                    Color(0xFFE8F6EC),
+                    Color(0xFFF2F8F3),
+                    Color(0xFFF6F7F9),
                   ],
                   stops: [0.0, 0.5, 1.0],
                 ),

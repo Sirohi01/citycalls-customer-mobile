@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -590,9 +591,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
 const _kGreen = Color(0xFF16A34A);
 const _kBg = Color(0xFFF8FAFC);
 
-// Photo carousel in a rounded card. Service photos are mostly product shots
-// on white, so they are shown whole (contain) on a soft tinted panel rather
-// than cropped edge to edge.
+// Photo carousel in a rounded card. Each photo fills the whole frame (cover,
+// no empty margins) and the carousel auto-advances when there are several.
 class _HeroGallery extends StatefulWidget {
   final List<String> imageUrls;
   final bool loading;
@@ -605,9 +605,44 @@ class _HeroGallery extends StatefulWidget {
 class _HeroGalleryState extends State<_HeroGallery> {
   final _controller = PageController();
   int _index = 0;
+  Timer? _timer;
+
+  static const _autoScrollEvery = Duration(seconds: 4);
+
+  @override
+  void initState() {
+    super.initState();
+    _restartTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _HeroGallery oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Photos usually arrive after the first build (media loads separately).
+    if (oldWidget.imageUrls.length != widget.imageUrls.length) _restartTimer();
+  }
+
+  // (Re)start auto-scroll; called again after a manual swipe so the next
+  // automatic move waits a full interval.
+  void _restartTimer() {
+    _timer?.cancel();
+    if (widget.imageUrls.length < 2) return;
+    _timer = Timer.periodic(_autoScrollEvery, (_) {
+      if (!_controller.hasClients) return;
+      final next = (_index + 1) % widget.imageUrls.length;
+      if (next == 0) {
+        _controller.jumpToPage(0);
+      } else {
+        _controller.animateToPage(next,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut);
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -657,11 +692,15 @@ class _HeroGalleryState extends State<_HeroGallery> {
                     controller: _controller,
                     itemCount: urls.length,
                     onPageChanged: (i) => setState(() => _index = i),
-                    itemBuilder: (_, i) => Padding(
-                      padding: const EdgeInsets.all(16),
+                    // Listener (not a GestureDetector) so it doesn't fight the
+                    // PageView for the swipe; a touch resets the countdown.
+                    itemBuilder: (_, i) => Listener(
+                      onPointerDown: (_) => _restartTimer(),
                       child: Image.network(
                         urls[i],
-                        fit: BoxFit.contain,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
                         errorBuilder: (_, __, ___) => fallback,
                       ),
                     ),

@@ -23,7 +23,14 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
   final _mobileController = TextEditingController();
   final _focusNode = FocusNode();
   bool _isFocused = false;
-  bool _rememberMe = false;
+  // Ticked by default: logging in keeps you logged in until you log out.
+  bool _rememberMe = true;
+  // Number of the last login on this phone, offered as a one-tap option.
+  String? _savedMobile;
+  // True once the user picks "Use a different number".
+  bool _useDifferentNumber = false;
+
+  bool get _showSavedNumber => _savedMobile != null && !_useDifferentNumber;
 
   @override
   void initState() {
@@ -43,16 +50,61 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
     }
   }
 
-  // Last "Remember me" login: pre-fill its number with the box ticked.
   Future<void> _loadRememberedMobile() async {
     final mobile = await RememberedLoginStorage.readMobile();
-    if (!mounted || mobile == null || _mobileController.text.isNotEmpty) {
-      return;
-    }
-    setState(() {
-      _mobileController.text = mobile;
-      _rememberMe = true;
-    });
+    if (!mounted || mobile == null || mobile.length != 10) return;
+    // Don't swap the field away if they already started typing.
+    if (_mobileController.text.isNotEmpty) return;
+    setState(() => _savedMobile = mobile);
+  }
+
+  static String _pretty(String m) =>
+      '+91 ${m.substring(0, 5)} ${m.substring(5)}';
+
+  // "Continue with +91 …" card shown instead of the field.
+  Widget _savedNumberCard(String mobile) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+            color: AppColors.lime500.withValues(alpha: 0.6), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: AppColors.lime500.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.phone_iphone_rounded,
+                color: AppColors.lime400),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Continue with',
+                    style:
+                        TextStyle(color: AppColors.slate400, fontSize: 12.5)),
+                const SizedBox(height: 3),
+                Text(_pretty(mobile),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5)),
+              ],
+            ),
+          ),
+          const Icon(Icons.check_circle_rounded, color: AppColors.lime500),
+        ],
+      ),
+    );
   }
 
   @override
@@ -102,40 +154,77 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
             ),
             const SizedBox(height: 32),
 
-            // --- Mobile number field ---
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: _isFocused
-                    ? [
-                        BoxShadow(
-                            color: AppColors.lime500.withValues(alpha: 0.18),
-                            blurRadius: 18,
-                            spreadRadius: 1)
-                      ]
-                    : [],
+            // --- Last-used number, or the mobile number field ---
+            if (_showSavedNumber) ...[
+              _savedNumberCard(_savedMobile!),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: authState.isLoading
+                      ? null
+                      : () {
+                          setState(() => _useDifferentNumber = true);
+                          ref.read(authProvider.notifier).backToMobileEntry();
+                          WidgetsBinding.instance.addPostFrameCallback(
+                              (_) => _focusNode.requestFocus());
+                        },
+                  style:
+                      TextButton.styleFrom(foregroundColor: AppColors.lime400),
+                  child: const Text('Use a different number',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
               ),
-              child: TextFormField(
-                controller: _mobileController,
-                focusNode: _focusNode,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 16, letterSpacing: 1.0),
-                keyboardType: TextInputType.phone,
-                maxLength: 10,
-                maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: authFieldDecoration(
-                  label: 'Enter mobile number',
-                  icon: Icons.phone_outlined,
-                  prefixText: '+91  ',
-                ).copyWith(counterText: ''),
-                validator: (value) =>
-                    (value == null || value.trim().length < 10)
-                        ? 'Enter valid 10-digit number'
-                        : null,
+            ] else ...[
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: _isFocused
+                      ? [
+                          BoxShadow(
+                              color: AppColors.lime500.withValues(alpha: 0.18),
+                              blurRadius: 18,
+                              spreadRadius: 1)
+                        ]
+                      : [],
+                ),
+                child: TextFormField(
+                  controller: _mobileController,
+                  focusNode: _focusNode,
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 16, letterSpacing: 1.0),
+                  keyboardType: TextInputType.phone,
+                  maxLength: 10,
+                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: authFieldDecoration(
+                    label: 'Enter mobile number',
+                    icon: Icons.phone_outlined,
+                    prefixText: '+91  ',
+                  ).copyWith(counterText: ''),
+                  validator: (value) =>
+                      (value == null || value.trim().length < 10)
+                          ? 'Enter valid 10-digit number'
+                          : null,
+                ),
               ),
-            ),
+              if (_savedMobile != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: authState.isLoading
+                        ? null
+                        : () => setState(() {
+                              _useDifferentNumber = false;
+                              _mobileController.clear();
+                            }),
+                    style: TextButton.styleFrom(
+                        foregroundColor: AppColors.lime400),
+                    child: Text('Use ${_pretty(_savedMobile!)} instead',
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+            ],
             const SizedBox(height: 16),
 
             // --- Remember Me ---
@@ -262,6 +351,12 @@ class _OtpRequestScreenState extends ConsumerState<OtpRequestScreen> {
   }
 
   void _submit() {
+    if (_showSavedNumber) {
+      ref
+          .read(authProvider.notifier)
+          .requestOtp(_savedMobile!, rememberMe: _rememberMe);
+      return;
+    }
     if (_formKey.currentState?.validate() ?? false) {
       ref
           .read(authProvider.notifier)

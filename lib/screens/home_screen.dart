@@ -49,6 +49,7 @@ class HomeScreen extends ConsumerWidget {
                   ref.invalidate(myServiceRequestsProvider);
                   ref.invalidate(serviceCategoriesProvider);
                   ref.invalidate(servicesByCategoryProvider);
+                  ref.invalidate(appBannersProvider(_homeBannerPath));
                 },
                 child: ListView(
                   padding: const EdgeInsets.only(top: 0, bottom: 24),
@@ -67,7 +68,7 @@ class HomeScreen extends ConsumerWidget {
                       child: const Column(
                         children: [
                           TopBarLocationSearch(),
-                          _HeroBanner(),
+                          _HomeTopBanner(),
                         ],
                       ),
                     ),
@@ -147,7 +148,8 @@ typedef _HeroSlide = ({
   String button,
 });
 
-// Static home top banners, bundled with the app (assets/home_top_bannar/).
+// Bundled home top banners (assets/home_top_bannar/) — shown until the API
+// answers, and if it fails or has no active banners.
 const List<_HeroSlide> _homeHeroSlides = [
   (
     tag: 'Trusted Professionals',
@@ -204,6 +206,33 @@ const List<_HeroSlide> _homeHeroSlides = [
     button: 'Book a Service',
   ),
 ];
+
+const _homeBannerPath = '/public/customer-app/home-banners';
+
+// Home tab's top banner: admin → Customer App → Home Banner, from the API.
+class _HomeTopBanner extends ConsumerWidget {
+  const _HomeTopBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final banners = ref.watch(appBannersProvider(_homeBannerPath)).valueOrNull;
+    if (banners == null || banners.isEmpty) return const _HeroBanner();
+    return _HeroBanner(
+      slides: [
+        for (final b in banners)
+          (
+            tag: b.tagLine,
+            title1: b.titleLine1,
+            title2: b.titleLine2,
+            subtitle: b.description,
+            image: b.imageUrl,
+            icon: Icons.home_repair_service_rounded,
+            button: b.buttonText,
+          ),
+      ],
+    );
+  }
+}
 
 class _HeroBanner extends StatefulWidget {
   final List<_HeroSlide> slides;

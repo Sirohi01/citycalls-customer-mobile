@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/live_map_section.dart';
 import '../widgets/state_views.dart';
+import '../widgets/ui_kit.dart';
 import 'service_visits_screen.dart';
 import 'reschedule_screen.dart';
 import 'cancel_request_screen.dart';
@@ -87,8 +88,7 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     });
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
-      appBar: AppBar(title: const Text('Service Request'), centerTitle: false),
+      appBar: AppBar(title: const Text('Booking details')),
       body: detail.when(
         data: (sr) => RefreshIndicator(
           onRefresh: () async {
@@ -98,37 +98,47 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
             ref.invalidate(reopenHistoryProvider(requestId));
           },
           child: ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
             children: [
               _headerCard(context, sr),
               const SizedBox(height: 16),
               if (sr.assignee != null) _technicianCard(context, sr.assignee!),
               if (sr.assignee != null && sr.isActive) LiveMapSection(requestId: requestId),
-              _infoCard(context, Icons.location_on_outlined, 'Address', sr.addressLine),
-              if (sr.symptoms.isNotEmpty) _infoCard(context, Icons.report_gmailerrorred_outlined, 'Symptoms', sr.symptoms.join(', ')),
-              if (sr.notes != null && sr.notes!.isNotEmpty) _infoCard(context, Icons.notes_outlined, 'Notes', sr.notes!),
-              if (sr.status == 'CANCELLED' && sr.cancelReason != null) _infoCard(context, Icons.cancel_outlined, 'Cancellation Reason', sr.cancelReason!),
-              const SizedBox(height: 10),
+              const UiSectionLabel('Booking details'),
+              UiCard(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                child: Column(
+                  children: [
+                    _infoCard(context, Icons.location_on_outlined, 'Address', sr.addressLine),
+                    if (sr.symptoms.isNotEmpty) ...[
+                      const Divider(height: 1),
+                      _infoCard(context, Icons.report_gmailerrorred_outlined, 'Issue', sr.symptoms.join(', ')),
+                    ],
+                    if (sr.notes != null && sr.notes!.isNotEmpty) ...[
+                      const Divider(height: 1),
+                      _infoCard(context, Icons.notes_outlined, 'Notes', sr.notes!),
+                    ],
+                    if (sr.status == 'CANCELLED' && sr.cancelReason != null) ...[
+                      const Divider(height: 1),
+                      _infoCard(context, Icons.cancel_outlined, 'Cancellation reason', sr.cancelReason!),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
               if (reopenHistory.isNotEmpty) ...[
                 _reopenHistoryCard(reopenHistory),
-                const SizedBox(height: 10),
+                const SizedBox(height: 18),
               ],
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
-                ),
+              const UiSectionLabel('Booking timeline'),
+              UiCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Activity Timeline', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    const SizedBox(height: 14),
                     activityLog.when(
                       data: (entries) => entries.isEmpty
-                          ? const Text('No activity yet.', style: TextStyle(color: AppColors.neutral500))
-                          : Column(children: [for (var i = 0; i < entries.length; i++) _timelineEntry(entries[i], isLast: i == entries.length - 1)]),
+                          ? const Text('No updates yet.', style: TextStyle(color: kMuted))
+                          : Column(children: [for (var i = 0; i < entries.length; i++) _timelineEntry(entries[i], isLast: i == entries.length - 1, isFirst: i == 0)]),
                       loading: () => const Center(child: CircularProgressIndicator()),
                       error: (err, __) => AppErrorView(
                         error: err,
@@ -139,7 +149,7 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
               // The technician's own record of the job — diagnosis, parts
               // fitted, work notes and before/after photos. Previously none
               // of this reached the customer at all, even though they get
@@ -199,85 +209,109 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     );
   }
 
+  // Status hero: service, booking number and the current status in its colour.
   Widget _headerCard(BuildContext context, ServiceRequestDetail sr) {
+    final color = StatusBadge.colorFor(sr.status);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 14, offset: const Offset(0, 4))],
+        border: Border.all(color: kLine),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
-            child: Icon(Icons.build_circle_outlined, color: Theme.of(context).colorScheme.primary, size: 24),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              UiIconTile(icon: Icons.home_repair_service_rounded, color: color, size: 46),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(sr.serviceName ?? 'Service request',
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: kInk)),
+                    const SizedBox(height: 3),
+                    Text('Booking #${sr.number}', style: const TextStyle(fontSize: 12.5, color: kMuted)),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
               children: [
-                Text(sr.number, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                if (sr.serviceName != null) Padding(padding: const EdgeInsets.only(top: 2), child: Text(sr.serviceName!, style: const TextStyle(color: AppColors.neutral500, fontSize: 12.5))),
+                Icon(Icons.radio_button_checked_rounded, size: 16, color: color),
+                const SizedBox(width: 8),
+                const Text('Status: ', style: TextStyle(fontSize: 13, color: kMuted)),
+                Expanded(
+                  child: Text(customerStatusLabel(sr.status),
+                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: color)),
+                ),
               ],
             ),
           ),
-          StatusBadge(status: sr.status),
         ],
       ),
     );
   }
 
   Widget _technicianCard(BuildContext context, ServiceRequestAssignee assignee) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(backgroundColor: Theme.of(context).colorScheme.primary, child: const Icon(Icons.engineering, color: Colors.white, size: 20)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(assignee.name ?? 'Technician assigned', style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text(assignee.type.replaceAll('_', ' '), style: const TextStyle(color: AppColors.neutral500, fontSize: 12)),
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: UiCard(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: const BoxDecoration(color: kInk, shape: BoxShape.circle),
+              child: const Icon(Icons.engineering_rounded, color: Colors.white, size: 22),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Your professional', style: TextStyle(fontSize: 11.5, color: kMuted)),
+                  const SizedBox(height: 2),
+                  Text(assignee.name ?? 'Technician assigned',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: kInk)),
+                ],
+              ),
+            ),
+            const UiPill(text: 'Assigned', color: kGreen, icon: Icons.verified_rounded),
+          ],
+        ),
       ),
     );
   }
 
   Widget _infoCard(BuildContext context, IconData icon, String label, String value) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: AppColors.neutral500),
-          const SizedBox(width: 10),
+          Icon(icon, size: 18, color: kFaint),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: AppColors.neutral500, fontSize: 12)),
-                const SizedBox(height: 4),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(label, style: const TextStyle(color: kMuted, fontSize: 12)),
+                const SizedBox(height: 3),
+                Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: kInk, height: 1.35)),
               ],
             ),
           ),
@@ -286,7 +320,13 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     );
   }
 
-  Widget _timelineEntry(ActivityLogEntry entry, {required bool isLast}) {
+  // "SERVICE_COMPLETED" → "Service completed".
+  static String _humanize(String action) {
+    final words = action.replaceAll('_', ' ').toLowerCase();
+    return words.isEmpty ? words : words[0].toUpperCase() + words.substring(1);
+  }
+
+  Widget _timelineEntry(ActivityLogEntry entry, {required bool isLast, bool isFirst = false}) {
     return IntrinsicHeight(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -296,12 +336,16 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
             Column(
               children: [
                 Container(
-                  width: 10,
-                  height: 10,
+                  width: 12,
+                  height: 12,
                   margin: const EdgeInsets.only(top: 3),
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.black),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isFirst ? kGreen : Colors.white,
+                    border: Border.all(color: isFirst ? kGreen : const Color(0xFFCBD5E1), width: 2),
+                  ),
                 ),
-                if (!isLast) Expanded(child: Container(width: 1.5, color: AppColors.neutral200)),
+                if (!isLast) Expanded(child: Container(width: 2, color: const Color(0xFFE2E8F0))),
               ],
             ),
             const SizedBox(width: 12),
@@ -311,15 +355,17 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(entry.action.replaceAll('_', ' '), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    Text(_humanize(entry.action),
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: isFirst ? kInk : const Color(0xFF334155))),
                     if (entry.reason != null && entry.reason!.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(entry.reason!, style: const TextStyle(fontSize: 12)),
                       ),
+                    const SizedBox(height: 2),
                     Text(
-                      DateTime.tryParse(entry.timestamp)?.toLocal().toString().split('.').first ?? '',
-                      style: const TextStyle(color: AppColors.neutral500, fontSize: 11.5),
+                      formatDisplayDateTime(entry.timestamp),
+                      style: const TextStyle(color: kFaint, fontSize: 11.5),
                     ),
                   ],
                 ),
@@ -337,17 +383,11 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
   // approved. The /reopen-requests list endpoint is happyCalls-gated, but
   // this per-request history is serviceRequests:view at OWN scope.
   Widget _reopenHistoryCard(List<ReopenRecord> records) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 3))],
-      ),
+    return UiCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Reopen Requests', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const Text('Reopen requests', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: kInk)),
           const SizedBox(height: 12),
           for (final record in records) _reopenRow(record),
         ],
@@ -426,7 +466,12 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                 onPressed: onTap,
                 icon: Icon(icon, size: 18),
                 label: Text(label),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), minimumSize: const Size.fromHeight(48)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFDC2626),
+                  backgroundColor: const Color(0xFFFEF2F2),
+                  side: const BorderSide(color: Color(0xFFFECACA)),
+                  minimumSize: const Size.fromHeight(50),
+                ),
               )
             : FilledButton.icon(onPressed: onTap, icon: Icon(icon, size: 18), label: Text(label)),
       ),

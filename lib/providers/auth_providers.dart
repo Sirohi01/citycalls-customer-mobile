@@ -9,22 +9,22 @@ import '../models/auth_models.dart';
 //
 //   flutter run --dart-define=API_BASE_URL=http://<host>:4000/api/v1
 //
-// The fallback below is a LAN address for local development and changes with
-// whatever network the dev machine is on — it is not a deployable default.
+// (scripts/run-local.sh does that with this Mac's current Wi-Fi IP.)
 const String _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  // Local API (this Mac's current LAN IP) — the live server doesn't have the
-  // customer-app banner routes yet. Switch back before a release build.
-  defaultValue: 'http://192.168.0.164:4000/api/v1',
-  // defaultValue: 'https://api.citycalls.in/api/v1',
+  // Live server: login, WhatsApp OTP, bookings and profile all go here, so
+  // the app works on any network with no Mac IP to keep updating. For local
+  // API testing run ./scripts/run-local.sh instead.
+  defaultValue: 'https://api.citycalls.in/api/v1',
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient(baseUrl: _apiBaseUrl);
 });
 
-// Categories and services (and their photos/diagnostics) are read from the
-// live server while everything else uses [_apiBaseUrl], using the same login.
+// Categories, services (and their photos/diagnostics) and the Home / Salon /
+// HelpNow top banners are read from the live server while everything else
+// uses [_apiBaseUrl], using the same login.
 const String _catalogApiBaseUrl = String.fromEnvironment(
   'CATALOG_API_BASE_URL',
   defaultValue: 'https://api.citycalls.in/api/v1',

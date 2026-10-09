@@ -246,7 +246,8 @@ class _EmptyFavourites extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pushReplacement(
+              // push, not pushReplacement, so back returns here.
+              onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
                       builder: (_) => const ServiceBrowseScreen())),
               style: ElevatedButton.styleFrom(

@@ -17,8 +17,7 @@ class NotificationPreferencesScreen extends ConsumerWidget {
     final profile = ref.watch(myProfileProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
-      appBar: AppBar(title: const Text('Notification Preferences'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
+      appBar: AppBar(title: const Text('Notification Preferences')),
       body: profile.when(
         data: (customer) => ListView(
           padding: const EdgeInsets.all(20),
@@ -96,7 +95,7 @@ class _ConsentTileState extends ConsumerState<_ConsentTile> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         children: [

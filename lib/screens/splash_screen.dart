@@ -76,13 +76,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       final customer = await ref
           .read(customerRepositoryProvider)
           .getMyProfile()
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 8));
       destination = customer.needsProfileSetup
           ? const ProfileSetupScreen()
           : const MainShell();
       skipIntro = true;
     } catch (_) {
-      destination = const OtpRequestScreen();
+      // A saved session survives a slow or offline start: ApiClient only
+      // deletes the tokens when the server actually rejects the session, so
+      // if they are still here the failure was the network — stay logged in
+      // and let the screens show their own retry. No tokens → log in.
+      final stillLoggedIn =
+          await ref.read(apiClientProvider).readRefreshToken() != null;
+      destination =
+          stillLoggedIn ? const MainShell() : const OtpRequestScreen();
+      if (stillLoggedIn) skipIntro = true;
     }
 
     const minDisplay = Duration(seconds: 6);

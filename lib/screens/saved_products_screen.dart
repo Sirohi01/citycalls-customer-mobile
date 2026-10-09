@@ -14,8 +14,7 @@ class SavedProductsScreen extends ConsumerWidget {
     final products = ref.watch(customerProductsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
-      appBar: AppBar(title: const Text('Saved Appliances'), centerTitle: false, backgroundColor: AppColors.neutral100, surfaceTintColor: AppColors.neutral100),
+      appBar: AppBar(title: const Text('Saved Appliances')),
       body: products.when(
         data: (items) => Padding(
           padding: const EdgeInsets.all(20),
@@ -62,7 +61,7 @@ class SavedProductsScreen extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(14),
-                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 2))],
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
                         child: Row(
                           children: [

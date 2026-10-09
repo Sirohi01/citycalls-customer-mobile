@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/complaint_providers.dart';
 import '../providers/service_request_providers.dart';
-import '../theme/app_theme.dart';
 
 // Per docs/rohit/05-customer-app-screen-list.md "Support" — Raise Complaint,
 // now a real ticket (citycalls-api's src/modules/complaints) instead of just
@@ -61,7 +60,6 @@ class _RaiseComplaintScreenState extends ConsumerState<RaiseComplaintScreen> {
     final requests = ref.watch(myServiceRequestsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.white,
       appBar: AppBar(title: const Text('Raise a Complaint'), centerTitle: false),
       body: Form(
         key: _formKey,

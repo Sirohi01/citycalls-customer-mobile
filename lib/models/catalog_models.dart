@@ -111,3 +111,49 @@ class AppBanner {
     );
   }
 }
+
+// CityCalls' public contact details (admin → SEO Section → Social Media).
+class SupportContact {
+  final String callNumber; // e.g. +917428808884
+  final String whatsappNumber; // digits with country code, e.g. 917428808884
+  final String whatsappMessage;
+  final String email;
+
+  const SupportContact({
+    required this.callNumber,
+    required this.whatsappNumber,
+    required this.whatsappMessage,
+    required this.email,
+  });
+
+  // Used until the API answers, or if it has nothing set.
+  static const fallback = SupportContact(
+    callNumber: '+917428808884',
+    whatsappNumber: '917428808884',
+    whatsappMessage: 'Hi CityCalls, I need help with a booking.',
+    email: 'hello@citycalls.in',
+  );
+
+  factory SupportContact.fromJson(Map<String, dynamic> json) {
+    String pick(String key, String fallbackValue) {
+      final v = (json[key] as String?)?.trim();
+      return v == null || v.isEmpty ? fallbackValue : v;
+    }
+
+    return SupportContact(
+      callNumber: pick('callNumber', fallback.callNumber),
+      whatsappNumber: pick('whatsappNumber', fallback.whatsappNumber),
+      whatsappMessage: pick('whatsappMessage', fallback.whatsappMessage),
+      email: pick('email', fallback.email),
+    );
+  }
+
+  /// "+91 74288 08884" for display.
+  String get displayCallNumber {
+    final digits = callNumber.replaceAll(RegExp(r'\D'), '');
+    if (digits.length == 12 && digits.startsWith('91')) {
+      return '+91 ${digits.substring(2, 7)} ${digits.substring(7)}';
+    }
+    return callNumber;
+  }
+}

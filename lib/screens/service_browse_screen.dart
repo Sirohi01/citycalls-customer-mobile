@@ -53,8 +53,8 @@ class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFFF6EAF6), // Soft purple/pink glow top-left
-                    Color(0xFFECF1FD), // Soft blue glow top-right
+                    Color(0xFFE8F6EC), // Soft green glow top-left
+                    Color(0xFFF2F8F3), // Paler green top-right
                     Color(0xFFF9FAFB), // Fade to normal background
                   ],
                   stops: [0.0, 0.5, 1.0],

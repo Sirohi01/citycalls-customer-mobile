@@ -65,7 +65,6 @@ class _RescheduleScreenState extends ConsumerState<RescheduleScreen> {
     final detail = ref.watch(serviceRequestDetailProvider(widget.requestId));
 
     return Scaffold(
-      backgroundColor: AppColors.white,
       appBar: AppBar(title: const Text('Reschedule'), centerTitle: false),
       body: ListView(
         padding: const EdgeInsets.all(20),
