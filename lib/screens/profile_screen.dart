@@ -449,10 +449,10 @@ class _AddressFormSheetState extends ConsumerState<_AddressFormSheet> {
       _lookingUpPin = false;
       if (area == null) return;
       // Fill blanks only — never overwrite what the user typed.
-      if (_cityController.text.trim().isEmpty && area.resolvedCity != null) {
+      if (area.resolvedCity != null) {
         _cityController.text = area.resolvedCity!;
       }
-      if (_stateController.text.trim().isEmpty && area.state != null) {
+      if (area.state != null) {
         _stateController.text = area.state!;
       }
       _pinNotice = area.serviceable
@@ -1011,3 +1011,4 @@ class _MenuTile extends StatelessWidget {
     );
   }
 }
+

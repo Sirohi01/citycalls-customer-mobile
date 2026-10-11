@@ -75,8 +75,15 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Column(
-          children: [
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 720;
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: compact ? 12 : 20),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  children: [
             // --- Header (Back Button & Logo) ---
             Padding(
               padding: const EdgeInsets.only(left: 8, top: 8),
@@ -175,23 +182,24 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 ),
               ),
 
-            const Spacer(),
+            SizedBox(height: compact ? 18 : 36),
 
             // --- Custom Numpad ---
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 28 : 32, vertical: compact ? 8 : 16),
               child: Column(
                 children: [
                   _NumpadRow(['1', '2', '3'], _onKeypadTap),
-                  const SizedBox(height: 12),
+                  SizedBox(height: compact ? 8 : 12),
                   _NumpadRow(['4', '5', '6'], _onKeypadTap),
-                  const SizedBox(height: 12),
+                  SizedBox(height: compact ? 8 : 12),
                   _NumpadRow(['7', '8', '9'], _onKeypadTap),
-                  const SizedBox(height: 12),
+                  SizedBox(height: compact ? 8 : 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const SizedBox(width: 80), // Empty space for left
+                      const SizedBox(width: 90),
                       _NumpadButton(label: '0', onTap: _onKeypadTap),
                       _NumpadButton(label: 'clear', icon: Icons.backspace_outlined, onTap: _onKeypadTap),
                     ],
@@ -199,8 +207,11 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-          ],
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

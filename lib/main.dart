@@ -75,6 +75,7 @@ class _CityCallsCustomerAppState extends ConsumerState<CityCallsCustomerApp> {
     final beautyMode = ref.watch(beautyModeProvider);
     return MaterialApp(
       title: 'CityCalls',
+      debugShowCheckedModeBanner: false,
       navigatorKey: appNavigatorKey,
       theme: beautyMode ? AppTheme.beauty() : AppTheme.light(),
       home: const SplashScreen(),

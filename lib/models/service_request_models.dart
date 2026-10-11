@@ -9,14 +9,14 @@
 const _customerStatusLabels = {
   'NEW': 'Request Received',
   'NEEDS_MANUAL_BRANCH_ASSIGNMENT': 'Request Received',
-  'ASSIGNED_TO_BRANCH': 'Technician Assigned',
-  'ASSIGNED_TO_SUB_BRANCH': 'Technician Assigned',
-  'ASSIGNED_TO_TEAM': 'Technician Assigned',
+  'ASSIGNED_TO_BRANCH': 'Finding Technician',
+  'ASSIGNED_TO_SUB_BRANCH': 'Finding Technician',
+  'ASSIGNED_TO_TEAM': 'Finding Technician',
   'ASSIGNED_TO_EMPLOYEE': 'Technician Assigned',
   'ASSIGNED_TO_VENDOR': 'Technician Assigned',
-  'OUTSOURCED': 'Technician Assigned',
-  'REASSIGNMENT_REQUIRED': 'Technician Assigned',
-  'ACCEPTED': 'Technician Assigned',
+  'OUTSOURCED': 'Finding Technician',
+  'REASSIGNMENT_REQUIRED': 'Finding Technician',
+  'ACCEPTED': 'Request Accepted',
   'APPOINTMENT_SCHEDULED': 'Appointment Scheduled',
   'RESCHEDULED': 'Rescheduled',
   'CUSTOMER_UNAVAILABLE': 'Reschedule Needed',
@@ -56,10 +56,7 @@ String customerStatusLabel(String status) =>
 const _cancellableStatuses = {
   'NEW', 'NEEDS_MANUAL_BRANCH_ASSIGNMENT', 'ASSIGNED_TO_BRANCH', 'ASSIGNED_TO_SUB_BRANCH', 'ASSIGNED_TO_TEAM',
   'ASSIGNED_TO_EMPLOYEE', 'ASSIGNED_TO_VENDOR', 'OUTSOURCED', 'REASSIGNMENT_REQUIRED', 'ACCEPTED',
-  'APPOINTMENT_SCHEDULED', 'RESCHEDULED', 'CUSTOMER_UNAVAILABLE', 'TECHNICIAN_EN_ROUTE', 'TECHNICIAN_ARRIVED',
-  'INSPECTION_STARTED', 'INSPECTION_COMPLETED', 'ESTIMATE_PENDING', 'ESTIMATE_SHARED', 'AWAITING_CUSTOMER_APPROVAL',
-  'ESTIMATE_APPROVED', 'PARTS_PENDING', 'WORK_STARTED', 'WORK_IN_PROGRESS', 'ON_HOLD', 'SERVICE_COMPLETED',
-  'CUSTOMER_CONFIRMATION_PENDING', 'PAYMENT_PENDING',
+  'APPOINTMENT_SCHEDULED', 'RESCHEDULED', 'CUSTOMER_UNAVAILABLE',
 };
 bool isCancellableStatus(String status) => _cancellableStatuses.contains(status);
 

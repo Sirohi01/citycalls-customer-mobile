@@ -190,7 +190,16 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                   context,
                   Icons.close,
                   'Cancel Request',
-                  () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => CancelRequestScreen(requestId: requestId))),
+                  () async {
+                    final cancelled = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute(builder: (_) => CancelRequestScreen(requestId: requestId)),
+                    );
+                    if (cancelled == true) {
+                      ref.invalidate(serviceRequestDetailProvider(requestId));
+                      ref.invalidate(activityLogProvider(requestId));
+                      ref.invalidate(myServiceRequestsProvider);
+                    }
+                  },
                   destructive: true,
                 ),
               if (sr.status == 'CLOSED' || sr.status == 'PAID')
@@ -320,8 +329,18 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     );
   }
 
-  // "SERVICE_COMPLETED" → "Service completed".
-  static String _humanize(String action) {
+    static String _timelineLabel(String action) {
+    if (action == 'CREATED') return 'Request received';
+    if (action == 'CANCELLED') return 'Booking cancelled';
+    if (action == 'ASSIGNED_TO_BRANCH' ||
+        action == 'ASSIGNED_TO_SUB_BRANCH' ||
+        action == 'ASSIGNED_TO_TEAM' ||
+        action == 'OUTSOURCED' ||
+        action == 'REASSIGNMENT_REQUIRED') {
+      return 'Finding technician';
+    }
+    final friendly = customerStatusLabel(action);
+    if (friendly != action.replaceAll('_', ' ')) return friendly;
     final words = action.replaceAll('_', ' ').toLowerCase();
     return words.isEmpty ? words : words[0].toUpperCase() + words.substring(1);
   }
@@ -355,7 +374,7 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_humanize(entry.action),
+                    Text(_timelineLabel(entry.action),
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: isFirst ? kInk : const Color(0xFF334155))),
                     if (entry.reason != null && entry.reason!.isNotEmpty)
                       Padding(
@@ -478,3 +497,4 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     );
   }
 }
+

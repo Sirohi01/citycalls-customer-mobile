@@ -13,7 +13,7 @@ class CustomerRepository {
 
   Future<Customer> updateProfile(String customerId,
       {required String name, String? email}) async {
-    final res = await _client.dio.patch('/customers/$customerId', data: {
+    final res = await _client.dio.patch('/customers/me', data: {
       'name': name,
       if (email != null && email.isNotEmpty) 'email': email,
     });
@@ -118,7 +118,7 @@ class CustomerRepository {
   // is required by the backend even though it's a simple toggle in the UI.
   Future<void> updateConsent(
       String customerId, String channel, String state) async {
-    await _client.dio.patch('/customers/$customerId/consent', data: {
+    await _client.dio.patch('/customers/me/consent', data: {
       'channel': channel,
       'state': state,
       'reason': 'Updated by customer in-app',
@@ -135,7 +135,7 @@ class CustomerRepository {
     required String state,
     required String pinCode,
   }) async {
-    await _client.dio.post('/customers/$customerId/addresses', data: {
+    await _client.dio.post('/customers/me/addresses', data: {
       if (label != null && label.isNotEmpty) 'label': label,
       'line1': line1,
       if (line2 != null && line2.isNotEmpty) 'line2': line2,
@@ -158,7 +158,7 @@ class CustomerRepository {
     required String pinCode,
   }) async {
     await _client.dio
-        .patch('/customers/$customerId/addresses/$addressId', data: {
+        .patch('/customers/me/addresses/$addressId', data: {
       if (label != null && label.isNotEmpty) 'label': label,
       'line1': line1,
       if (line2 != null && line2.isNotEmpty) 'line2': line2,
@@ -177,18 +177,18 @@ class CustomerRepository {
       {String? previousDefaultId}) async {
     if (previousDefaultId != null && previousDefaultId != addressId) {
       await _client.dio.patch(
-        '/customers/$customerId/addresses/$previousDefaultId',
+        '/customers/me/addresses/$previousDefaultId',
         data: {'isDefault': false},
       );
     }
     await _client.dio.patch(
-      '/customers/$customerId/addresses/$addressId',
+      '/customers/me/addresses/$addressId',
       data: {'isDefault': true},
     );
   }
 
   Future<void> deleteAddress(String customerId, String addressId) async {
-    await _client.dio.delete('/customers/$customerId/addresses/$addressId');
+    await _client.dio.delete('/customers/me/addresses/$addressId');
   }
 
   // "me"-scoped (not /customers/:id) — the backend resolves the caller's own

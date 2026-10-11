@@ -15,7 +15,7 @@ const String _apiBaseUrl = String.fromEnvironment(
   // Live server: login, WhatsApp OTP, bookings and profile all go here, so
   // the app works on any network with no Mac IP to keep updating. For local
   // API testing run ./scripts/run-local.sh instead.
-  defaultValue: 'https://api.citycalls.in/api/v1',
+  defaultValue: 'https://nenita-untoured-nonhesitantly.ngrok-free.dev/api/v1',
 );
 
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -27,7 +27,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 // uses [_apiBaseUrl], using the same login.
 const String _catalogApiBaseUrl = String.fromEnvironment(
   'CATALOG_API_BASE_URL',
-  defaultValue: 'https://api.citycalls.in/api/v1',
+  defaultValue: 'https://nenita-untoured-nonhesitantly.ngrok-free.dev/api/v1',
 );
 
 final catalogApiClientProvider = Provider<SecondaryApiClient>((ref) {

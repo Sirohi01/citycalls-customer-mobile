@@ -792,15 +792,11 @@ String formatServiceDuration(int minutes) {
   return '$hours hr $rest min';
 }
 
-// Grid shows up to 3 rows of 3 (9 slots). Categories beyond that are reached
-// via the 9th slot turning into a "More Services" card instead of trying to
-// cram them all in, or an expand/collapse toggle.
-const _maxGridSlots = 9;
-const _categoryGridSpacing = 12.0;
+const _maxCategoryPills = 5;
+const _categoryStripGap = 5.0;
 
-// 3 tiles per row: screen minus 16px side padding and two 12px gaps.
-double _categoryTileWidth(BuildContext context) =>
-    (MediaQuery.of(context).size.width - 32 - 2 * _categoryGridSpacing) / 3;
+double _categoryPillWidth(BuildContext context) =>
+    (MediaQuery.of(context).size.width - 32 - 4 * _categoryStripGap) / 5;
 
 class _TopCategoriesSection extends ConsumerWidget {
   const _TopCategoriesSection();
@@ -818,9 +814,9 @@ class _TopCategoriesSection extends ConsumerWidget {
             .toList();
         if (displayCats.isEmpty) return const SizedBox.shrink();
 
-        final showMoreCard = displayCats.length > _maxGridSlots;
-        final itemsToShow =
-            showMoreCard ? _maxGridSlots - 1 : displayCats.length;
+        final itemsToShow = displayCats.length > _maxCategoryPills
+            ? _maxCategoryPills
+            : displayCats.length;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -837,17 +833,17 @@ class _TopCategoriesSection extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Wrap(
-                spacing: _categoryGridSpacing,
-                runSpacing: 14,
-                alignment: WrapAlignment.start,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (int i = 0; i < itemsToShow; i++)
+                  for (int i = 0; i < itemsToShow; i++) ...[
                     _buildCategoryItem(context, ref, displayCats[i], i),
-                  if (showMoreCard) _buildMoreCard(context),
+                    if (i != itemsToShow - 1)
+                      const SizedBox(width: _categoryStripGap),
+                  ],
                 ],
               ),
             ),
@@ -871,7 +867,7 @@ class _TopCategoriesSection extends ConsumerWidget {
 
   Widget _buildCategoryItem(BuildContext context, WidgetRef ref,
       ServiceCategory category, int index) {
-    final width = _categoryTileWidth(context);
+    final width = _categoryPillWidth(context);
     final iconColor = _categoryIconColors[index % _categoryIconColors.length];
 
     return GestureDetector(
@@ -885,114 +881,63 @@ class _TopCategoriesSection extends ConsumerWidget {
         child: Column(
           children: [
             Container(
-              height: width,
+              height: 66,
               width: width,
               decoration: BoxDecoration(
-                // Soft tint of the category's accent colour.
-                color: iconColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.white,
+                borderRadius: BorderRadius.zero,
                 border: Border.all(
-                    color: iconColor.withValues(alpha: 0.15), width: 1),
+                    color: iconColor.withValues(alpha: 0.16), width: 1),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2))
+                      color: Colors.black.withValues(alpha: 0.045),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4))
                 ],
               ),
-              child: ref.watch(masterMediaProvider(category.id)).when(
-                    data: (media) {
-                      final img = media
-                          .where((m) => m.category == 'CATALOG_IMAGE')
-                          .firstOrNull;
-                      if (img != null) {
-                        final url = ref
-                            .read(catalogRepositoryProvider)
-                            .resolveMediaUrl(img);
-                        return Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: Image.network(
+              child: Center(
+                child: ref.watch(masterMediaProvider(category.id)).when(
+                      data: (media) {
+                        final img = media
+                            .where((m) => m.category == 'CATALOG_IMAGE')
+                            .firstOrNull;
+                        if (img != null) {
+                          final url = ref
+                              .read(catalogRepositoryProvider)
+                              .resolveMediaUrl(img);
+                          return Image.network(
                             url,
-                            width: double.infinity,
-                            height: double.infinity,
+                            width: width,
+                            height: 66,
                             fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) => Icon(
-                                _iconForCategory(category.label),
-                                color: iconColor,
-                                size: 38),
-                          ),
-                        );
-                      }
-                      return Center(
-                        child: Icon(_iconForCategory(category.label),
-                            color: iconColor, size: 38),
-                      );
-                    },
-                    loading: () => const Center(
-                        child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))),
-                    error: (_, __) => Center(
-                        child: Icon(_iconForCategory(category.label),
-                            color: iconColor, size: 38)),
-                  ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(_iconForCategory(category.label),
+                                    color: iconColor, size: 32),
+                          );
+                        }
+                        return Icon(_iconForCategory(category.label),
+                            color: iconColor, size: 32);
+                      },
+                      loading: () => SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: iconColor)),
+                      error: (_, __) => Icon(_iconForCategory(category.label),
+                          color: iconColor, size: 32),
+                    ),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 5),
             Text(
               category.label,
               textAlign: TextAlign.center,
               maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
-                  color: Color(0xFF334155)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMoreCard(BuildContext context) {
-    final width = _categoryTileWidth(context);
-
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ServiceBrowseScreen()),
-      ),
-      child: SizedBox(
-        width: width,
-        child: Column(
-          children: [
-            Container(
-              height: width,
-              width: width,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2))
-                ],
-              ),
-              child: const Center(
-                child: Icon(Icons.more_horiz_rounded,
-                    color: Colors.grey, size: 38),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'More\nServices',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
+                  fontSize: 10.8,
+                  fontWeight: FontWeight.w700,
+                  height: 1.08,
                   color: Color(0xFF334155)),
             ),
           ],
@@ -1360,38 +1305,38 @@ class HelpNowHomeScreen extends StatelessWidget {
       bannerPath: '/public/customer-app/helpnow-banners',
       // Yellow header (HelpNow's uniform colour) with dark text, and the
       // light banner card — the banner photos are white on the left.
-      accent: Color(0xFFD97706),
-      pageColor: Color(0xFFFFFBEB),
-      headerColor: Color(0xFFFACC15),
-      headerForeground: Color(0xFF3B2A06),
-      cardColor: Color(0xFFFEF3C7),
+      accent: Color(0xFFF5A623),
+      pageColor: Color(0xFFFFF7E8),
+      headerColor: Color(0xFFF5A623),
+      headerForeground: Color(0xFF2B1A03),
+      cardColor: Color(0xFFFFE0A3),
       lightCard: true,
       slides: [
         (
-          tag: 'Quick Support',
-          title1: 'Instant Help',
-          title2: 'In Minutes',
-          subtitle: 'Verified experts at your door\nright when you need them.',
+          tag: 'Daily Help',
+          title1: 'Home Helper',
+          title2: 'At Your Door',
+          subtitle: 'Dishwashing, cleaning,\nlaundry and daily chores.',
           image: null,
-          icon: Icons.support_agent_rounded,
+          icon: Icons.cleaning_services_rounded,
           button: 'Book a Service',
         ),
         (
-          tag: 'Emergency',
-          title1: 'Urgent Repairs',
-          title2: 'No Long Waits',
-          subtitle: 'Leaks, wiring, breakdowns —\nfixed fast and safely.',
+          tag: 'Kitchen Support',
+          title1: 'Cooking & Meal',
+          title2: 'Prep Help',
+          subtitle: 'Chopping, dough prep,\nbasic cooking and cleanup.',
           image: null,
-          icon: Icons.bolt_rounded,
+          icon: Icons.restaurant_rounded,
           button: 'Book a Service',
         ),
         (
           tag: 'On Demand',
-          title1: 'Quick Cleaning',
-          title2: 'Same Day',
-          subtitle: 'Kitchen, bathroom or sofa —\ncleaned when it suits you.',
+          title1: 'Laundry &',
+          title2: 'Ironing Help',
+          subtitle: 'Wash, dry, fold and\nregular clothes ironing.',
           image: null,
-          icon: Icons.cleaning_services_rounded,
+          icon: Icons.local_laundry_service_rounded,
           button: 'Book a Service',
         ),
       ],
@@ -1623,3 +1568,4 @@ Widget _landingEmpty(Color accent, String text) => Padding(
         ],
       ),
     );
+

@@ -76,18 +76,31 @@ class _Splash2ScreenState extends State<Splash2Screen> {
             // bigger.
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
                 // Scaled down a little so the illustration doesn't crowd the
                 // heading and buttons.
                 child: Center(
                   child: FractionallySizedBox(
-                    widthFactor: 0.85,
-                    heightFactor: 0.85,
+                    widthFactor: 0.92,
+                    heightFactor: 0.92,
                     child: Image.asset(
-                      'assets/login/splash22.png',
+                      'assets/login/citycalls_service_mascot_infographic.png',
                       fit: BoxFit.contain,
                     ),
                   ),
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Text(
+                'Book trusted professionals for AC repair,\ncleaning, pest control, beauty services\nand more.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14.5,
+                  height: 1.45,
+                  color: AppColors.slate400,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),

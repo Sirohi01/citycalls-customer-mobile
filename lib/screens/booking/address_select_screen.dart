@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../models/booking_models.dart';
 import '../../models/customer_models.dart';
 import '../../providers/booking_providers.dart';
@@ -162,6 +164,13 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                     data: (customer) => ListView(
                       padding: const EdgeInsets.only(top: 8, bottom: 20),
                       children: [
+                        if (_selectedAddressId != null)
+                          _SelectedAddressSummary(
+                            address: customer.addresses.firstWhere(
+                              (a) => a.id == _selectedAddressId,
+                              orElse: () => customer.addresses.first,
+                            ),
+                          ),
                         ...customer.addresses.map((a) => _AddressTile(
                               address: a,
                               selected: _selectedAddressId == a.id,
@@ -264,6 +273,7 @@ class _AddAddressSheet extends ConsumerStatefulWidget {
 
 class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
   final _formKey = GlobalKey<FormState>();
+  final _labelController = TextEditingController(text: 'Home');
   final _line1Controller = TextEditingController();
   final _line2Controller = TextEditingController();
   final _landmarkController = TextEditingController();
@@ -272,6 +282,7 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
   final _pinCodeController = TextEditingController();
   bool _saving = false;
   bool _lookingUpPin = false;
+  bool _detectingLocation = false;
   String? _error;
   String? _pinNotice;
   String _lastLookedUpPin = '';
@@ -307,10 +318,10 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
       }
       // Only fill blanks — never overwrite something the user typed
       // themselves, since the lookup is a convenience, not an authority.
-      if (_cityController.text.trim().isEmpty && area.resolvedCity != null) {
+      if (area.resolvedCity != null) {
         _cityController.text = area.resolvedCity!;
       }
-      if (_stateController.text.trim().isEmpty && area.state != null) {
+      if (area.state != null) {
         _stateController.text = area.state!;
       }
       _pinNotice = area.serviceable
@@ -322,6 +333,7 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
   @override
   void dispose() {
     _pinCodeController.removeListener(_onPinChanged);
+    _labelController.dispose();
     _line1Controller.dispose();
     _line2Controller.dispose();
     _landmarkController.dispose();
@@ -331,6 +343,86 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
     super.dispose();
   }
 
+  Future<void> _useCurrentLocation() async {
+    setState(() {
+      _detectingLocation = true;
+      _error = null;
+    });
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        setState(() => _error = 'Turn on location services, then try again.');
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() => _error = 'Location permission is needed to use current location.');
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 12),
+        ),
+      );
+      final placemarks = await placemarkFromCoordinates(
+          position.latitude, position.longitude);
+      if (!mounted) return;
+      if (placemarks.isEmpty) {
+        setState(() => _error = 'Could not read this location. Please enter it manually.');
+        return;
+      }
+
+      final p = placemarks.first;
+      final lineParts = [
+        p.name,
+        p.street,
+      ].where((s) => s != null && s.trim().isNotEmpty).cast<String>().toSet();
+      final areaParts = [
+        p.subLocality,
+        p.locality,
+      ].where((s) => s != null && s.trim().isNotEmpty).cast<String>().toSet();
+
+      setState(() {
+        if (_line1Controller.text.trim().isEmpty) {
+          _line1Controller.text = lineParts.isEmpty
+              ? 'Current location'
+              : lineParts.join(', ');
+        }
+        if (_line2Controller.text.trim().isEmpty && areaParts.isNotEmpty) {
+          _line2Controller.text = areaParts.join(', ');
+        }
+        if (_cityController.text.trim().isEmpty) {
+          _cityController.text = p.locality?.trim().isNotEmpty == true
+              ? p.locality!.trim()
+              : (p.subAdministrativeArea ?? '').trim();
+        }
+        if (_stateController.text.trim().isEmpty) {
+          _stateController.text = (p.administrativeArea ?? '').trim();
+        }
+        if (_pinCodeController.text.trim().isEmpty &&
+            (p.postalCode ?? '').trim().length >= 6) {
+          _pinCodeController.text = p.postalCode!.trim().substring(0, 6);
+        }
+        if (_landmarkController.text.trim().isEmpty) {
+          _landmarkController.text =
+              'Map: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}';
+        }
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'Could not fetch current location. Please enter it manually.');
+      }
+    } finally {
+      if (mounted) setState(() => _detectingLocation = false);
+    }
+  }
+
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
@@ -338,6 +430,7 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
       _error = null;
     });
     final address = AddressDraft(
+      label: _labelController.text.trim(),
       line1: _line1Controller.text.trim(),
       line2: _line2Controller.text.trim(),
       landmark: _landmarkController.text.trim(),
@@ -366,8 +459,37 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Add Address', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Add New Address', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              const Text(
+                'Save this service location and continue booking.',
+                style: TextStyle(color: Colors.black54, fontSize: 12.5),
+              ),
               const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: _detectingLocation ? null : _useCurrentLocation,
+                icon: _detectingLocation
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.my_location_rounded, size: 18),
+                label: Text(_detectingLocation
+                    ? 'Detecting location...'
+                    : 'Use current location'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(44),
+                  foregroundColor: const Color(0xFF16A34A),
+                  side: const BorderSide(color: Color(0xFF16A34A)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _labelController,
+                decoration: const InputDecoration(labelText: 'Address label'),
+              ),
+              const SizedBox(height: 10),
               TextFormField(
                 controller: _line1Controller,
                 decoration: const InputDecoration(labelText: 'House / Flat / Street'),
@@ -431,11 +553,70 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
               FilledButton(
                 style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
                 onPressed: _saving ? null : _save,
-                child: _saving ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Save & Continue'),
+                child: _saving ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Add Address & Continue'),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SelectedAddressSummary extends StatelessWidget {
+  final CustomerAddress address;
+  const _SelectedAddressSummary({required this.address});
+
+  @override
+  Widget build(BuildContext context) {
+    final title = address.label?.trim().isNotEmpty == true
+        ? address.label!.trim()
+        : 'Selected address';
+    final line = [
+      address.line1,
+      address.line2,
+      address.landmark,
+      address.city,
+      address.state,
+      address.pinCode,
+    ].where((part) => part != null && part.trim().isNotEmpty).cast<String>().join(', ');
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFFDF4),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Using $title',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13.5,
+                    color: Color(0xFF14532D),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  line,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF166534)),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -539,3 +720,4 @@ class _AddressTile extends StatelessWidget {
     );
   }
 }
+

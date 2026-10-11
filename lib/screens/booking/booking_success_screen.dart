@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../app_navigator.dart';
 import 'package:flutter/services.dart';
 import '../main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -185,10 +184,8 @@ class BookingSuccessScreen extends ConsumerWidget {
                           InkWell(
                             onTap: () {
                               ref.invalidate(myServiceRequestsProvider);
-                              // The new shell opens straight on the Bookings tab.
-                              pendingShellTab.value = ShellTab.bookings;
                               Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(builder: (_) => const MainShell()),
+                                MaterialPageRoute(builder: (_) => const MainShell(initialIndex: 3)),
                                 (route) => false,
                               );
                             },

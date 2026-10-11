@@ -10,14 +10,15 @@ import 'notifications_screen.dart';
 import 'profile_screen.dart';
 
 class MainShell extends ConsumerStatefulWidget {
-  const MainShell({super.key});
+  final int initialIndex;
+  const MainShell({super.key, this.initialIndex = 0});
 
   @override
   ConsumerState<MainShell> createState() => _MainShellState();
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  int _index = 0;
+  late int _index = widget.initialIndex;
   // Tabs visited before the current one, most recent last. The phone's back
   // button walks back through these one at a time instead of closing the app.
   final List<int> _tabHistory = [];
@@ -54,11 +55,14 @@ class _MainShellState extends ConsumerState<MainShell> {
   @override
   void initState() {
     super.initState();
-    ref.read(pushNotificationServiceProvider).initialize();
     pendingShellTab.addListener(_applyPendingTab);
-    // A push may have been tapped while this shell was still being built
-    // (cold start via getInitialMessage), so consume anything already queued.
-    _applyPendingTab();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(pushNotificationServiceProvider).initialize();
+      // A push may have been tapped while this shell was still being built
+      // (cold start via getInitialMessage), so consume anything already queued.
+      _applyPendingTab();
+    });
   }
 
   @override
@@ -132,7 +136,7 @@ class _MainShellState extends ConsumerState<MainShell> {
             ),
             child: SafeArea(
               child: SizedBox(
-                height: 62,
+                height: 56,
                 child: Row(
                   children: [
                     _NavItem(
@@ -143,24 +147,24 @@ class _MainShellState extends ConsumerState<MainShell> {
                       onTap: () => _selectTab(0),
                     ),
                     _NavItem(
-                      icon: Icons.spa_outlined,
-                      activeIcon: Icons.spa_rounded,
+                      icon: Icons.content_cut_outlined,
+                      activeIcon: Icons.content_cut_rounded,
                       label: 'Salon',
                       brandColor: const Color(0xFFEC4899),
                       selected: _index == 1,
                       onTap: () => _selectTab(1),
                     ),
                     _NavItem(
-                      icon: Icons.support_agent_outlined,
-                      activeIcon: Icons.support_agent_rounded,
+                      icon: Icons.cleaning_services_outlined,
+                      activeIcon: Icons.cleaning_services_rounded,
                       label: 'HelpNow',
-                      brandColor: const Color(0xFFF97316),
+                      brandColor: const Color(0xFFF5A623),
                       selected: _index == 2,
                       onTap: () => _selectTab(2),
                     ),
                     _NavItem(
-                      icon: Icons.grid_view_outlined,
-                      activeIcon: Icons.grid_view_rounded,
+                      icon: Icons.assignment_outlined,
+                      activeIcon: Icons.assignment_rounded,
                       label: 'Bookings',
                       selected: _index == 3,
                       onTap: () => _selectTab(3),
@@ -219,30 +223,35 @@ class _NavItem extends StatelessWidget {
         highlightColor: Colors.transparent,
         child: Column(
           children: [
+            const SizedBox(height: 3),
             AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 220),
               curve: Curves.easeOut,
-              width: selected ? 28 : 0,
-              height: 3,
+              width: selected ? 32 : 30,
+              height: 27,
               decoration: BoxDecoration(
-                color: activeColor,
-                borderRadius:
-                    const BorderRadius.vertical(bottom: Radius.circular(3)),
+                color: selected
+                    ? activeColor.withValues(alpha: 0.12)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                selected ? activeIcon : icon,
+                color: color,
+                size: selected ? 21.5 : 20.5,
               ),
             ),
-            const Spacer(),
-            Icon(selected ? activeIcon : icon, color: color, size: 24),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               maxLines: 1,
               style: TextStyle(
-                fontSize: 11.5,
+                fontSize: 10.5,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: color,
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 3),
           ],
         ),
       ),

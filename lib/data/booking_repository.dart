@@ -17,12 +17,12 @@ class BookingRepository {
       : _catalogClient = catalogClient;
 
   Future<List<CustomerProductSummary>> listProducts(String customerId) async {
-    final res = await _client.dio.get('/customers/$customerId/products');
+    final res = await _client.dio.get('/customers/me/products');
     return (res.data['data'] as List).map((p) => CustomerProductSummary.fromJson(p as Map<String, dynamic>)).toList();
   }
 
   Future<void> addProduct(String customerId, {required String brandId, required String productTypeId, String? modelNumber}) async {
-    await _client.dio.post('/customers/$customerId/products', data: {
+    await _client.dio.post('/customers/me/products', data: {
       'brandId': brandId,
       'productTypeId': productTypeId,
       if (modelNumber != null && modelNumber.isNotEmpty) 'modelNumber': modelNumber,
@@ -44,7 +44,7 @@ class BookingRepository {
   }
 
   Future<void> addAddress(String customerId, AddressDraft address) async {
-    await _client.dio.post('/customers/$customerId/addresses', data: address.toAddAddressJson());
+    await _client.dio.post('/customers/me/addresses', data: address.toAddAddressJson());
   }
 
   // Uploaded against entityType 'CUSTOMER' since the ServiceRequest doesn't

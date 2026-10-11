@@ -41,11 +41,11 @@ class AppDrawer extends ConsumerWidget {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Drawer(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       // A proper side panel: most of the screen, with the page still visible
       // (and tappable to close) on the right.
-      width: screenWidth * 0.86,
+      width: screenWidth * 0.78,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
       ),
@@ -58,7 +58,7 @@ class AppDrawer extends ConsumerWidget {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               physics: const BouncingScrollPhysics(),
               children: [
                 // Quick actions
@@ -70,14 +70,14 @@ class AppDrawer extends ConsumerWidget {
                       color: const Color(0xFF2563EB),
                       onTap: () => _goToTab(context, ShellTab.bookings),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     _QuickAction(
                       icon: Icons.favorite_rounded,
                       label: 'Favourites',
                       color: const Color(0xFFE11D48),
                       onTap: () => _open(context, const FavouritesScreen()),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                     _QuickAction(
                       icon: Icons.headset_mic_rounded,
                       label: 'Support',
@@ -86,7 +86,7 @@ class AppDrawer extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 const _SectionLabel('Explore'),
                 _MenuGroup(children: [
                   _MenuListItem(
@@ -97,21 +97,21 @@ class AppDrawer extends ConsumerWidget {
                         const ServiceBrowseScreen(title: 'All Categories')),
                   ),
                   _MenuListItem(
-                    icon: Icons.spa_rounded,
+                    icon: Icons.content_cut_rounded,
                     title: 'Salon at Home',
                     subtitle: 'Beauty & grooming services',
                     iconColor: const Color(0xFFDB2777),
                     onTap: () => _goToTab(context, ShellTab.salon),
                   ),
                   _MenuListItem(
-                    icon: Icons.support_agent_rounded,
+                    icon: Icons.cleaning_services_rounded,
                     title: 'HelpNow',
                     subtitle: 'Quick help for everyday chores',
-                    iconColor: const Color(0xFFD97706),
+                    iconColor: const Color(0xFFF5A623),
                     onTap: () => _goToTab(context, ShellTab.helpNow),
                   ),
                 ]),
-                const SizedBox(height: 18),
+                const SizedBox(height: 10),
                 const _SectionLabel('Account'),
                 _MenuGroup(children: [
                   _MenuListItem(
@@ -133,7 +133,7 @@ class AppDrawer extends ConsumerWidget {
                     onTap: () => _open(context, const FavouritesScreen()),
                   ),
                 ]),
-                const SizedBox(height: 18),
+                const SizedBox(height: 10),
                 const _SectionLabel('Help'),
                 _MenuGroup(children: [
                   _MenuListItem(
@@ -143,7 +143,7 @@ class AppDrawer extends ConsumerWidget {
                     onTap: () => _open(context, const SupportScreen()),
                   ),
                 ]),
-                const SizedBox(height: 18),
+                const SizedBox(height: 10),
                 _ReferCard(onTap: () => _shareApp(context)),
                 const SizedBox(height: 8),
               ],
@@ -153,7 +153,7 @@ class AppDrawer extends ConsumerWidget {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              padding: const EdgeInsets.fromLTRB(14, 2, 14, 10),
               child: Column(
                 children: [
                   SizedBox(
@@ -168,7 +168,7 @@ class AppDrawer extends ConsumerWidget {
                         foregroundColor: const Color(0xFFDC2626),
                         backgroundColor: const Color(0xFFFEF2F2),
                         side: const BorderSide(color: Color(0xFFFECACA)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14)),
                       ),
@@ -238,7 +238,7 @@ class _DrawerHeader extends ConsumerWidget {
     final top = MediaQuery.of(context).padding.top;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(20, top + 12, 12, 22),
+      padding: EdgeInsets.fromLTRB(16, top + 8, 8, 14),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [_kDark, _kDark2],
@@ -280,7 +280,7 @@ class _DrawerHeader extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           InkWell(
             onTap: onProfile,
             borderRadius: BorderRadius.circular(16),
@@ -298,7 +298,7 @@ class _DrawerHeader extends ConsumerWidget {
                           end: Alignment.bottomRight),
                     ),
                     child: const ProfileAvatar(
-                        size: 58, borderWidth: 2, borderColor: _kDark),
+                        size: 52, borderWidth: 2, borderColor: _kDark),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -326,10 +326,10 @@ class _DrawerHeader extends ConsumerWidget {
                               color: Colors.white.withValues(alpha: 0.7),
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                                horizontal: 9, vertical: 3),
                             decoration: BoxDecoration(
                               color: _kLime.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(20),
@@ -396,13 +396,13 @@ class _QuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFFE2E8F0)),
@@ -410,14 +410,14 @@ class _QuickAction extends StatelessWidget {
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(9),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: color, size: 20),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   label,
                   style: const TextStyle(
@@ -441,11 +441,11 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(left: 4, bottom: 8),
+        padding: const EdgeInsets.only(left: 2, bottom: 5),
         child: Text(
           text.toUpperCase(),
           style: const TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
             color: Color(0xFF94A3B8),
@@ -464,8 +464,8 @@ class _MenuGroup extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -475,7 +475,7 @@ class _MenuGroup extends StatelessWidget {
               const Divider(
                   height: 1,
                   thickness: 1,
-                  indent: 62,
+                  indent: 54,
                   color: Color(0xFFF1F5F9)),
             children[i],
           ],
@@ -505,19 +505,19 @@ class _MenuListItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(11),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: iconColor, size: 20),
+              child: Icon(icon, color: iconColor, size: 18),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -525,15 +525,15 @@ class _MenuListItem extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 14.5,
+                      fontSize: 13.8,
                       fontWeight: FontWeight.w600,
                       color: _kInk,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 11.5, color: _kMuted),
+                    style: const TextStyle(fontSize: 11, color: _kMuted),
                   ),
                 ],
               ),

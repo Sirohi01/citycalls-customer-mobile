@@ -87,17 +87,24 @@ class AuthRepository {
 
   // [rememberMe] decides whether the session survives an app restart — see
   // ApiClient.saveTokens.
-  Future<LoginResponse> verifyOtp(String mobile, String otp, {bool rememberMe = true}) async {
+  Future<LoginResponse> verifyOtp(String mobile, String otp,
+      {bool rememberMe = true}) async {
     try {
-      final res = await _client.dio.post('/auth/otp/verify', data: {'mobile': mobile, 'otp': otp});
-      final loginResponse = LoginResponse.fromJson(res.data['data'] as Map<String, dynamic>);
+      final res = await _client.dio
+          .post('/auth/otp/verify', data: {'mobile': mobile, 'otp': otp});
+      final loginResponse =
+          LoginResponse.fromJson(res.data['data'] as Map<String, dynamic>);
       await _client.saveTokens(
         accessToken: loginResponse.accessToken,
         refreshToken: loginResponse.refreshToken,
         persist: rememberMe,
       );
-      // Last number used on this phone, offered back on the login screen.
-      await RememberedLoginStorage.saveMobile(mobile);
+      if (rememberMe) {
+        // Last remembered number, offered back on the login screen after logout.
+        await RememberedLoginStorage.saveMobile(mobile);
+      } else {
+        await RememberedLoginStorage.clear();
+      }
       return loginResponse;
     } on DioException catch (e) {
       throw _toAuthException(e, 'Incorrect or expired OTP.');

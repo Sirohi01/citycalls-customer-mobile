@@ -4,7 +4,7 @@ import '../providers/auth_providers.dart';
 import '../providers/customer_providers.dart';
 import '../providers/location_providers.dart';
 import '../models/customer_models.dart';
-import '../screens/edit_profile_screen.dart';
+import '../screens/profile_screen.dart';
 import '../screens/service_browse_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../theme/app_theme.dart';
@@ -314,11 +314,9 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
             OutlinedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
-                // EditProfileScreen owns the address book and has its own
-                // back button; ProfileScreen is a bottom-tab screen and
-                // pushing it as a route would strand the user.
+                // Profile opens with Saved Addresses as the first section.
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
                 );
               },
               icon: const Icon(Icons.add_location_alt_outlined, size: 18),

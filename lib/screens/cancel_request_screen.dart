@@ -39,7 +39,7 @@ class _CancelRequestScreenState extends ConsumerState<CancelRequestScreen> {
       await ref.read(serviceRequestRepositoryProvider).cancelServiceRequest(widget.requestId, _reasonController.text.trim());
       ref.invalidate(myServiceRequestsProvider);
       ref.invalidate(serviceRequestDetailProvider(widget.requestId));
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       setState(() => _error = 'Failed to cancel: $e');
     } finally {
