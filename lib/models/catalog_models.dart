@@ -131,7 +131,7 @@ class SupportContact {
     callNumber: '+917428808884',
     whatsappNumber: '917428808884',
     whatsappMessage: 'Hi CityCalls, I need help with a booking.',
-    email: 'hello@citycalls.in',
+    email: 'support@citycalls.in',
   );
 
   factory SupportContact.fromJson(Map<String, dynamic> json) {

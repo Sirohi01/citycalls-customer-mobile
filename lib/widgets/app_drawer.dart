@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/customer_providers.dart';
 import '../providers/auth_providers.dart';
@@ -143,8 +142,6 @@ class AppDrawer extends ConsumerWidget {
                     onTap: () => _open(context, const SupportScreen()),
                   ),
                 ]),
-                const SizedBox(height: 10),
-                _ReferCard(onTap: () => _shareApp(context)),
                 const SizedBox(height: 8),
               ],
             ),
@@ -202,8 +199,8 @@ class AppDrawer extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFDC2626)),
+            style:
+                TextButton.styleFrom(foregroundColor: const Color(0xFFDC2626)),
             child: const Text('Logout'),
           ),
         ],
@@ -264,8 +261,7 @@ class _DrawerHeader extends ConsumerWidget {
                     TextSpan(
                         text: 'Calls',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500)),
+                            color: Colors.white, fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
@@ -545,96 +541,4 @@ class _MenuListItem extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ReferCard extends StatelessWidget {
-  final VoidCallback onTap;
-  const _ReferCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF16A34A), Color(0xFF4FA021)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: _kGreen.withValues(alpha: 0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.card_giftcard_rounded,
-                color: Colors.white, size: 24),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Refer & Earn',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white)),
-                SizedBox(height: 3),
-                Text('Share CityCalls with friends & family',
-                    style: TextStyle(fontSize: 11.5, color: Colors.white70)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Material(
-            color: Colors.white,
-            shape: const StadiumBorder(),
-            child: InkWell(
-              onTap: onTap,
-              customBorder: const StadiumBorder(),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                child: Text('Invite',
-                    style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: _kGreen)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Play Store listing for this app (applicationId com.citycalls.customer).
-const _kPlayStoreUrl =
-    'https://play.google.com/store/apps/details?id=com.citycalls.customer';
-
-// Opens the system share sheet (WhatsApp, SMS, etc.) with an invite message.
-// There is no referral/rewards backend yet, so this is a plain invite.
-Future<void> _shareApp(BuildContext context) async {
-  final box = context.findRenderObject() as RenderBox?;
-  await Share.share(
-    'I use CityCalls to book trusted professionals for home services '
-    '— AC repair, cleaning, pest control, salon at home and more. '
-    'Download the app: $_kPlayStoreUrl',
-    subject: 'Try CityCalls',
-    // iPad needs an anchor for the share popover.
-    sharePositionOrigin:
-        box == null ? null : box.localToGlobal(Offset.zero) & box.size,
-  );
 }

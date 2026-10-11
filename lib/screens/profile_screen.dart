@@ -63,10 +63,19 @@ class ProfileScreen extends ConsumerWidget {
                   onEdit: () => _open(context, const EditProfileScreen()),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _ProfileSummaryCard(
+                        customer: customer,
+                        onEdit: () => _open(context, const EditProfileScreen()),
+                        onAddresses: () =>
+                            _showAddressSheet(context, ref, customer.id),
+                        onSupport: () =>
+                            _open(context, const SupportScreen()),
+                      ),
+                      const SizedBox(height: 22),
                       // --- Saved addresses ---
                       Row(
                         children: [
@@ -659,10 +668,10 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
     return Container(
-      padding: EdgeInsets.fromLTRB(16, top + 8, 16, 24),
+      padding: EdgeInsets.fromLTRB(16, top + 8, 16, 26),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [_kDark, _kDark2],
+          colors: [_kDark, Color(0xFF102315), _kDark2],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -704,64 +713,336 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          GestureDetector(
-            onTap: onEdit,
-            child: Stack(
-              clipBehavior: Clip.none,
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(22),
+              border:
+                  Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            ),
+            child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                        colors: [_kLime, _kGreen],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight),
+                GestureDetector(
+                  onTap: onEdit,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                              colors: [_kLime, _kGreen],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight),
+                        ),
+                        child: const ProfileAvatar(
+                            size: 78, borderWidth: 3, borderColor: _kDark),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: _kLime,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: _kDark, width: 2),
+                          ),
+                          child: const Icon(Icons.camera_alt_rounded,
+                              size: 14, color: _kDark),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const ProfileAvatar(
-                      size: 88, borderWidth: 3, borderColor: _kDark),
                 ),
-                Positioned(
-                  right: 0,
-                  bottom: 2,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: _kLime,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: _kDark, width: 2),
-                    ),
-                    child: const Icon(Icons.camera_alt_rounded,
-                        size: 14, color: _kDark),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customer.name.isNotEmpty
+                            ? customer.name
+                            : 'Guest User',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        customer.email?.trim().isNotEmpty == true
+                            ? customer.email!.trim()
+                            : 'Add email to complete your profile',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 12.5,
+                            color: Colors.white.withValues(alpha: 0.68)),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (customer.mobile != null &&
+                              customer.mobile!.isNotEmpty)
+                            _InfoChip(
+                                icon: Icons.phone_rounded,
+                                text: '+91 ${customer.mobile}'),
+                          _InfoChip(
+                              icon: Icons.verified_user_rounded,
+                              text: 'Verified'),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            customer.name.isNotEmpty ? customer.name : 'Guest User',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
+          const SizedBox(height: 14),
+          Row(
             children: [
-              if (customer.mobile != null && customer.mobile!.isNotEmpty)
-                _InfoChip(
-                    icon: Icons.phone_rounded, text: '+91 ${customer.mobile}'),
-              if (customer.email != null && customer.email!.isNotEmpty)
-                _InfoChip(icon: Icons.email_rounded, text: customer.email!),
+              Expanded(
+                child: _HeaderMetric(
+                  icon: Icons.home_work_rounded,
+                  value: '${customer.addresses.length}',
+                  label: 'Saved addresses',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _HeaderMetric(
+                  icon: Icons.security_rounded,
+                  value: 'Active',
+                  label: 'Account status',
+                ),
+              ),
             ],
           ),
         ],
       ),
     );
   }
+}
+
+class _HeaderMetric extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  const _HeaderMetric({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: _kLime, size: 20),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 1),
+                  Text(label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.62),
+                          fontSize: 11)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+}class _ProfileSummaryCard extends StatelessWidget {
+  final Customer customer;
+  final VoidCallback onEdit;
+  final VoidCallback onAddresses;
+  final VoidCallback onSupport;
+  const _ProfileSummaryCard({
+    required this.customer,
+    required this.onEdit,
+    required this.onAddresses,
+    required this.onSupport,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final email = customer.email?.trim();
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _MiniStat(
+                value: '${customer.addresses.length}',
+                label: 'Addresses',
+                icon: Icons.location_on_rounded,
+                color: _kGreen,
+              ),
+              const SizedBox(width: 10),
+              _MiniStat(
+                value: email == null || email.isEmpty ? 'Add' : 'Saved',
+                label: 'Email',
+                icon: Icons.alternate_email_rounded,
+                color: const Color(0xFF2563EB),
+              ),
+              const SizedBox(width: 10),
+              const _MiniStat(
+                value: '24/7',
+                label: 'Support',
+                icon: Icons.headset_mic_rounded,
+                color: Color(0xFFD97706),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionPill(
+                  icon: Icons.edit_outlined,
+                  label: 'Edit',
+                  onTap: onEdit,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ActionPill(
+                  icon: Icons.add_location_alt_outlined,
+                  label: 'Address',
+                  onTap: onAddresses,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ActionPill(
+                  icon: Icons.support_agent_rounded,
+                  label: 'Support',
+                  onTap: onSupport,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color color;
+  const _MiniStat({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withValues(alpha: 0.12)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 19),
+              const SizedBox(height: 6),
+              Text(value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: _kInk)),
+              const SizedBox(height: 1),
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10.5, color: _kMuted)),
+            ],
+          ),
+        ),
+      );
+}
+
+class _ActionPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ActionPill({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 17, color: _kInk),
+                const SizedBox(width: 6),
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: _kInk)),
+              ],
+            ),
+          ),
+        ),
+      );
 }
 
 class _InfoChip extends StatelessWidget {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'device_name.dart';
 
 // What a repository needs from a server connection. Lets one repository talk
 // to a different server than the rest of the app (see SecondaryApiClient).
@@ -85,10 +86,13 @@ class ApiClient implements ApiTarget {
   // those through the refresh path would be meaningless and would surface the
   // wrong error message to the user.
   bool _isAuthRoute(String path) =>
-      path.contains('/auth/login') || path.contains('/auth/otp') || path.contains('/auth/refresh');
+      path.contains('/auth/login') ||
+      path.contains('/auth/otp') ||
+      path.contains('/auth/refresh');
 
   Future<bool> _refreshAccessToken() {
-    return _refreshInFlight ??= _doRefresh().whenComplete(() => _refreshInFlight = null);
+    return _refreshInFlight ??=
+        _doRefresh().whenComplete(() => _refreshInFlight = null);
   }
 
   Future<bool> _doRefresh() async {
@@ -101,7 +105,10 @@ class ApiClient implements ApiTarget {
       // Goes through the same Dio (and therefore the same adapter/base URL)
       // as everything else. _isAuthRoute() keeps this call out of the 401
       // branch above, so it can't recurse into another refresh.
-      final res = await dio.post('/auth/refresh', data: {'refreshToken': refreshToken});
+      final res = await dio.post('/auth/refresh', data: {
+        'refreshToken': refreshToken,
+        'deviceName': await DeviceName.current(),
+      });
       final data = res.data['data'] as Map<String, dynamic>;
       await saveTokens(
         accessToken: data['accessToken'] as String,
@@ -128,7 +135,10 @@ class ApiClient implements ApiTarget {
 
   // [persist] is set at login from the "Remember me" checkbox; a refresh
   // omits it and keeps whichever mode the session started in.
-  Future<void> saveTokens({required String accessToken, required String refreshToken, bool? persist}) async {
+  Future<void> saveTokens(
+      {required String accessToken,
+      required String refreshToken,
+      bool? persist}) async {
     if (persist != null) _persistTokens = persist;
     if (_persistTokens) {
       _memoryAccessToken = null;
@@ -165,13 +175,15 @@ class ApiClient implements ApiTarget {
   // this origin prefixed. CLOUDINARY urls are already absolute. Mirrors
   // citycalls-admin-web's useFiles.ts resolveFileUrl().
   @override
-  String get apiOrigin => dio.options.baseUrl.replaceFirst(RegExp(r'/api/v1/?$'), '');
+  String get apiOrigin =>
+      dio.options.baseUrl.replaceFirst(RegExp(r'/api/v1/?$'), '');
 
   // Same rule as resolveMediaUrl() in catalog_repository.dart, but for bare
   // URL strings that don't arrive wrapped in a File document — ServiceVisit's
   // beforeImages/afterImages are plain string arrays, not File refs.
   @override
-  String resolveUrl(String url) => url.startsWith('http') ? url : '$apiOrigin$url';
+  String resolveUrl(String url) =>
+      url.startsWith('http') ? url : '$apiOrigin$url';
 
   // Lets a SecondaryApiClient renew the shared session after a 401.
   Future<bool> refreshSession() => _refreshAccessToken();
@@ -209,7 +221,8 @@ class SecondaryApiClient implements ApiTarget {
         }
         if (!await _session.refreshSession()) return handler.next(error);
         final options = error.requestOptions;
-        options.headers['Authorization'] = 'Bearer ${await _session.readAccessToken()}';
+        options.headers['Authorization'] =
+            'Bearer ${await _session.readAccessToken()}';
         options.extra[_retriedFlag] = true;
         try {
           handler.resolve(await dio.fetch(options));
@@ -221,8 +234,10 @@ class SecondaryApiClient implements ApiTarget {
   }
 
   @override
-  String get apiOrigin => dio.options.baseUrl.replaceFirst(RegExp(r'/api/v1/?$'), '');
+  String get apiOrigin =>
+      dio.options.baseUrl.replaceFirst(RegExp(r'/api/v1/?$'), '');
 
   @override
-  String resolveUrl(String url) => url.startsWith('http') ? url : '$apiOrigin$url';
+  String resolveUrl(String url) =>
+      url.startsWith('http') ? url : '$apiOrigin$url';
 }

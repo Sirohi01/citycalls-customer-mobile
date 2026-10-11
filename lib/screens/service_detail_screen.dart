@@ -140,6 +140,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _HeroGallery(
+                          service: s,
                           imageUrls: imageUrls,
                           loading: media.isLoading,
                         ),
@@ -594,9 +595,14 @@ const _kBg = Color(0xFFF8FAFC);
 // Photo carousel in a rounded card. Each photo fills the whole frame (cover,
 // no empty margins) and the carousel auto-advances when there are several.
 class _HeroGallery extends StatefulWidget {
+  final Service service;
   final List<String> imageUrls;
   final bool loading;
-  const _HeroGallery({required this.imageUrls, required this.loading});
+  const _HeroGallery({
+    required this.service,
+    required this.imageUrls,
+    required this.loading,
+  });
 
   @override
   State<_HeroGallery> createState() => _HeroGalleryState();
@@ -658,53 +664,131 @@ class _HeroGalleryState extends State<_HeroGallery> {
     return Column(
       children: [
         Container(
-          height: 220,
+          height: 246,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFFF0FDF4), Colors.white],
+              colors: [Color(0xFFEFF6FF), Color(0xFFF0FDF4)],
             ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white, width: 2),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: urls.isEmpty
-                ? (widget.loading
-                    ? const Center(
-                        child: SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: _kGreen),
+            borderRadius: BorderRadius.circular(22),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                urls.isEmpty
+                    ? (widget.loading
+                        ? const Center(
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: _kGreen),
+                            ),
+                          )
+                        : fallback)
+                    : PageView.builder(
+                        controller: _controller,
+                        itemCount: urls.length,
+                        onPageChanged: (i) => setState(() => _index = i),
+                        // Listener (not a GestureDetector) so it doesn't fight the
+                        // PageView for the swipe; a touch resets the countdown.
+                        itemBuilder: (_, i) => Listener(
+                          onPointerDown: (_) => _restartTimer(),
+                          child: Image.network(
+                            urls[i],
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            errorBuilder: (_, __, ___) => fallback,
+                          ),
                         ),
-                      )
-                    : fallback)
-                : PageView.builder(
-                    controller: _controller,
-                    itemCount: urls.length,
-                    onPageChanged: (i) => setState(() => _index = i),
-                    // Listener (not a GestureDetector) so it doesn't fight the
-                    // PageView for the swipe; a touch resets the countdown.
-                    itemBuilder: (_, i) => Listener(
-                      onPointerDown: (_) => _restartTimer(),
-                      child: Image.network(
-                        urls[i],
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                        errorBuilder: (_, __, ___) => fallback,
                       ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.08),
+                        Colors.black.withValues(alpha: 0.08),
+                        Colors.black.withValues(alpha: 0.72),
+                      ],
+                      stops: const [0, 0.48, 1],
                     ),
                   ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          _HeroChip(
+                            icon: Icons.verified_rounded,
+                            label: 'Verified expert',
+                            color: _kGreen,
+                          ),
+                          const SizedBox(width: 8),
+                          if (widget.service.warrantyPeriodDays > 0)
+                            _HeroChip(
+                              icon: Icons.shield_outlined,
+                              label: '${widget.service.warrantyPeriodDays} day warranty',
+                              color: const Color(0xFF2563EB),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        widget.service.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          height: 1.05,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            'Starts at ₹${widget.service.pricing.basePrice.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Icon(Icons.schedule_rounded, size: 15, color: Colors.white70),
+                          const SizedBox(width: 4),
+                          Text(
+                            formatServiceDuration(widget.service.expectedDurationMinutes),
+                            style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         if (urls.length > 1) ...[
@@ -727,6 +811,33 @@ class _HeroGalleryState extends State<_HeroGallery> {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _HeroChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _HeroChip({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color)),
+        ],
+      ),
     );
   }
 }

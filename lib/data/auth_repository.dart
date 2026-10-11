@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'api_client.dart';
+import 'device_name.dart';
 import '../models/auth_models.dart';
 import 'remembered_login_storage.dart';
 
@@ -16,11 +17,14 @@ class AuthRepository {
 
   Future<LoginResponse> login(String identifier, String password) async {
     try {
+      final deviceName = await DeviceName.current();
       final res = await _client.dio.post('/auth/login', data: {
         'identifier': identifier,
         'password': password,
+        'deviceName': deviceName,
       });
-      final loginResponse = LoginResponse.fromJson(res.data['data'] as Map<String, dynamic>);
+      final loginResponse =
+          LoginResponse.fromJson(res.data['data'] as Map<String, dynamic>);
       await _client.saveTokens(
         accessToken: loginResponse.accessToken,
         refreshToken: loginResponse.refreshToken,
@@ -32,9 +36,11 @@ class AuthRepository {
         final errors = (body['errors'] as List)
             .map((e) => ApiFieldError.fromJson(e as Map<String, dynamic>))
             .toList();
-        throw AuthException(body['message'] as String? ?? 'Login failed', errors);
+        throw AuthException(
+            body['message'] as String? ?? 'Login failed', errors);
       }
-      throw AuthException('Unable to reach the server. Please check your connection.', []);
+      throw AuthException(
+          'Unable to reach the server. Please check your connection.', []);
     }
   }
 
@@ -46,7 +52,8 @@ class AuthRepository {
     final refreshToken = await _client.readRefreshToken();
     if (refreshToken != null) {
       try {
-        await _client.dio.post('/auth/logout', data: {'refreshToken': refreshToken});
+        await _client.dio
+            .post('/auth/logout', data: {'refreshToken': refreshToken});
       } on DioException {
         // Best-effort — a network failure here must not block the user from
         // logging out locally, which is the part they actually see.
@@ -90,8 +97,12 @@ class AuthRepository {
   Future<LoginResponse> verifyOtp(String mobile, String otp,
       {bool rememberMe = true}) async {
     try {
-      final res = await _client.dio
-          .post('/auth/otp/verify', data: {'mobile': mobile, 'otp': otp});
+      final deviceName = await DeviceName.current();
+      final res = await _client.dio.post('/auth/otp/verify', data: {
+        'mobile': mobile,
+        'otp': otp,
+        'deviceName': deviceName,
+      });
       final loginResponse =
           LoginResponse.fromJson(res.data['data'] as Map<String, dynamic>);
       await _client.saveTokens(
@@ -122,6 +133,7 @@ class AuthRepository {
     if (body is Map<String, dynamic> && body['message'] != null) {
       return AuthException(body['message'] as String, []);
     }
-    return AuthException('Unable to reach the server. Please check your connection.', []);
+    return AuthException(
+        'Unable to reach the server. Please check your connection.', []);
   }
 }
