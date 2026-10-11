@@ -110,7 +110,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.white,
+        systemNavigationBarColor: Color(0xFFF7F8FA),
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       // Pushed screens (service detail, booking steps…) pop on their own
@@ -122,64 +122,9 @@ class _MainShellState extends ConsumerState<MainShell> {
         },
         child: Scaffold(
           body: IndexedStack(index: _index, children: _tabs),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: const Border(top: BorderSide(color: Color(0xFFF1F5F9))),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 12,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              child: SizedBox(
-                height: 56,
-                child: Row(
-                  children: [
-                    _NavItem(
-                      icon: Icons.home_outlined,
-                      activeIcon: Icons.home_rounded,
-                      label: 'Home',
-                      selected: _index == 0,
-                      onTap: () => _selectTab(0),
-                    ),
-                    _NavItem(
-                      icon: Icons.content_cut_outlined,
-                      activeIcon: Icons.content_cut_rounded,
-                      label: 'Salon',
-                      brandColor: const Color(0xFFEC4899),
-                      selected: _index == 1,
-                      onTap: () => _selectTab(1),
-                    ),
-                    _NavItem(
-                      icon: Icons.cleaning_services_outlined,
-                      activeIcon: Icons.cleaning_services_rounded,
-                      label: 'HelpNow',
-                      brandColor: const Color(0xFFF5A623),
-                      selected: _index == 2,
-                      onTap: () => _selectTab(2),
-                    ),
-                    _NavItem(
-                      icon: Icons.assignment_outlined,
-                      activeIcon: Icons.assignment_rounded,
-                      label: 'Bookings',
-                      selected: _index == 3,
-                      onTap: () => _selectTab(3),
-                    ),
-                    _NavItem(
-                      icon: Icons.person_outline_rounded,
-                      activeIcon: Icons.person_rounded,
-                      label: 'Profile',
-                      selected: _index == 4,
-                      onTap: () => _selectTab(4),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          bottomNavigationBar: _BottomNavBar(
+            currentIndex: _index,
+            onSelect: _selectTab,
           ),
         ),
       ),
@@ -188,7 +133,84 @@ class _MainShellState extends ConsumerState<MainShell> {
 }
 
 const _kNavGreen = Color(0xFF16A34A);
+const _kNavInk = Color(0xFF0F172A);
 const _kNavIdle = Color(0xFF94A3B8);
+
+class _BottomNavBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onSelect;
+  const _BottomNavBar({
+    required this.currentIndex,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).padding.bottom;
+    return Container(
+      color: Colors.transparent,
+      padding: EdgeInsets.fromLTRB(14, 8, 14, bottom > 0 ? bottom : 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 26,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: SizedBox(
+          height: 68,
+          child: Row(
+            children: [
+              _NavItem(
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home_rounded,
+                label: 'Home',
+                selected: currentIndex == 0,
+                onTap: () => onSelect(0),
+              ),
+              _NavItem(
+                icon: Icons.content_cut_outlined,
+                activeIcon: Icons.content_cut_rounded,
+                label: 'Salon',
+                brandColor: const Color(0xFFEC4899),
+                selected: currentIndex == 1,
+                onTap: () => onSelect(1),
+              ),
+              _NavItem(
+                icon: Icons.bolt_outlined,
+                activeIcon: Icons.bolt_rounded,
+                label: 'HelpNow',
+                brandColor: const Color(0xFF0F766E),
+                selected: currentIndex == 2,
+                onTap: () => onSelect(2),
+              ),
+              _NavItem(
+                icon: Icons.assignment_outlined,
+                activeIcon: Icons.assignment_rounded,
+                label: 'Bookings',
+                selected: currentIndex == 3,
+                onTap: () => onSelect(3),
+              ),
+              _NavItem(
+                icon: Icons.person_outline_rounded,
+                activeIcon: Icons.person_rounded,
+                label: 'Profile',
+                selected: currentIndex == 4,
+                onTap: () => onSelect(4),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 // One tab: icon + label, always visible. The selected tab gets a short
 // coloured bar along the top edge, a filled icon and a bold label. Salon and
@@ -214,45 +236,61 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeColor = brandColor ?? _kNavGreen;
-    final color = selected ? activeColor : (brandColor ?? _kNavIdle);
+    final color = selected ? activeColor : _kNavIdle;
 
     return Expanded(
       child: InkWell(
         onTap: onTap,
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
-        child: Column(
-          children: [
-            const SizedBox(height: 3),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
-              width: selected ? 32 : 30,
-              height: 27,
-              decoration: BoxDecoration(
-                color: selected
-                    ? activeColor.withValues(alpha: 0.12)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: selected
+                ? activeColor.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(17),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                width: selected ? 30 : 20,
+                height: 3,
+                decoration: BoxDecoration(
+                  color: selected ? activeColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(99),
+                ),
               ),
-              child: Icon(
-                selected ? activeIcon : icon,
-                color: color,
-                size: selected ? 21.5 : 20.5,
+              const SizedBox(height: 8),
+              AnimatedScale(
+                scale: selected ? 1.08 : 1,
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                child: Icon(
+                  selected ? activeIcon : icon,
+                  color: color,
+                  size: 21.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              maxLines: 1,
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: color,
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: selected ? 10.8 : 10.2,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  color: selected ? _kNavInk : color,
+                ),
               ),
-            ),
-            const SizedBox(height: 3),
-          ],
+            ],
+          ),
         ),
       ),
     );

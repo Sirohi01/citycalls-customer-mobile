@@ -20,9 +20,8 @@ import 'edit_profile_screen.dart';
 
 // Brand palette, matching the home header and the side drawer.
 const _kDark = Color(0xFF0B0B0B);
-const _kDark2 = Color(0xFF1C2A14);
-const _kLime = Color(0xFF8BD450);
-const _kGreen = Color(0xFF16A34A);
+const _kLime = Color(0xFF93C5FD);
+const _kGreen = Color(0xFF2563EB);
 const _kInk = Color(0xFF0F172A);
 const _kMuted = Color(0xFF64748B);
 
@@ -40,7 +39,7 @@ class ProfileScreen extends ConsumerWidget {
     final canGoBack = Navigator.of(context).canPop();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F8),
+      backgroundColor: const Color(0xFFF7F8FA),
       // Light status-bar icons over the dark header.
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle.light,
@@ -67,7 +66,7 @@ class ProfileScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _ProfileSummaryCard(
+                      _ProfileQuickActions(
                         customer: customer,
                         onEdit: () => _open(context, const EditProfileScreen()),
                         onAddresses: () =>
@@ -671,7 +670,7 @@ class _ProfileHeader extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16, top + 8, 16, 26),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [_kDark, Color(0xFF102315), _kDark2],
+          colors: [_kDark, Color(0xFF162033), Color(0xFF101828)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -712,12 +711,12 @@ class _ProfileHeader extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(22),
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(20),
               border:
                   Border.all(color: Colors.white.withValues(alpha: 0.12)),
             ),
@@ -733,9 +732,10 @@ class _ProfileHeader extends StatelessWidget {
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
-                              colors: [_kLime, _kGreen],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight),
+                            colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                         ),
                         child: const ProfileAvatar(
                             size: 78, borderWidth: 3, borderColor: _kDark),
@@ -751,7 +751,7 @@ class _ProfileHeader extends StatelessWidget {
                             border: Border.all(color: _kDark, width: 2),
                           ),
                           child: const Icon(Icons.camera_alt_rounded,
-                              size: 14, color: _kDark),
+                              size: 14, color: Colors.white),
                         ),
                       ),
                     ],
@@ -794,9 +794,9 @@ class _ProfileHeader extends StatelessWidget {
                             _InfoChip(
                                 icon: Icons.phone_rounded,
                                 text: '+91 ${customer.mobile}'),
-                          _InfoChip(
-                              icon: Icons.verified_user_rounded,
-                              text: 'Verified'),
+                          const _InfoChip(
+                            icon: Icons.verified_user_rounded,
+                            text: 'Verified'),
                         ],
                       ),
                     ],
@@ -877,12 +877,14 @@ class _HeaderMetric extends StatelessWidget {
           ],
         ),
       );
-}class _ProfileSummaryCard extends StatelessWidget {
+}
+
+class _ProfileQuickActions extends StatelessWidget {
   final Customer customer;
   final VoidCallback onEdit;
   final VoidCallback onAddresses;
   final VoidCallback onSupport;
-  const _ProfileSummaryCard({
+  const _ProfileQuickActions({
     required this.customer,
     required this.onEdit,
     required this.onAddresses,
@@ -892,76 +894,61 @@ class _HeaderMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final email = customer.email?.trim();
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              _MiniStat(
-                value: '${customer.addresses.length}',
-                label: 'Addresses',
-                icon: Icons.location_on_rounded,
-                color: _kGreen,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _MiniStat(
+              value: '${customer.addresses.length}',
+              label: 'Addresses',
+              icon: Icons.location_on_rounded,
+              color: const Color(0xFF2563EB),
+            ),
+            const SizedBox(width: 10),
+            _MiniStat(
+              value: email == null || email.isEmpty ? 'Add' : 'Saved',
+              label: 'Email',
+              icon: Icons.alternate_email_rounded,
+              color: const Color(0xFF7C3AED),
+            ),
+            const SizedBox(width: 10),
+            const _MiniStat(
+              value: '24/7',
+              label: 'Support',
+              icon: Icons.support_agent_rounded,
+              color: Color(0xFF0F766E),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              child: _ActionPill(
+                icon: Icons.edit_outlined,
+                label: 'Edit profile',
+                primary: true,
+                onTap: onEdit,
               ),
-              const SizedBox(width: 10),
-              _MiniStat(
-                value: email == null || email.isEmpty ? 'Add' : 'Saved',
-                label: 'Email',
-                icon: Icons.alternate_email_rounded,
-                color: const Color(0xFF2563EB),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ActionPill(
+                icon: Icons.add_location_alt_outlined,
+                label: 'Add address',
+                onTap: onAddresses,
               ),
-              const SizedBox(width: 10),
-              const _MiniStat(
-                value: '24/7',
-                label: 'Support',
-                icon: Icons.headset_mic_rounded,
-                color: Color(0xFFD97706),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _ActionPill(
-                  icon: Icons.edit_outlined,
-                  label: 'Edit',
-                  onTap: onEdit,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ActionPill(
-                  icon: Icons.add_location_alt_outlined,
-                  label: 'Address',
-                  onTap: onAddresses,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ActionPill(
-                  icon: Icons.support_agent_rounded,
-                  label: 'Support',
-                  onTap: onSupport,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _ActionPill(
+          icon: Icons.support_agent_rounded,
+          label: 'Contact support',
+          onTap: onSupport,
+        ),
+      ],
     );
   }
 }
@@ -981,16 +968,16 @@ class _MiniStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Expanded(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: color.withValues(alpha: 0.12)),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: Column(
             children: [
-              Icon(icon, color: color, size: 19),
-              const SizedBox(height: 6),
+              Icon(icon, color: color, size: 20),
+              const SizedBox(height: 7),
               Text(value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1013,31 +1000,40 @@ class _ActionPill extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool primary;
   const _ActionPill({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.primary = false,
   });
 
   @override
   Widget build(BuildContext context) => Material(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
+        color: primary ? _kInk : Colors.white,
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            height: 46,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: primary ? _kInk : const Color(0xFFE2E8F0),
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 17, color: _kInk),
-                const SizedBox(width: 6),
+                Icon(icon,
+                    size: 18, color: primary ? Colors.white : _kInk),
+                const SizedBox(width: 7),
                 Text(label,
-                    style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: _kInk)),
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: primary ? Colors.white : _kInk)),
               ],
             ),
           ),

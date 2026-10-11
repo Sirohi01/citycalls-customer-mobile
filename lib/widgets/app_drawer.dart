@@ -103,10 +103,10 @@ class AppDrawer extends ConsumerWidget {
                     onTap: () => _goToTab(context, ShellTab.salon),
                   ),
                   _MenuListItem(
-                    icon: Icons.cleaning_services_rounded,
+                    icon: Icons.bolt_rounded,
                     title: 'HelpNow',
                     subtitle: 'Quick help for everyday chores',
-                    iconColor: const Color(0xFFF5A623),
+                    iconColor: const Color(0xFF0F766E),
                     onTap: () => _goToTab(context, ShellTab.helpNow),
                   ),
                 ]),
