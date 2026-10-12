@@ -146,7 +146,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                         child: RichText(
                           text: const TextSpan(children: [
                             TextSpan(
-                                text: 'Built for brand services. ',
+                                text: 'Built for brand services ',
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,

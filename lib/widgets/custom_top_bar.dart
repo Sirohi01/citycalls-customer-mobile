@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../providers/customer_providers.dart';
 import '../providers/location_providers.dart';
+import '../providers/notification_providers.dart';
 import '../models/customer_models.dart';
 import '../screens/profile_screen.dart';
 import '../screens/service_browse_screen.dart';
@@ -47,16 +48,21 @@ class TopBarLocationSearch extends ConsumerWidget {
   }
 }
 
-class _HeaderRow extends StatelessWidget {
+class _HeaderRow extends ConsumerWidget {
   final Color foreground;
   const _HeaderRow({required this.foreground});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // The lime "City" washes out on a light header; use the brand green there.
     final cityColor = foreground == Colors.white
         ? const Color(0xFF8BD450)
         : const Color(0xFF16A34A);
+    final hasUnreadNotification = ref
+            .watch(myNotificationsProvider)
+            .valueOrNull
+            ?.any((notification) => !notification.isRead) ??
+        false;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -103,20 +109,21 @@ class _HeaderRow extends StatelessWidget {
                 children: [
                   Icon(Icons.notifications_none_rounded,
                       size: 26, color: foreground),
-                  Positioned(
-                    top: 2,
-                    right: 2,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: const Color(0xFF0B0B0B), width: 1.5),
+                  if (hasUnreadNotification)
+                    Positioned(
+                      top: 2,
+                      right: 2,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              color: const Color(0xFF0B0B0B), width: 1.5),
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

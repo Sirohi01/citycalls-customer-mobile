@@ -285,7 +285,7 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       const Center(
-                        child: Text('CityCalls · Built for brand services',
+                        child: Text('CityCalls Built for brand services',
                             style: TextStyle(
                                 fontSize: 11, color: Color(0xFF94A3B8))),
                       ),

@@ -124,7 +124,6 @@ class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
                       ),
                       _IconButtonShell(
                         icon: Icons.notifications_none_rounded,
-                        showDot: true,
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) => const NotificationsScreen()),
@@ -286,10 +285,8 @@ class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
 class _IconButtonShell extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  final bool showDot;
 
-  const _IconButtonShell(
-      {required this.icon, required this.onTap, this.showDot = false});
+  const _IconButtonShell({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -317,17 +314,6 @@ class _IconButtonShell extends StatelessWidget {
               ),
               child: Icon(icon, color: const Color(0xFF0F172A), size: 21),
             ),
-            if (showDot)
-              Positioned(
-                right: 12,
-                top: 11,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                      color: Color(0xFFEF4444), shape: BoxShape.circle),
-                ),
-              ),
           ],
         ),
       ),

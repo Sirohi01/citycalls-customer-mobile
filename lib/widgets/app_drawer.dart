@@ -173,7 +173,7 @@ class AppDrawer extends ConsumerWidget {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'CityCalls · Built for brand services',
+                    'CityCalls Built for brand services',
                     style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                   ),
                 ],
