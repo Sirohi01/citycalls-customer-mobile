@@ -712,8 +712,8 @@ class _ServiceCard extends ConsumerWidget {
           child: Row(
             children: [
               Container(
-                width: 74,
-                height: 74,
+                width: 96,
+                height: 72,
                 decoration: BoxDecoration(
                     color: themeColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(15)),

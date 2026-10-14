@@ -659,48 +659,50 @@ class _HeroGalleryState extends State<_HeroGallery> {
 
     return Column(
       children: [
-        Container(
-          height: 240,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                urls.isEmpty
-                    ? (widget.loading
-                        ? const Center(
-                            child: SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: _kGreen),
-                            ),
-                          )
-                        : fallback)
-                    : PageView.builder(
-                        controller: _controller,
-                        itemCount: urls.length,
-                        onPageChanged: (i) => setState(() => _index = i),
-                        // Listener (not a GestureDetector) so it doesn't fight the
-                        // PageView for the swipe; a touch resets the countdown.
-                        itemBuilder: (_, i) => Listener(
-                          onPointerDown: (_) => _restartTimer(),
-                          child: _FullPhoto(url: urls[i], fallback: fallback),
-                        ),
-                      ),
+        AspectRatio(
+          aspectRatio: 4 / 3,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
               ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  urls.isEmpty
+                      ? (widget.loading
+                          ? const Center(
+                              child: SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: _kGreen),
+                              ),
+                            )
+                          : fallback)
+                      : PageView.builder(
+                          controller: _controller,
+                          itemCount: urls.length,
+                          onPageChanged: (i) => setState(() => _index = i),
+                          // Listener (not a GestureDetector) so it doesn't fight the
+                          // PageView for the swipe; a touch resets the countdown.
+                          itemBuilder: (_, i) => Listener(
+                            onPointerDown: (_) => _restartTimer(),
+                            child: _FullPhoto(url: urls[i], fallback: fallback),
+                          ),
+                        ),
+                ],
+              ),
             ),
           ),
         ),

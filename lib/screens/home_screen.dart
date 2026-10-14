@@ -528,9 +528,8 @@ class _HeroBannerState extends State<_HeroBanner> {
                         Text(
                           slide.button,
                           style: TextStyle(
-                            color: light
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
+                            color:
+                                light ? Colors.white : const Color(0xFF0F172A),
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                           ),
@@ -538,9 +537,8 @@ class _HeroBannerState extends State<_HeroBanner> {
                         const SizedBox(width: 6),
                         Icon(Icons.chevron_right_rounded,
                             size: 18,
-                            color: light
-                                ? Colors.white
-                                : const Color(0xFF0F172A)),
+                            color:
+                                light ? Colors.white : const Color(0xFF0F172A)),
                       ],
                     ),
                   ),
@@ -910,9 +908,10 @@ class _TopCategoriesSection extends ConsumerWidget {
                             width: width,
                             height: 66,
                             fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Icon(_iconForCategory(category.label),
-                                    color: iconColor, size: 32),
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                                _iconForCategory(category.label),
+                                color: iconColor,
+                                size: 32),
                           );
                         }
                         return Icon(_iconForCategory(category.label),
@@ -1114,7 +1113,9 @@ class _ServiceGridCard extends ConsumerWidget {
     );
 
     return AspectRatio(
-      aspectRatio: 1.15,
+      // 4:3 to match the recommended service-photo shape, so a 4:3 upload
+      // fills the card without being cropped.
+      aspectRatio: 4 / 3,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -1568,4 +1569,3 @@ Widget _landingEmpty(Color accent, String text) => Padding(
         ],
       ),
     );
-
