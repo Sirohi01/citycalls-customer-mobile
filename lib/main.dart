@@ -31,18 +31,11 @@ class CityCallsCustomerApp extends ConsumerStatefulWidget {
 }
 
 class _CityCallsCustomerAppState extends ConsumerState<CityCallsCustomerApp> {
-  // Held directly rather than re-read in dispose(): this is the root widget,
-  // so its dispose runs while the ProviderScope is itself being torn down and
-  // reading a provider there can throw.
   late final ApiClient _apiClient;
 
   @override
   void initState() {
     super.initState();
-    // Refresh-token rotation failing (api_client.dart) means the session is
-    // genuinely over. Before this existed, every screen simply kept showing
-    // its error state and the user had no way to discover they needed to log
-    // in again.
     _apiClient = ref.read(apiClientProvider);
     _apiClient.sessionExpired.addListener(_onSessionExpired);
   }
@@ -56,10 +49,6 @@ class _CityCallsCustomerAppState extends ConsumerState<CityCallsCustomerApp> {
   void _onSessionExpired() {
     if (!_apiClient.sessionExpired.value) return;
     _apiClient.sessionExpired.value = false;
-    // SplashScreen's own _resolveDestination() already handles a missing/
-    // expired session on first load (and honors its minDisplay timing) —
-    // redirecting here too would yank the splash off screen before it's had
-    // time to show.
     if (SplashScreen.bootstrapping) return;
     final navigator = appNavigator;
     if (navigator == null) return;

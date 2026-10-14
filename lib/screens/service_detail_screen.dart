@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,11 +15,6 @@ import '../models/booking_models.dart';
 import 'booking/product_select_screen.dart';
 import '../widgets/state_views.dart';
 
-// Per docs/rohit/05-customer-app-screen-list.md "Home" — Service Detail.
-// The pin-code coverage check here is the same gate the Booking flow itself
-// enforces server-side (docs/manish/08-customer-app-functional-plan.md §2) —
-// showing it up front avoids a customer getting through several booking
-// steps before finding out their area isn't covered.
 class ServiceDetailScreen extends ConsumerStatefulWidget {
   final String serviceId;
   const ServiceDetailScreen({super.key, required this.serviceId});
@@ -263,34 +259,34 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
   }
 
   Widget _buildStats(Service s) {
+    final tiles = <Widget>[
+      _StatTile(
+        icon: Icons.schedule_rounded,
+        color: const Color(0xFF2563EB),
+        value: formatServiceDuration(s.expectedDurationMinutes),
+        label: 'Duration',
+      ),
+      if (s.pricing.visitingCharge > 0)
+        _StatTile(
+          icon: Icons.directions_car_rounded,
+          color: const Color(0xFFF97316),
+          value: '₹${s.pricing.visitingCharge.toStringAsFixed(0)}',
+          label: 'Visiting charge',
+        ),
+      if (s.pricing.inspectionCharge > 0)
+        _StatTile(
+          icon: Icons.search_rounded,
+          color: const Color(0xFF9333EA),
+          value: '₹${s.pricing.inspectionCharge.toStringAsFixed(0)}',
+          label: 'Inspection',
+        ),
+    ];
     return Row(
       children: [
-        Expanded(
-          child: _StatTile(
-            icon: Icons.schedule_rounded,
-            color: const Color(0xFF2563EB),
-            value: formatServiceDuration(s.expectedDurationMinutes),
-            label: 'Duration',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            icon: Icons.directions_car_rounded,
-            color: const Color(0xFFF97316),
-            value: '₹${s.pricing.visitingCharge.toStringAsFixed(0)}',
-            label: 'Visiting charge',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            icon: Icons.search_rounded,
-            color: const Color(0xFF9333EA),
-            value: '₹${s.pricing.inspectionCharge.toStringAsFixed(0)}',
-            label: 'Inspection',
-          ),
-        ),
+        for (int i = 0; i < tiles.length; i++) ...[
+          if (i > 0) const SizedBox(width: 10),
+          Expanded(child: tiles[i]),
+        ],
       ],
     );
   }
@@ -664,13 +660,9 @@ class _HeroGalleryState extends State<_HeroGallery> {
     return Column(
       children: [
         Container(
-          height: 246,
+          height: 240,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFEFF6FF), Color(0xFFF0FDF4)],
-            ),
+            color: const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: [
@@ -705,88 +697,9 @@ class _HeroGalleryState extends State<_HeroGallery> {
                         // PageView for the swipe; a touch resets the countdown.
                         itemBuilder: (_, i) => Listener(
                           onPointerDown: (_) => _restartTimer(),
-                          child: Image.network(
-                            urls[i],
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                            errorBuilder: (_, __, ___) => fallback,
-                          ),
+                          child: _FullPhoto(url: urls[i], fallback: fallback),
                         ),
                       ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.08),
-                        Colors.black.withValues(alpha: 0.08),
-                        Colors.black.withValues(alpha: 0.72),
-                      ],
-                      stops: const [0, 0.48, 1],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          _HeroChip(
-                            icon: Icons.verified_rounded,
-                            label: 'Verified expert',
-                            color: _kGreen,
-                          ),
-                          const SizedBox(width: 8),
-                          if (widget.service.warrantyPeriodDays > 0)
-                            _HeroChip(
-                              icon: Icons.shield_outlined,
-                              label: '${widget.service.warrantyPeriodDays} day warranty',
-                              color: const Color(0xFF2563EB),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        widget.service.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          height: 1.05,
-                          letterSpacing: -0.4,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Text(
-                            'Starts at ₹${widget.service.pricing.basePrice.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          const Icon(Icons.schedule_rounded, size: 15, color: Colors.white70),
-                          const SizedBox(width: 4),
-                          Text(
-                            formatServiceDuration(widget.service.expectedDurationMinutes),
-                            style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
@@ -815,29 +728,44 @@ class _HeroGalleryState extends State<_HeroGallery> {
   }
 }
 
-class _HeroChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _HeroChip({required this.icon, required this.label, required this.color});
+// Shows the entire photo (BoxFit.contain) so nothing is cropped, over a
+// blurred, enlarged copy of itself so non-matching aspect ratios don't leave
+// empty bars.
+class _FullPhoto extends StatelessWidget {
+  final String url;
+  final Widget fallback;
+  const _FullPhoto({required this.url, required this.fallback});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color)),
-        ],
-      ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ImageFiltered(
+          imageFilter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+          child: Image.network(
+            url,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        ),
+        Container(color: Colors.white.withValues(alpha: 0.25)),
+        Image.network(
+          url,
+          fit: BoxFit.contain,
+          loadingBuilder: (_, child, progress) => progress == null
+              ? child
+              : const Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: _kGreen),
+                  ),
+                ),
+          errorBuilder: (_, __, ___) => fallback,
+        ),
+      ],
     );
   }
 }
