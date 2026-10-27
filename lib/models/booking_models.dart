@@ -74,11 +74,22 @@ class BookingDraft {
   final List<String> imageUrls;
   final DateTime? scheduledDate;
   final String? scheduledSlot;
+  // The "which appliance" step only exists for Home Appliances services; every
+  // other category goes straight to the address step, so the wizard is one
+  // step shorter and the step labels have to follow.
+  final bool hasProductStep;
+  // What the customer chose as "where" on the service page, so the address
+  // step opens with the same place selected instead of asking again.
+  final String? preferredAddressId;
+  final bool preferCurrentLocation;
 
   BookingDraft({
     required this.serviceId,
     required this.serviceName,
     required this.pinCode,
+    this.hasProductStep = true,
+    this.preferredAddressId,
+    this.preferCurrentLocation = false,
     this.customerProductId,
     this.address,
     this.symptoms = const [],
@@ -108,8 +119,17 @@ class BookingDraft {
       imageUrls: imageUrls ?? this.imageUrls,
       scheduledDate: scheduledDate ?? this.scheduledDate,
       scheduledSlot: scheduledSlot ?? this.scheduledSlot,
+      hasProductStep: hasProductStep,
+      preferredAddressId: preferredAddressId,
+      preferCurrentLocation: preferCurrentLocation,
     );
   }
+
+  int get totalSteps => hasProductStep ? 5 : 4;
+
+  /// Position of a screen in the wizard, given its place in the full
+  /// 5-step order (product 1, address 2, issue 3, slot 4, review 5).
+  int stepNumber(int fullStep) => hasProductStep ? fullStep : fullStep - 1;
 }
 
 // Real per-branch capacity-checked slots — GET /appointment-slots, per

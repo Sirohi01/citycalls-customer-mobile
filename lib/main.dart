@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_navigator.dart';
 import 'data/api_client.dart';
+import 'data/session_actions.dart';
 import 'providers/auth_providers.dart';
+import 'providers/realtime_providers.dart';
 import 'providers/theme_providers.dart';
 import 'screens/otp_request_screen.dart';
 import 'screens/splash_screen.dart';
@@ -52,6 +54,11 @@ class _CityCallsCustomerAppState extends ConsumerState<CityCallsCustomerApp> {
     if (SplashScreen.bootstrapping) return;
     final navigator = appNavigator;
     if (navigator == null) return;
+    // The tokens are already gone, so only the local side needs tearing down:
+    // the next login must not see the expired account's cached data, and a
+    // socket still holding its JWT would keep running.
+    ref.read(socketServiceProvider).disconnect();
+    resetSessionState(ProviderScope.containerOf(context));
     navigator.pushAndRemoveUntil(
       MaterialPageRoute(
           builder: (_) => const OtpRequestScreen(sessionExpired: true)),

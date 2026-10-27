@@ -23,12 +23,15 @@ class SocketService {
     final existing = _socket;
     if (existing != null) return existing;
 
-    final token = await _client.readAccessToken();
     final socket = io.io(
       _client.apiOrigin,
       io.OptionBuilder()
           .setTransports(['websocket'])
-          .setAuth({'token': token})
+          // Read per handshake rather than once at creation: the access token
+          // is short-lived, and an automatic reconnect hours later would
+          // otherwise present the stale one the first connect used.
+          .setAuthFn((callback) async =>
+              callback({'token': await _client.readAccessToken()}))
           .disableAutoConnect()
           .build(),
     );

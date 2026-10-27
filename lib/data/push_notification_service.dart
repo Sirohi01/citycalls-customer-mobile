@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../app_navigator.dart';
 import '../screens/my_complaints_screen.dart';
 import '../screens/notifications_screen.dart';
 import 'customer_repository.dart';
+import 'permission_queue.dart';
 
 // Registers this device's FCM token with the backend so
 // PUSH-channel notifications (citycalls-api's src/lib/pushAdapter.ts) can
@@ -16,18 +18,24 @@ class PushNotificationService {
   PushNotificationService(this._customerRepo);
 
   bool _tapHandlersAttached = false;
+  StreamSubscription<String>? _tokenRefreshSub;
 
   Future<void> initialize() async {
     final messaging = FirebaseMessaging.instance;
-    await messaging.requestPermission(alert: true, badge: true, sound: true);
+    // Queued behind the location prompt — see PermissionQueue.
+    await PermissionQueue.run(() =>
+        messaging.requestPermission(alert: true, badge: true, sound: true));
 
     final token = await messaging.getToken();
     if (token != null) await _registerSafely(token);
 
     // Tokens rotate (app reinstall, data clear, FCM-side refresh) — without
     // this, a device would silently stop receiving pushes after a rotation
-    // until the next full app restart happened to re-register.
-    messaging.onTokenRefresh.listen(_registerSafely);
+    // until the next full app restart happened to re-register. initialize()
+    // runs on every MainShell mount (each login), so the previous listener is
+    // replaced rather than stacked.
+    await _tokenRefreshSub?.cancel();
+    _tokenRefreshSub = messaging.onTokenRefresh.listen(_registerSafely);
 
     _attachTapHandlers(messaging);
   }

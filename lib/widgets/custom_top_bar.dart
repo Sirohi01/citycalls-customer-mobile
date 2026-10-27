@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import '../providers/auth_providers.dart';
 import '../providers/customer_providers.dart';
 import '../providers/location_providers.dart';
@@ -222,6 +223,34 @@ class _LocationPickerSheet extends ConsumerStatefulWidget {
 class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
   String? _saving;
 
+  // Permission is normally asked at app start; this is the retry path for a
+  // customer who said no, or has GPS switched off. When the OS won't prompt
+  // again it takes them to the settings page that can fix it — MainShell
+  // re-checks when they come back.
+  Future<void> _useCurrentLocation() async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final access = await ensureLocationAccess();
+    switch (access) {
+      case LocationAccess.granted:
+        ref.invalidate(currentPlaceProvider);
+        navigator.pop();
+      case LocationAccess.serviceOff:
+        navigator.pop();
+        messenger.showSnackBar(const SnackBar(
+            content: Text('Turn on location (GPS), then come back.')));
+        await Geolocator.openLocationSettings();
+      case LocationAccess.deniedForever:
+        navigator.pop();
+        messenger.showSnackBar(const SnackBar(
+            content: Text('Allow location for CityCalls in Settings.')));
+        await Geolocator.openAppSettings();
+      case LocationAccess.denied:
+        messenger.showSnackBar(const SnackBar(
+            content: Text('Location permission is needed to use your current location.')));
+    }
+  }
+
   Future<void> _select(CustomerAddress address) async {
     if (address.isDefault) {
       Navigator.pop(context);
@@ -271,10 +300,7 @@ class _LocationPickerSheetState extends ConsumerState<_LocationPickerSheet> {
             const SizedBox(height: 14),
             InkWell(
               borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                ref.invalidate(currentLocationProvider);
-                Navigator.pop(context);
-              },
+              onTap: _useCurrentLocation,
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(

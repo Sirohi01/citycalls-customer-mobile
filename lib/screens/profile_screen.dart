@@ -6,13 +6,11 @@ import '../models/customer_models.dart';
 import '../providers/auth_providers.dart';
 import '../providers/customer_providers.dart';
 import '../providers/geo_providers.dart';
-import '../providers/realtime_providers.dart';
-import '../providers/push_providers.dart';
+import '../data/session_actions.dart';
 // import '../providers/theme_providers.dart'; // used by the hidden Preferences section
 import '../widgets/state_views.dart';
 import 'active_sessions_screen.dart';
 import 'my_complaints_screen.dart';
-import 'otp_request_screen.dart';
 import 'saved_products_screen.dart';
 import 'notification_preferences_screen.dart';
 import 'support_screen.dart';
@@ -339,7 +337,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    await _logout(context, ref);
+    await signOut(context);
   }
 
   void _showAddressSheet(BuildContext context, WidgetRef ref, String customerId,
@@ -385,16 +383,6 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _logout(BuildContext context, WidgetRef ref) async {
-    await ref.read(pushNotificationServiceProvider).unregisterCurrentToken();
-    await ref.read(authRepositoryProvider).logout();
-    ref.read(socketServiceProvider).disconnect();
-    if (!context.mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const OtpRequestScreen()),
-      (route) => false,
-    );
-  }
 }
 
 class _AddressFormSheet extends ConsumerStatefulWidget {

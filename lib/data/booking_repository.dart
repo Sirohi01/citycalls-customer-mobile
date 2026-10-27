@@ -21,12 +21,16 @@ class BookingRepository {
     return (res.data['data'] as List).map((p) => CustomerProductSummary.fromJson(p as Map<String, dynamic>)).toList();
   }
 
-  Future<void> addProduct(String customerId, {required String brandId, required String productTypeId, String? modelNumber}) async {
-    await _client.dio.post('/customers/me/products', data: {
+  // Returns the new appliance's id so the booking flow can select it straight
+  // away; null if the response doesn't carry one.
+  Future<String?> addProduct(String customerId, {required String brandId, required String productTypeId, String? modelNumber}) async {
+    final res = await _client.dio.post('/customers/me/products', data: {
       'brandId': brandId,
       'productTypeId': productTypeId,
       if (modelNumber != null && modelNumber.isNotEmpty) 'modelNumber': modelNumber,
     });
+    final data = res.data is Map ? (res.data as Map)['data'] : null;
+    return data is Map ? data['_id'] as String? : null;
   }
 
   Future<List<ServiceCategory>> listMasters(String masterType) async {

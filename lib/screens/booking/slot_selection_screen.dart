@@ -85,10 +85,10 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                         ],
                       ),
                       RichText(
-                        text: const TextSpan(
+                        text: TextSpan(
                           children: [
-                            TextSpan(text: 'Step 4 ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
-                            TextSpan(text: 'of 5', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
+                            TextSpan(text: 'Step ${widget.draft.stepNumber(4)} ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
+                            TextSpan(text: 'of ${widget.draft.totalSteps}', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
                           ]
                         )
                       ),
@@ -107,7 +107,7 @@ class _SlotSelectionScreenState extends ConsumerState<SlotSelectionScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: 4 / 5,
+                          value: widget.draft.stepNumber(4) / widget.draft.totalSteps,
                           minHeight: 5,
                           backgroundColor: Colors.grey.shade200,
                           valueColor: const AlwaysStoppedAnimation(Color(0xFF16A34A)),

@@ -164,12 +164,14 @@ class _ProductSelectScreenState extends ConsumerState<ProductSelectScreen> {
                         ...items.map((p) => _ProductTile(
                               title: '${p.brandLabel} ${p.productTypeLabel}',
                               subtitle: p.modelNumber,
+                              icon: _applianceIcon(p.productTypeLabel),
                               selected: _selectedProductId == p.id,
                               onTap: () => setState(() => _selectedProductId = p.id),
                             )),
                         _ProductTile(
                           title: 'Add a new appliance',
                           icon: Icons.add,
+                          isAction: true,
                           selected: false,
                           onTap: () => _showAddProductSheet(context),
                         ),
@@ -256,47 +258,93 @@ class _ProductSelectScreenState extends ConsumerState<ProductSelectScreen> {
   }
 
   void _showAddProductSheet(BuildContext context) {
+    // No backgroundColor override: the sheet's white rounded surface comes from
+    // the theme, and a transparent one left the form floating on the dimmed
+    // screen behind it.
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (sheetContext) => AddProductSheet(
-        onAdded: () {
+        onAdded: (newId) {
           Navigator.of(sheetContext).pop();
           ref.invalidate(customerProductsProvider);
+          // The appliance they just added is the one they want to book for.
+          if (newId != null) setState(() => _selectedProductId = newId);
         },
       ),
     );
   }
 }
 
+// Picks a glyph from the appliance type's name so a washing machine doesn't
+// show up with an AC icon. Unknown types get a generic appliance icon.
+IconData _applianceIcon(String productType) {
+  final t = productType.toLowerCase();
+  if (RegExp(r'\bac\b').hasMatch(t) || t.contains('air cond')) {
+    return Icons.ac_unit;
+  }
+  if (t.contains('wash') || t.contains('laundry')) {
+    return Icons.local_laundry_service_outlined;
+  }
+  if (t.contains('fridge') || t.contains('refrigerator')) {
+    return Icons.kitchen_outlined;
+  }
+  if (RegExp(r'\btv\b').hasMatch(t) || t.contains('television')) return Icons.tv_outlined;
+  if (t.contains('microwave') || t.contains('oven')) {
+    return Icons.microwave_outlined;
+  }
+  if (t.contains('water') || t.contains('purif') || RegExp(r'\bro\b').hasMatch(t)) {
+    return Icons.water_drop_outlined;
+  }
+  if (t.contains('geyser') || t.contains('heater')) {
+    return Icons.thermostat_outlined;
+  }
+  if (t.contains('fan') || t.contains('cooler')) return Icons.air_rounded;
+  return Icons.devices_other_outlined;
+}
+
 class _ProductTile extends StatelessWidget {
+  static const _green = Color(0xFF16A34A);
+
   final String title;
   final String? subtitle;
-  final IconData? icon;
+  final IconData icon;
   final bool selected;
+  // "Add a new appliance" - styled as an action, never shown as selected.
+  final bool isAction;
   final VoidCallback onTap;
-  const _ProductTile({required this.title, this.subtitle, this.icon, required this.selected, required this.onTap});
+  const _ProductTile({
+    required this.title,
+    this.subtitle,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    this.isAction = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isAddNew = icon == Icons.add;
+    final highlight = isAction || selected;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isAction ? const Color(0xFFF7FDF9) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: selected ? const Color(0xFF16A34A) : Colors.grey.shade200, 
-          width: selected ? 1.5 : 1
+          color: selected
+              ? _green
+              : isAction
+                  ? _green.withValues(alpha: 0.4)
+                  : Colors.grey.shade200,
+          width: selected ? 1.5 : 1,
         ),
         boxShadow: [
-          if (!selected)
+          if (!selected && !isAction)
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03), 
-              blurRadius: 10, 
-              offset: const Offset(0, 4)
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
         ],
       ),
@@ -307,7 +355,6 @@ class _ProductTile extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Image / Icon Box
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -315,16 +362,13 @@ class _ProductTile extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: isAddNew ? const Color(0xFFFAFAFA) : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
+                      color: highlight ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(12),
-                      border: isAddNew ? Border.all(color: Colors.grey.shade300, style: BorderStyle.none) : null,
                     ),
                     alignment: Alignment.center,
-                    // Note: Dashed border for Add New would require a custom painter or package.
-                    // Using a light container instead for simplicity.
-                    child: isAddNew
-                        ? const Icon(Icons.add, color: Color(0xFF16A34A), size: 24)
-                        : const Icon(Icons.ac_unit, color: Colors.black38, size: 28),
+                    child: Icon(icon,
+                        color: highlight ? _green : Colors.black38,
+                        size: isAction ? 24 : 28),
                   ),
                   if (selected)
                     Positioned(
@@ -333,7 +377,7 @@ class _ProductTile extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Color(0xFF16A34A),
+                          color: _green,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.check, color: Colors.white, size: 14),
@@ -342,35 +386,50 @@ class _ProductTile extends StatelessWidget {
                 ],
               ),
               const SizedBox(width: 16),
-              // Texts
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)),
+                    Text(title,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: isAction ? const Color(0xFF166534) : Colors.black87)),
                     const SizedBox(height: 6),
-                    if (!isAddNew) // "Saved Appliance" tag
+                    if (isAction)
+                      const Text('Brand, type and model number',
+                          style: TextStyle(color: Colors.black54, fontSize: 12))
+                    else ...[
+                      if (subtitle != null && subtitle!.trim().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text('Model: ${subtitle!.trim()}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                        ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF0FDF4),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.settings_suggest_outlined, color: Color(0xFF16A34A), size: 14),
-                            const SizedBox(width: 4),
-                            const Text('Saved Appliance', style: TextStyle(color: Color(0xFF16A34A), fontSize: 11, fontWeight: FontWeight.bold)),
+                            Icon(Icons.bookmark_outline_rounded, color: _green, size: 14),
+                            SizedBox(width: 4),
+                            Text('Saved appliance',
+                                style: TextStyle(color: _green, fontSize: 11, fontWeight: FontWeight.bold)),
                           ],
                         ),
-                      )
-                    else
-                      const Text('Enter appliance details manually', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                      ),
+                    ],
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.black38, size: 24),
+              Icon(isAction ? Icons.add_circle_outline_rounded : Icons.chevron_right,
+                  color: isAction ? _green : Colors.black38, size: 24),
             ],
           ),
         ),

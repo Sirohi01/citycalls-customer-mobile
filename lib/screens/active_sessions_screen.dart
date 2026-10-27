@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/auth_models.dart';
 import '../providers/auth_providers.dart';
-import '../providers/push_providers.dart';
-import '../providers/realtime_providers.dart';
+import '../data/session_actions.dart';
 import '../theme/app_theme.dart';
 import '../widgets/state_views.dart';
-import 'otp_request_screen.dart';
 
 // GET /auth/sessions + DELETE /auth/sessions/:id — self-scoped, so a customer
 // can see and end their own logins. Worth surfacing now that refresh tokens
@@ -61,22 +59,13 @@ class _ActiveSessionsScreenState extends ConsumerState<ActiveSessionsScreen> {
         ],
       ),
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
 
     setState(() => _revokingAll = true);
     try {
-      await ref.read(authRepositoryProvider).revokeAllSessions();
-      // This device's session is gone too, so tear down the same things a
-      // normal logout does rather than leaving a live socket and a
-      // registered FCM token behind.
-      await ref.read(pushNotificationServiceProvider).unregisterCurrentToken();
-      await ref.read(apiClientProvider).clearTokens();
-      ref.read(socketServiceProvider).disconnect();
-      if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const OtpRequestScreen()),
-        (route) => false,
-      );
+      // This device's session is gone too, so it goes through the same
+      // teardown as a normal logout.
+      await signOut(context, everywhere: true);
     } catch (_) {
       if (!mounted) return;
       setState(() => _revokingAll = false);

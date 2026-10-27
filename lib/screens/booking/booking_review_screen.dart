@@ -117,10 +117,10 @@ class _BookingReviewScreenState extends ConsumerState<BookingReviewScreen> {
                         children: [
                           const Text('Review your booking', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                           RichText(
-                            text: const TextSpan(
+                            text: TextSpan(
                               children: [
-                                TextSpan(text: 'Step 5 ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
-                                TextSpan(text: 'of 5', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
+                                TextSpan(text: 'Step ${widget.draft.stepNumber(5)} ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
+                                TextSpan(text: 'of ${widget.draft.totalSteps}', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
                               ]
                             )
                           )

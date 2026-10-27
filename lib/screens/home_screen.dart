@@ -656,6 +656,9 @@ class _PromoBannerState extends State<_PromoBanner> {
                             : AssetImage(slide['imageUrl'] as String)
                                 as ImageProvider,
                         fit: BoxFit.cover,
+                        // A banner whose URL 404s used to throw and leave a
+                        // blank slide; the dark card behind it reads fine.
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                       ),
                     ),
                     // Content

@@ -6,12 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/catalog_providers.dart';
 import '../providers/customer_providers.dart';
 import '../providers/favourites_providers.dart';
+import '../providers/location_providers.dart';
 import 'favourites_screen.dart';
 import '../models/catalog_models.dart';
+import '../models/customer_models.dart';
 import '../widgets/media_gallery.dart';
 import '../models/media_models.dart';
 import 'home_screen.dart' show formatServiceDuration;
 import '../models/booking_models.dart';
+import 'booking/address_select_screen.dart';
 import 'booking/product_select_screen.dart';
 import '../widgets/state_views.dart';
 
@@ -24,39 +27,71 @@ class ServiceDetailScreen extends ConsumerStatefulWidget {
       _ServiceDetailScreenState();
 }
 
+// Where the PIN code being checked came from.
+enum _PinSource { current, saved, manual }
+
 class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
   final _pinCodeController = TextEditingController();
   CoverageResult? _coverage;
   bool _checking = false;
   String? _checkError;
-  bool _pinFromSavedAddress = false;
+  _PinSource _pinSource = _PinSource.manual;
+  String? _savedAddressId;
+  // Set once the customer picks a source or types a PIN themselves, so a
+  // slow location lookup finishing afterwards can't overwrite their choice.
+  bool _userPicked = false;
 
   @override
   void initState() {
     super.initState();
-    _prefillFromSavedAddress();
+    _applyDefaultPin();
   }
 
-  // A customer who already has a saved address shouldn't have to type its
-  // PIN code in by hand — that's also what avoids the mismatch where
-  // coverage gets checked for one PIN but the booking flow's Address Select
-  // screen (next step) ends up using a different saved address entirely.
-  // Best-effort: if this fails or there's no saved address, the field just
-  // stays empty and manual entry still works exactly as before.
-  Future<void> _prefillFromSavedAddress() async {
+  // Starts from where the customer is right now (the same current location the
+  // home screen shows), and falls back to their default saved address when
+  // location is off, denied, or has no PIN. Either way they can switch to
+  // another saved address or type any PIN - see the chips in the card.
+  // Best-effort: if both fail the field stays empty and manual entry works.
+  Future<void> _applyDefaultPin() async {
+    CurrentPlace? place;
+    try {
+      place = await ref
+          .read(currentPlaceProvider.future)
+          .timeout(const Duration(seconds: 4));
+    } catch (_) {
+      // Slow or failed lookup - fall through to the saved address.
+    }
+    if (!mounted || _userPicked) return;
+    if (place != null && place.hasPin) {
+      _useCurrent(place);
+      return;
+    }
     try {
       final customer = await ref.read(myProfileProvider.future);
-      if (customer.addresses.isEmpty || !mounted) return;
-      final primary = customer.addresses.firstWhere((a) => a.isDefault,
-          orElse: () => customer.addresses.first);
-      setState(() {
-        _pinCodeController.text = primary.pinCode;
-        _pinFromSavedAddress = true;
-      });
-      _checkCoverage();
+      if (customer.addresses.isEmpty || !mounted || _userPicked) return;
+      _useSaved(customer.addresses.firstWhere((a) => a.isDefault,
+          orElse: () => customer.addresses.first));
     } catch (_) {
-      // Best-effort — profile fetch failing here shouldn't block the page.
+      // Best-effort - profile fetch failing here shouldn't block the page.
     }
+  }
+
+  void _useCurrent(CurrentPlace place) {
+    setState(() {
+      _pinCodeController.text = place.pinCode;
+      _pinSource = _PinSource.current;
+      _savedAddressId = null;
+    });
+    _checkCoverage();
+  }
+
+  void _useSaved(CustomerAddress address) {
+    setState(() {
+      _pinCodeController.text = address.pinCode;
+      _pinSource = _PinSource.saved;
+      _savedAddressId = address.id;
+    });
+    _checkCoverage();
   }
 
   @override
@@ -362,6 +397,73 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     );
   }
 
+  // "Current location" first, then each saved address; typing a PIN is the
+  // third way and clears the selection.
+  Widget _buildPinSources() {
+    final place = ref.watch(currentPlaceProvider).valueOrNull;
+    final addresses =
+        ref.watch(myProfileProvider).valueOrNull?.addresses ?? const [];
+    final showCurrent = place != null && place.hasPin;
+    if (!showCurrent && addresses.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          if (showCurrent)
+            _SourceChip(
+              icon: Icons.my_location_rounded,
+              label: 'Current location',
+              selected: _pinSource == _PinSource.current,
+              onTap: () {
+                _userPicked = true;
+                _useCurrent(place);
+              },
+            ),
+          for (final a in addresses)
+            _SourceChip(
+              icon: Icons.home_outlined,
+              label: (a.label?.trim().isNotEmpty ?? false)
+                  ? a.label!.trim()
+                  : a.city,
+              selected:
+                  _pinSource == _PinSource.saved && _savedAddressId == a.id,
+              onTap: () {
+                _userPicked = true;
+                _useSaved(a);
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  String? _pinSourceNote() {
+    switch (_pinSource) {
+      case _PinSource.current:
+        final label = ref.read(currentPlaceProvider).valueOrNull?.label;
+        return label == null
+            ? 'Using your current location.'
+            : 'Using your current location · $label';
+      case _PinSource.saved:
+        final a = ref
+            .read(myProfileProvider)
+            .valueOrNull
+            ?.addresses
+            .where((a) => a.id == _savedAddressId)
+            .firstOrNull;
+        final name =
+            (a?.label?.trim().isNotEmpty ?? false) ? a!.label!.trim() : null;
+        return name == null
+            ? 'Using your saved address.'
+            : 'Using your saved address · $name';
+      case _PinSource.manual:
+        return null;
+    }
+  }
+
   Widget _buildCoverageCard() {
     final coverage = _coverage;
     return _Card(
@@ -369,10 +471,11 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Enter your PIN code to see if we serve your area.',
+            'Check if we serve your area - use where you are, a saved address, or another PIN code.',
             style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 12),
+          _buildPinSources(),
           Row(
             children: [
               Expanded(
@@ -409,10 +512,14 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                       contentPadding: EdgeInsets.symmetric(vertical: 10),
                       counterText: '',
                     ),
-                    onChanged: (_) {
-                      if (_pinFromSavedAddress) {
-                        setState(() => _pinFromSavedAddress = false);
-                      }
+                    onChanged: (value) {
+                      setState(() {
+                        _userPicked = true;
+                        _pinSource = _PinSource.manual;
+                        _savedAddressId = null;
+                        _coverage = null;
+                      });
+                      if (value.trim().length == 6) _checkCoverage();
                     },
                   ),
                 ),
@@ -445,11 +552,11 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               ),
             ],
           ),
-          if (_pinFromSavedAddress) ...[
+          if (_pinSourceNote() case final note?) ...[
             const SizedBox(height: 8),
-            const Text(
-              'Using your saved address — edit above to check a different area.',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+            Text(
+              note,
+              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
             ),
           ],
           if (_checkError != null) ...[
@@ -507,6 +614,39 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     );
   }
 
+  // The "which appliance" step only makes sense for Home Appliances. Home
+  // Cleaning, Pest Control, HelpNow and Salon bookings go straight to the
+  // address step.
+  Future<void> _startBooking(Service s) async {
+    var needsAppliance = true;
+    try {
+      final categories = await ref.read(serviceCategoriesProvider.future);
+      final label = categories
+          .where((c) => c.id == s.categoryId)
+          .map((c) => c.label.toLowerCase())
+          .firstOrNull;
+      // Unknown category (list failed or service points elsewhere) keeps the
+      // old behaviour of asking, rather than silently dropping the step.
+      if (label != null) needsAppliance = label.contains('appliance');
+    } catch (_) {}
+    if (!mounted) return;
+
+    final draft = BookingDraft(
+      serviceId: widget.serviceId,
+      serviceName: s.name,
+      pinCode: _pinCodeController.text.trim(),
+      hasProductStep: needsAppliance,
+      preferredAddressId:
+          _pinSource == _PinSource.saved ? _savedAddressId : null,
+      preferCurrentLocation: _pinSource == _PinSource.current,
+    );
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => needsAppliance
+          ? ProductSelectScreen(draft: draft)
+          : AddressSelectScreen(draft: draft),
+    ));
+  }
+
   Widget _buildBottomBar(Service s) {
     final canBook = _coverage?.serviceable == true;
     return Container(
@@ -549,16 +689,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                 child: SizedBox(
                   height: 42,
                   child: ElevatedButton.icon(
-                    onPressed: canBook
-                        ? () => Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => ProductSelectScreen(
-                                draft: BookingDraft(
-                                    serviceId: widget.serviceId,
-                                    serviceName: s.name,
-                                    pinCode: _pinCodeController.text.trim()),
-                              ),
-                            ))
-                        : null,
+                    onPressed: canBook ? () => _startBooking(s) : null,
                     icon: const Icon(Icons.calendar_month_rounded, size: 16),
                     label: const Text(
                       'Book Now',
@@ -579,6 +710,56 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SourceChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _SourceChip({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFF0FDF4) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? _kGreen : const Color(0xFFE2E8F0),
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon,
+                size: 15, color: selected ? _kGreen : const Color(0xFF64748B)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: selected
+                    ? const Color(0xFF166534)
+                    : const Color(0xFF334155),
+              ),
+            ),
+          ],
         ),
       ),
     );

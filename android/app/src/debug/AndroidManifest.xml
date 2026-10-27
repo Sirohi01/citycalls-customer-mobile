@@ -4,4 +4,7 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Plain http:// is only allowed in debug builds, for scripts/run-local.sh
+         against a local API. Release builds talk to https://api.citycalls.in. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>

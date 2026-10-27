@@ -9,7 +9,11 @@ flutter pub get
 flutter run
 ```
 
-The API base URL is currently hardcoded in `lib/providers/auth_providers.dart` (`apiClientProvider`) to `http://localhost:4000/api/v1` for local development against `citycalls-api`. Move this to environment-specific config (`--dart-define` or a config file) before staging/production builds.
+The API base URL defaults to the live server (`https://api.citycalls.in/api/v1`, set in `lib/providers/auth_providers.dart`). For a local `citycalls-api`, override it per run with `flutter run --dart-define=API_BASE_URL=http://<host>:4000/api/v1` (or `scripts/run-local.sh`). Plain `http://` only works in debug builds.
+
+## Release signing
+
+Copy `android/key.properties.example` to `android/key.properties` (git-ignored) and point it at your upload keystore. Without it, release builds fall back to the debug key and cannot be uploaded to the Play Store.
 
 ## Structure
 

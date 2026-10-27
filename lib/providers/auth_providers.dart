@@ -118,7 +118,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
           isLoading: false,
-          errorMessage: "Failed to connect to backend server");
+          errorMessage: "Something went wrong. Please try again.");
     }
   }
 
@@ -136,7 +136,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
           isLoading: false,
-          errorMessage: "Failed to connect to backend server");
+          errorMessage: "Something went wrong. Please try again.");
     }
   }
 

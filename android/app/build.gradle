@@ -12,6 +12,12 @@ plugins {
     id "com.google.gms.google-services"
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.citycalls.customer"
     compileSdk = 36
@@ -37,11 +43,25 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        release {
+            if (keystoreProperties['storeFile']) {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Signed with the real upload key when android/key.properties
+            // exists (see key.properties.example). Without it the build falls
+            // back to the debug key so `flutter run --release` still works on
+            // a dev machine — such an APK can NOT be uploaded to the Play Store.
+            signingConfig = keystoreProperties['storeFile'] ?
+                signingConfigs.release : signingConfigs.debug
         }
     }
 }

@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/customer_providers.dart';
-import '../providers/auth_providers.dart';
-import '../providers/push_providers.dart';
-import '../providers/realtime_providers.dart';
+import '../data/session_actions.dart';
 import '../screens/profile_screen.dart';
 import '../screens/support_screen.dart';
 import '../screens/favourites_screen.dart';
 import 'profile_avatar.dart';
-import '../screens/otp_request_screen.dart';
 import '../screens/service_browse_screen.dart';
 import '../app_navigator.dart';
 
@@ -207,19 +204,9 @@ class AppDrawer extends ConsumerWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    await _logout(context, ref);
+    await signOut(context);
   }
 
-  Future<void> _logout(BuildContext context, WidgetRef ref) async {
-    await ref.read(pushNotificationServiceProvider).unregisterCurrentToken();
-    await ref.read(authRepositoryProvider).logout();
-    ref.read(socketServiceProvider).disconnect();
-    if (!context.mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const OtpRequestScreen()),
-      (route) => false,
-    );
-  }
 }
 
 // Dark brand header: wordmark + close, then the customer's photo, name and

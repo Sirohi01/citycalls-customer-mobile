@@ -143,15 +143,15 @@ class _IssueDescriptionScreenState
                         ],
                       ),
                       RichText(
-                          text: const TextSpan(children: [
+                          text: TextSpan(children: [
                         TextSpan(
-                            text: 'Step 3 ',
+                            text: 'Step ${widget.draft.stepNumber(3)} ',
                             style: TextStyle(
                                 color: Color(0xFF16A34A),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13)),
                         TextSpan(
-                            text: 'of 5',
+                            text: 'of ${widget.draft.totalSteps}',
                             style: TextStyle(
                                 color: Colors.black54,
                                 fontWeight: FontWeight.w500,
@@ -173,7 +173,7 @@ class _IssueDescriptionScreenState
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: 3 / 5,
+                          value: widget.draft.stepNumber(3) / widget.draft.totalSteps,
                           minHeight: 5,
                           backgroundColor: Colors.grey.shade200,
                           valueColor:

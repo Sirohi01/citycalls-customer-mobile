@@ -26,7 +26,7 @@ class SavedProductsScreen extends ConsumerWidget {
                   context: context,
                   isScrollControlled: true,
                   builder: (sheetContext) => AddProductSheet(
-                    onAdded: () {
+                    onAdded: (_) {
                       Navigator.of(sheetContext).pop();
                       ref.invalidate(customerProductsProvider);
                     },

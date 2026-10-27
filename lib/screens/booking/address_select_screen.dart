@@ -7,6 +7,7 @@ import '../../models/customer_models.dart';
 import '../../providers/booking_providers.dart';
 import '../../providers/customer_providers.dart';
 import '../../providers/geo_providers.dart';
+import '../../providers/location_providers.dart';
 import 'issue_description_screen.dart';
 import '../../widgets/state_views.dart';
 
@@ -21,6 +22,85 @@ class AddressSelectScreen extends ConsumerStatefulWidget {
 
 class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
   String? _selectedAddressId;
+  bool _currentSelected = false;
+  // Set once the customer taps a tile themselves, so the default choice made
+  // after the lookups finish never overrides it.
+  bool _userPicked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _preselect();
+  }
+
+  // Opens with the place chosen on the service page already selected: the
+  // saved address or current location they picked there, otherwise a saved
+  // address in the PIN that was checked. Nothing is selected if none match.
+  Future<void> _preselect() async {
+    try {
+      final customer = await ref.read(myProfileProvider.future);
+      final place = await ref
+          .read(currentPlaceProvider.future)
+          .timeout(const Duration(seconds: 3), onTimeout: () => null);
+      if (!mounted || _userPicked) return;
+
+      final draft = widget.draft;
+      final currentUsable = place != null && place.hasPin;
+      CustomerAddress? saved;
+      if (draft.preferredAddressId != null) {
+        saved = customer.addresses
+            .where((a) => a.id == draft.preferredAddressId)
+            .firstOrNull;
+      }
+      if (saved == null && !(draft.preferCurrentLocation && currentUsable)) {
+        final samePin =
+            customer.addresses.where((a) => a.pinCode == draft.pinCode);
+        saved = samePin.where((a) => a.isDefault).firstOrNull ??
+            samePin.firstOrNull;
+      }
+
+      setState(() {
+        if (saved != null) {
+          _selectedAddressId = saved.id;
+        } else if (currentUsable &&
+            (draft.preferCurrentLocation || place.pinCode == draft.pinCode)) {
+          _currentSelected = true;
+        }
+      });
+    } catch (_) {
+      // Preselecting is a convenience; the list still works without it.
+    }
+  }
+
+  // The current place as a bookable address. Geocoders often return no city
+  // or state, so those are filled in from the PIN lookup before continuing.
+  Future<void> _proceedWithCurrentLocation(CurrentPlace place) async {
+    var city = place.city;
+    var state = place.state;
+    if (city.isEmpty || state.isEmpty) {
+      final area =
+          await ref.read(geoRepositoryProvider).lookupPincode(place.pinCode);
+      if (city.isEmpty) city = area?.resolvedCity ?? '';
+      if (state.isEmpty) state = area?.state ?? '';
+    }
+    if (!mounted) return;
+    if (city.isEmpty || state.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              "Couldn't read this location fully. Please add it as a new address.")));
+      return;
+    }
+    _proceed(AddressDraft(
+      label: 'Current location',
+      line1: place.line1 ?? 'Current location',
+      line2: place.line2,
+      landmark:
+          'Map: ${place.latitude.toStringAsFixed(5)}, ${place.longitude.toStringAsFixed(5)}',
+      city: city,
+      state: state,
+      pinCode: place.pinCode,
+    ));
+  }
 
   void _proceed(AddressDraft address) {
     Navigator.of(context).push(MaterialPageRoute(
@@ -31,6 +111,8 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(myProfileProvider);
+    final place = ref.watch(currentPlaceProvider).valueOrNull;
+    final currentPlace = place != null && place.hasPin ? place : null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
@@ -94,10 +176,10 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                         ],
                       ),
                       RichText(
-                        text: const TextSpan(
+                        text: TextSpan(
                           children: [
-                            TextSpan(text: 'Step 2 ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
-                            TextSpan(text: 'of 5', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
+                            TextSpan(text: 'Step ${widget.draft.stepNumber(2)} ', style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold, fontSize: 13)),
+                            TextSpan(text: 'of ${widget.draft.totalSteps}', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 13)),
                           ]
                         )
                       ),
@@ -116,7 +198,7 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: 2 / 5,
+                          value: widget.draft.stepNumber(2) / widget.draft.totalSteps,
                           minHeight: 5,
                           backgroundColor: Colors.grey.shade200,
                           valueColor: const AlwaysStoppedAnimation(Color(0xFF16A34A)),
@@ -148,7 +230,7 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                             const Text('Where should the', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87, height: 1.2)),
                             const Text('technician visit?', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF16A34A), height: 1.2)),
                             const SizedBox(height: 6),
-                            const Text('Choose an address from the list below', style: TextStyle(color: Colors.black54, fontSize: 13)),
+                            const Text('Use where you are, a saved address, or add a new one', style: TextStyle(color: Colors.black54, fontSize: 13)),
                           ],
                         ),
                       )
@@ -171,13 +253,34 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                               orElse: () => customer.addresses.first,
                             ),
                           ),
+                        if (currentPlace != null)
+                          _AddressTile(
+                            title: 'Current location',
+                            subtitle: [currentPlace.label, currentPlace.pinCode].join(' \u00b7 '),
+                            icon: Icons.my_location_rounded,
+                            selected: _currentSelected,
+                            onTap: () => setState(() {
+                              _userPicked = true;
+                              _currentSelected = true;
+                              _selectedAddressId = null;
+                            }),
+                          ),
                         ...customer.addresses.map((a) => _AddressTile(
-                              address: a,
+                              title: a.label?.trim().isNotEmpty == true ? a.label!.trim() : 'Home',
+                              subtitle: [a.line1, a.city, a.pinCode].where((s) => s != null && s.isNotEmpty).join(', '),
+                              icon: Icons.location_on,
                               selected: _selectedAddressId == a.id,
-                              onTap: () => setState(() => _selectedAddressId = a.id),
+                              onTap: () => setState(() {
+                                _userPicked = true;
+                                _selectedAddressId = a.id;
+                                _currentSelected = false;
+                              }),
                             )),
                         _AddressTile(
-                          address: null, // Add new address
+                          title: 'Add a new address',
+                          subtitle: 'Enter address details manually',
+                          icon: Icons.add,
+                          isAction: true,
                           selected: false,
                           onTap: () => _showAddAddressSheet(context, customer.id),
                         ),
@@ -208,9 +311,13 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                       children: [
                         Expanded(
                           child: InkWell(
-                            onTap: _selectedAddressId == null
+                            onTap: (_selectedAddressId == null && !(_currentSelected && currentPlace != null))
                                 ? null
                                 : () {
+                                    if (_selectedAddressId == null) {
+                                      _proceedWithCurrentLocation(currentPlace!);
+                                      return;
+                                    }
                                     final customer = profile.value!;
                                     final a = customer.addresses.firstWhere((a) => a.id == _selectedAddressId);
                                     _proceed(AddressDraft(label: a.label, line1: a.line1 ?? '', line2: a.line2, landmark: a.landmark, city: a.city, state: a.state, pinCode: a.pinCode));
@@ -219,7 +326,7 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
                             child: Container(
                               height: 48,
                               decoration: BoxDecoration(
-                                color: _selectedAddressId != null ? const Color(0xFF16A34A) : Colors.grey.shade400,
+                                color: (_selectedAddressId != null || (_currentSelected && currentPlace != null)) ? const Color(0xFF16A34A) : Colors.grey.shade400,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               alignment: Alignment.center,
@@ -249,7 +356,6 @@ class _AddressSelectScreenState extends ConsumerState<AddressSelectScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (sheetContext) => _AddAddressSheet(
         onSaved: (address) {
           Navigator.of(sheetContext).pop();
@@ -451,7 +557,7 @@ class _AddAddressSheetState extends ConsumerState<_AddAddressSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+      padding: EdgeInsets.only(left: 20, right: 20, top: 4, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
       child: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -623,30 +729,39 @@ class _SelectedAddressSummary extends StatelessWidget {
 }
 
 class _AddressTile extends StatelessWidget {
-  final CustomerAddress? address;
+  final String title;
+  final String subtitle;
+  final IconData icon;
   final bool selected;
+  // "Add a new address" - styled as an action, never shown as selected.
+  final bool isAction;
   final VoidCallback onTap;
-  const _AddressTile({required this.address, required this.selected, required this.onTap});
+  const _AddressTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    this.isAction = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isAddNew = address == null;
-
     return Container(
       margin: const EdgeInsets.only(bottom: 12, left: 20, right: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: selected ? const Color(0xFF16A34A) : Colors.grey.shade200, 
-          width: selected ? 1.5 : 1
+          color: selected ? const Color(0xFF16A34A) : Colors.grey.shade200,
+          width: selected ? 1.5 : 1,
         ),
         boxShadow: [
           if (!selected)
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03), 
-              blurRadius: 10, 
-              offset: const Offset(0, 4)
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
         ],
       ),
@@ -657,7 +772,6 @@ class _AddressTile extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Image / Icon Box
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -665,14 +779,19 @@ class _AddressTile extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: isAddNew ? const Color(0xFFFAFAFA) : const Color(0xFFF0FDF4).withValues(alpha: 0.5),
+                      color: isAction || selected
+                          ? const Color(0xFFF0FDF4)
+                          : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(12),
-                      border: isAddNew ? Border.all(color: Colors.grey.shade300, style: BorderStyle.none) : null,
                     ),
                     alignment: Alignment.center,
-                    child: isAddNew
-                        ? const Icon(Icons.add, color: Color(0xFF16A34A), size: 24)
-                        : const Icon(Icons.location_on, color: Colors.black38, size: 28),
+                    child: Icon(
+                      icon,
+                      color: isAction || selected
+                          ? const Color(0xFF16A34A)
+                          : Colors.black38,
+                      size: isAction ? 24 : 28,
+                    ),
                   ),
                   if (selected)
                     Positioned(
@@ -690,25 +809,22 @@ class _AddressTile extends StatelessWidget {
                 ],
               ),
               const SizedBox(width: 16),
-              // Texts
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      isAddNew ? 'Add a new address' : address!.label ?? 'Home',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)
-                    ),
+                    Text(title,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.black87)),
                     const SizedBox(height: 6),
-                    if (!isAddNew)
-                      Text(
-                        [address!.line1, address!.city, address!.pinCode].where((s) => s != null && s.isNotEmpty).join(', '),
-                        style: const TextStyle(color: Colors.black54, fontSize: 12),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    else
-                      const Text('Enter address details manually', style: TextStyle(color: Colors.black54, fontSize: 12)),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(color: Colors.black54, fontSize: 12),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -720,4 +836,3 @@ class _AddressTile extends StatelessWidget {
     );
   }
 }
-

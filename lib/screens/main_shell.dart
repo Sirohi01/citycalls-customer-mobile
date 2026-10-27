@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_navigator.dart';
+import '../providers/location_providers.dart';
 import '../providers/notification_providers.dart';
 import '../providers/push_providers.dart';
 import 'home_screen.dart';
@@ -17,7 +18,8 @@ class MainShell extends ConsumerStatefulWidget {
   ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends ConsumerState<MainShell> {
+class _MainShellState extends ConsumerState<MainShell>
+    with WidgetsBindingObserver {
   late int _index = widget.initialIndex;
   // Tabs visited before the current one, most recent last. The phone's back
   // button walks back through these one at a time instead of closing the app.
@@ -55,6 +57,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     pendingShellTab.addListener(_applyPendingTab);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -67,8 +70,21 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     pendingShellTab.removeListener(_applyPendingTab);
     super.dispose();
+  }
+
+  // Coming back from the system settings page (where the customer may have
+  // just allowed location or switched GPS on) retries a lookup that came up
+  // empty, so the top bar doesn't stay on the saved address until a restart.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final place = ref.read(currentPlaceProvider);
+    if (!place.isLoading && place.valueOrNull == null) {
+      ref.invalidate(currentPlaceProvider);
+    }
   }
 
   // Tab switch requested from outside the widget tree — see app_navigator.dart.
