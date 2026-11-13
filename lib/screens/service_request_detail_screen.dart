@@ -27,10 +27,12 @@ class ServiceRequestDetailScreen extends ConsumerStatefulWidget {
   const ServiceRequestDetailScreen({super.key, required this.requestId});
 
   @override
-  ConsumerState<ServiceRequestDetailScreen> createState() => _ServiceRequestDetailScreenState();
+  ConsumerState<ServiceRequestDetailScreen> createState() =>
+      _ServiceRequestDetailScreenState();
 }
 
-class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetailScreen> {
+class _ServiceRequestDetailScreenState
+    extends ConsumerState<ServiceRequestDetailScreen> {
   String get requestId => widget.requestId;
   bool _confirming = false;
 
@@ -39,22 +41,30 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirm Completion'),
-        content: const Text('Confirm that the technician has completed this service? This moves your request forward to payment.'),
+        content: const Text(
+            'Confirm that the technician has completed this service? This moves your request forward to payment.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not Yet')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirm')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Not Yet')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Confirm')),
         ],
       ),
     );
     if (confirmed != true) return;
     setState(() => _confirming = true);
     try {
-      await ref.read(serviceRequestRepositoryProvider).confirmCompletion(requestId);
+      await ref
+          .read(serviceRequestRepositoryProvider)
+          .confirmCompletion(requestId);
       ref.invalidate(serviceRequestDetailProvider(requestId));
       ref.invalidate(activityLogProvider(requestId));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not confirm: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not confirm: $e')));
       }
     } finally {
       if (mounted) setState(() => _confirming = false);
@@ -68,9 +78,15 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     // Drives the "Work Details" entry point below — the button only appears
     // once a technician has actually opened a visit, so it never leads to an
     // empty screen.
-    final hasVisits = ref.watch(serviceVisitsProvider(requestId)).valueOrNull?.isNotEmpty ?? false;
-    final reopenHistory = ref.watch(reopenHistoryProvider(requestId)).valueOrNull ?? const <ReopenRecord>[];
-    final proformaAwaitingAcceptance = ref.watch(proformaForRequestProvider(requestId)).valueOrNull?.status == 'SHARED';
+    final hasVisits =
+        ref.watch(serviceVisitsProvider(requestId)).valueOrNull?.isNotEmpty ??
+            false;
+    final reopenHistory =
+        ref.watch(reopenHistoryProvider(requestId)).valueOrNull ??
+            const <ReopenRecord>[];
+    final proformaAwaitingAcceptance =
+        ref.watch(proformaForRequestProvider(requestId)).valueOrNull?.status ==
+            'SHARED';
 
     // Status/assignment changes arrive over the same socket room the Live
     // Map section listens on (serviceRequestRealtimeProvider) — refetching
@@ -103,24 +119,39 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
               _headerCard(context, sr),
               const SizedBox(height: 16),
               if (sr.assignee != null) _technicianCard(context, sr.assignee!),
-              if (sr.assignee != null && sr.isActive) LiveMapSection(requestId: requestId),
+              if (sr.assignee != null && sr.isActive)
+                LiveMapSection(requestId: requestId),
               const UiSectionLabel('Booking details'),
               UiCard(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 child: Column(
                   children: [
-                    _infoCard(context, Icons.location_on_outlined, 'Address', sr.addressLine),
+                    if (sr.bookingPrice != null)
+                      _infoCard(
+                          context,
+                          Icons.currency_rupee,
+                          sr.bookingPrice!['mode'] == 'ESTIMATE'
+                              ? 'Visit / inspection amount'
+                              : 'Agreed booking price',
+                          '₹${sr.bookingPrice!['total']} · ${sr.bookingPrice!['mode'] == 'HOURLY' ? '${sr.bookingPrice!['hours']} hours × ${sr.bookingPrice!['helpers']} helpers' : sr.bookingPrice!['mode']}'),
+                    _infoCard(context, Icons.location_on_outlined, 'Address',
+                        sr.addressLine),
                     if (sr.symptoms.isNotEmpty) ...[
                       const Divider(height: 1),
-                      _infoCard(context, Icons.report_gmailerrorred_outlined, 'Issue', sr.symptoms.join(', ')),
+                      _infoCard(context, Icons.report_gmailerrorred_outlined,
+                          'Issue', sr.symptoms.join(', ')),
                     ],
                     if (sr.notes != null && sr.notes!.isNotEmpty) ...[
                       const Divider(height: 1),
-                      _infoCard(context, Icons.notes_outlined, 'Notes', sr.notes!),
+                      _infoCard(
+                          context, Icons.notes_outlined, 'Notes', sr.notes!),
                     ],
-                    if (sr.status == 'CANCELLED' && sr.cancelReason != null) ...[
+                    if (sr.status == 'CANCELLED' &&
+                        sr.cancelReason != null) ...[
                       const Divider(height: 1),
-                      _infoCard(context, Icons.cancel_outlined, 'Cancellation reason', sr.cancelReason!),
+                      _infoCard(context, Icons.cancel_outlined,
+                          'Cancellation reason', sr.cancelReason!),
                     ],
                   ],
                 ),
@@ -137,13 +168,21 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                   children: [
                     activityLog.when(
                       data: (entries) => entries.isEmpty
-                          ? const Text('No updates yet.', style: TextStyle(color: kMuted))
-                          : Column(children: [for (var i = 0; i < entries.length; i++) _timelineEntry(entries[i], isLast: i == entries.length - 1, isFirst: i == 0)]),
-                      loading: () => const Center(child: CircularProgressIndicator()),
+                          ? const Text('No updates yet.',
+                              style: TextStyle(color: kMuted))
+                          : Column(children: [
+                              for (var i = 0; i < entries.length; i++)
+                                _timelineEntry(entries[i],
+                                    isLast: i == entries.length - 1,
+                                    isFirst: i == 0)
+                            ]),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                       error: (err, __) => AppErrorView(
                         error: err,
                         compact: true,
-                        onRetry: () => ref.invalidate(activityLogProvider(requestId)),
+                        onRetry: () =>
+                            ref.invalidate(activityLogProvider(requestId)),
                       ),
                     ),
                   ],
@@ -160,31 +199,69 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                   Icons.assignment_outlined,
                   'View Work Details',
                   () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => ServiceVisitsScreen(requestId: requestId, requestNumber: sr.number),
+                    builder: (_) => ServiceVisitsScreen(
+                        requestId: requestId, requestNumber: sr.number),
                   )),
                 ),
-              if (sr.status == 'ESTIMATE_SHARED' || sr.status == 'AWAITING_CUSTOMER_APPROVAL')
-                _actionButton(context, Icons.receipt_long_outlined, 'Review Estimate', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => EstimateReviewScreen(requestId: requestId)))),
+              if (sr.status == 'ESTIMATE_SHARED' ||
+                  sr.status == 'AWAITING_CUSTOMER_APPROVAL')
+                _actionButton(
+                    context,
+                    Icons.receipt_long_outlined,
+                    'Review Estimate',
+                    () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            EstimateReviewScreen(requestId: requestId)))),
               // The actual "move this request forward" action for this
               // status — previously the only thing offered here was "Rate
               // Your Experience", which submits feedback but never confirms
               // completion, so the request could sit stuck on this status
               // forever with no way for the customer to advance it.
               if (sr.status == 'CUSTOMER_CONFIRMATION_PENDING')
-                _actionButton(context, Icons.check_circle_outline, _confirming ? 'Confirming...' : 'Confirm Completion', _confirming ? () {} : _confirmCompletion),
+                _actionButton(
+                    context,
+                    Icons.check_circle_outline,
+                    _confirming ? 'Confirming...' : 'Confirm Completion',
+                    _confirming ? () {} : _confirmCompletion),
               // The bill is auto-generated from the already-approved Estimate
               // (no re-typed amounts) but still needs this one explicit tap —
               // same reasoning as Confirm Completion above: a financial
               // commitment shouldn't advance silently without the customer
               // seeing it.
               if (sr.status == 'PAYMENT_PENDING' && proformaAwaitingAcceptance)
-                _actionButton(context, Icons.request_quote_outlined, 'Review Bill', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ProformaReviewScreen(requestId: requestId)))),
-              if (sr.status == 'PAYMENT_PENDING' || sr.status == 'PARTIALLY_PAID' || sr.status == 'PAID')
-                _actionButton(context, Icons.receipt_outlined, 'View Invoice', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InvoiceViewScreen(requestId: requestId)))),
-              if (sr.status == 'SERVICE_COMPLETED' || sr.status == 'CUSTOMER_CONFIRMATION_PENDING')
-                _actionButton(context, Icons.star_outline, 'Rate Your Experience', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FeedbackScreen(requestId: requestId)))),
+                _actionButton(
+                    context,
+                    Icons.request_quote_outlined,
+                    'Review Bill',
+                    () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            ProformaReviewScreen(requestId: requestId)))),
+              if (sr.status == 'PAYMENT_PENDING' ||
+                  sr.status == 'PARTIALLY_PAID' ||
+                  sr.status == 'PAID')
+                _actionButton(
+                    context,
+                    Icons.receipt_outlined,
+                    'View Invoice',
+                    () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            InvoiceViewScreen(requestId: requestId)))),
+              if (sr.status == 'SERVICE_COMPLETED' ||
+                  sr.status == 'CUSTOMER_CONFIRMATION_PENDING')
+                _actionButton(
+                    context,
+                    Icons.star_outline,
+                    'Rate Your Experience',
+                    () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => FeedbackScreen(requestId: requestId)))),
               if (sr.status == 'APPOINTMENT_SCHEDULED')
-                _actionButton(context, Icons.event_repeat, 'Reschedule', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => RescheduleScreen(requestId: requestId)))),
+                _actionButton(
+                    context,
+                    Icons.event_repeat,
+                    'Reschedule',
+                    () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            RescheduleScreen(requestId: requestId)))),
               if (isCancellableStatus(sr.status))
                 _actionButton(
                   context,
@@ -192,7 +269,9 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                   'Cancel Request',
                   () async {
                     final cancelled = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute(builder: (_) => CancelRequestScreen(requestId: requestId)),
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              CancelRequestScreen(requestId: requestId)),
                     );
                     if (cancelled == true) {
                       ref.invalidate(serviceRequestDetailProvider(requestId));
@@ -203,7 +282,13 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                   destructive: true,
                 ),
               if (sr.status == 'CLOSED' || sr.status == 'PAID')
-                _actionButton(context, Icons.replay, 'Reopen Request', () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ReopenRequestScreen(requestId: requestId)))),
+                _actionButton(
+                    context,
+                    Icons.replay,
+                    'Reopen Request',
+                    () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            ReopenRequestScreen(requestId: requestId)))),
             ],
           ),
         ),
@@ -211,7 +296,8 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
         error: (err, _) => Center(
           child: AppErrorView(
             error: err,
-            onRetry: () => ref.invalidate(serviceRequestDetailProvider(requestId)),
+            onRetry: () =>
+                ref.invalidate(serviceRequestDetailProvider(requestId)),
           ),
         ),
       ),
@@ -234,16 +320,23 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              UiIconTile(icon: Icons.home_repair_service_rounded, color: color, size: 46),
+              UiIconTile(
+                  icon: Icons.home_repair_service_rounded,
+                  color: color,
+                  size: 46),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(sr.serviceName ?? 'Service request',
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: kInk)),
+                        style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: kInk)),
                     const SizedBox(height: 3),
-                    Text('Booking #${sr.number}', style: const TextStyle(fontSize: 12.5, color: kMuted)),
+                    Text('Booking #${sr.number}',
+                        style: const TextStyle(fontSize: 12.5, color: kMuted)),
                   ],
                 ),
               ),
@@ -259,12 +352,17 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
             ),
             child: Row(
               children: [
-                Icon(Icons.radio_button_checked_rounded, size: 16, color: color),
+                Icon(Icons.radio_button_checked_rounded,
+                    size: 16, color: color),
                 const SizedBox(width: 8),
-                const Text('Status: ', style: TextStyle(fontSize: 13, color: kMuted)),
+                const Text('Status: ',
+                    style: TextStyle(fontSize: 13, color: kMuted)),
                 Expanded(
                   child: Text(customerStatusLabel(sr.status),
-                      style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: color)),
+                      style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: color)),
                 ),
               ],
             ),
@@ -274,7 +372,8 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     );
   }
 
-  Widget _technicianCard(BuildContext context, ServiceRequestAssignee assignee) {
+  Widget _technicianCard(
+      BuildContext context, ServiceRequestAssignee assignee) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: UiCard(
@@ -284,29 +383,37 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
             Container(
               width: 46,
               height: 46,
-              decoration: const BoxDecoration(color: kInk, shape: BoxShape.circle),
-              child: const Icon(Icons.engineering_rounded, color: Colors.white, size: 22),
+              decoration:
+                  const BoxDecoration(color: kInk, shape: BoxShape.circle),
+              child: const Icon(Icons.engineering_rounded,
+                  color: Colors.white, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Your professional', style: TextStyle(fontSize: 11.5, color: kMuted)),
+                  const Text('Your professional',
+                      style: TextStyle(fontSize: 11.5, color: kMuted)),
                   const SizedBox(height: 2),
                   Text(assignee.name ?? 'Technician assigned',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: kInk)),
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: kInk)),
                 ],
               ),
             ),
-            const UiPill(text: 'Assigned', color: kGreen, icon: Icons.verified_rounded),
+            const UiPill(
+                text: 'Assigned', color: kGreen, icon: Icons.verified_rounded),
           ],
         ),
       ),
     );
   }
 
-  Widget _infoCard(BuildContext context, IconData icon, String label, String value) {
+  Widget _infoCard(
+      BuildContext context, IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -318,9 +425,15 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: kMuted, fontSize: 12)),
+                Text(label,
+                    style: const TextStyle(color: kMuted, fontSize: 12)),
                 const SizedBox(height: 3),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5, color: kInk, height: 1.35)),
+                Text(value,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                        color: kInk,
+                        height: 1.35)),
               ],
             ),
           ),
@@ -329,7 +442,7 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     );
   }
 
-    static String _timelineLabel(String action) {
+  static String _timelineLabel(String action) {
     if (action == 'CREATED') return 'Request received';
     if (action == 'CANCELLED') return 'Booking cancelled';
     if (action == 'ASSIGNED_TO_BRANCH' ||
@@ -345,7 +458,8 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     return words.isEmpty ? words : words[0].toUpperCase() + words.substring(1);
   }
 
-  Widget _timelineEntry(ActivityLogEntry entry, {required bool isLast, bool isFirst = false}) {
+  Widget _timelineEntry(ActivityLogEntry entry,
+      {required bool isLast, bool isFirst = false}) {
     return IntrinsicHeight(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -361,10 +475,15 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isFirst ? kGreen : Colors.white,
-                    border: Border.all(color: isFirst ? kGreen : const Color(0xFFCBD5E1), width: 2),
+                    border: Border.all(
+                        color: isFirst ? kGreen : const Color(0xFFCBD5E1),
+                        width: 2),
                   ),
                 ),
-                if (!isLast) Expanded(child: Container(width: 2, color: const Color(0xFFE2E8F0))),
+                if (!isLast)
+                  Expanded(
+                      child:
+                          Container(width: 2, color: const Color(0xFFE2E8F0))),
               ],
             ),
             const SizedBox(width: 12),
@@ -375,11 +494,15 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_timelineLabel(entry.action),
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: isFirst ? kInk : const Color(0xFF334155))),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                            color: isFirst ? kInk : const Color(0xFF334155))),
                     if (entry.reason != null && entry.reason!.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
-                        child: Text(entry.reason!, style: const TextStyle(fontSize: 12)),
+                        child: Text(entry.reason!,
+                            style: const TextStyle(fontSize: 12)),
                       ),
                     const SizedBox(height: 2),
                     Text(
@@ -406,7 +529,9 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Reopen requests', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: kInk)),
+          const Text('Reopen requests',
+              style: TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 15, color: kInk)),
           const SizedBox(height: 12),
           for (final record in records) _reopenRow(record),
         ],
@@ -437,22 +562,29 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                 Expanded(
                   child: Text(
                     'Reopen #${record.reopenCount}',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 13),
                   ),
                 ),
                 Text(
                   reopenStatusLabel(record.status),
-                  style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                      color: color,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700),
                 ),
               ],
             ),
             const SizedBox(height: 5),
-            Text(record.reason, style: const TextStyle(fontSize: 12.5, height: 1.4)),
-            if (record.status == 'REJECTED' && record.rejectionReason != null) ...[
+            Text(record.reason,
+                style: const TextStyle(fontSize: 12.5, height: 1.4)),
+            if (record.status == 'REJECTED' &&
+                record.rejectionReason != null) ...[
               const SizedBox(height: 5),
               Text(
                 'Reason: ${record.rejectionReason}',
-                style: const TextStyle(fontSize: 12, color: AppColors.neutral500, height: 1.4),
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.neutral500, height: 1.4),
               ),
             ],
             if (!record.withinPolicyWindow) ...[
@@ -466,7 +598,8 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
               const SizedBox(height: 5),
               Text(
                 '${record.reopenedAt!.day.toString().padLeft(2, '0')}/${record.reopenedAt!.month.toString().padLeft(2, '0')}/${record.reopenedAt!.year}',
-                style: const TextStyle(fontSize: 11, color: AppColors.neutral500),
+                style:
+                    const TextStyle(fontSize: 11, color: AppColors.neutral500),
               ),
             ],
           ],
@@ -475,7 +608,9 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
     );
   }
 
-  Widget _actionButton(BuildContext context, IconData icon, String label, VoidCallback onTap, {bool destructive = false}) {
+  Widget _actionButton(
+      BuildContext context, IconData icon, String label, VoidCallback onTap,
+      {bool destructive = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: SizedBox(
@@ -492,9 +627,11 @@ class _ServiceRequestDetailScreenState extends ConsumerState<ServiceRequestDetai
                   minimumSize: const Size.fromHeight(50),
                 ),
               )
-            : FilledButton.icon(onPressed: onTap, icon: Icon(icon, size: 18), label: Text(label)),
+            : FilledButton.icon(
+                onPressed: onTap,
+                icon: Icon(icon, size: 18),
+                label: Text(label)),
       ),
     );
   }
 }
-

@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/finance_providers.dart';
@@ -46,7 +47,7 @@ class _EstimateReviewScreenState extends ConsumerState<EstimateReviewScreen> {
     final estimate = ref.watch(estimateForRequestProvider(widget.requestId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Review Estimate')),
+      appBar: AppBar(title: const Text('Review Estimate'), actions: [IconButton(tooltip: 'Download PDF', icon: const Icon(Icons.download_outlined), onPressed: estimate.asData?.value == null ? null : () async { try { final url = await ref.read(financeRepositoryProvider).documentUrl('ESTIMATE', estimate.asData!.value!.id); await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication); } catch (e) { if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not download PDF: $e'))); } })]),
       body: estimate.when(
         data: (e) {
           if (e == null) return const Center(child: Text('No estimate found for this request yet.', style: TextStyle(color: AppColors.neutral500)));

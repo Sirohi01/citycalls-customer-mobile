@@ -271,7 +271,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              '₹${s.pricing.basePrice.toStringAsFixed(0)}',
+              '₹${(s.pricing.mode == 'HOURLY' ? s.pricing.hourlyRate : s.pricing.basePrice).toStringAsFixed(0)}',
               style: const TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
@@ -632,6 +632,12 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     if (!mounted) return;
 
     final draft = BookingDraft(
+      pricingMode: s.pricing.mode,
+      unitPrice: s.pricing.mode == 'HOURLY'
+          ? s.pricing.hourlyRate
+          : s.pricing.basePrice,
+      visitingCharge: s.pricing.visitingCharge,
+      inspectionCharge: s.pricing.inspectionCharge,
       serviceId: widget.serviceId,
       serviceName: s.name,
       pinCode: _pinCodeController.text.trim(),
@@ -670,7 +676,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '₹${s.pricing.basePrice.toStringAsFixed(0)}',
+                    '₹${(s.pricing.mode == 'HOURLY' ? s.pricing.hourlyRate : s.pricing.basePrice).toStringAsFixed(0)}',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -678,7 +684,13 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                     ),
                   ),
                   Text(
-                    canBook ? 'Starting price' : 'Check PIN code to book',
+                    canBook
+                        ? (s.pricing.mode == 'HOURLY'
+                            ? 'Per hour per helper'
+                            : s.pricing.mode == 'ESTIMATE'
+                                ? 'Repair estimate after inspection'
+                                : 'Fixed service price')
+                        : 'Check PIN code to book',
                     style: const TextStyle(
                         fontSize: 11.5, color: Color(0xFF64748B)),
                   ),

@@ -11,17 +11,25 @@ class ServiceCategory {
 }
 
 class ServicePricing {
+  final String mode;
+  final double hourlyRate;
   final double basePrice;
   final double visitingCharge;
   final double inspectionCharge;
 
   ServicePricing(
-      {required this.basePrice,
+      {this.mode = 'FIXED',
+      this.hourlyRate = 0,
+      required this.basePrice,
       required this.visitingCharge,
       required this.inspectionCharge});
 
   factory ServicePricing.fromJson(Map<String, dynamic> json) {
     return ServicePricing(
+      mode: json['mode'] as String? ?? 'FIXED',
+      hourlyRate: (json['hourlyRate'] as num?)?.toDouble() ??
+          (json['basePrice'] as num?)?.toDouble() ??
+          0,
       basePrice: (json['basePrice'] as num?)?.toDouble() ?? 0,
       visitingCharge: (json['visitingCharge'] as num?)?.toDouble() ?? 0,
       inspectionCharge: (json['inspectionCharge'] as num?)?.toDouble() ?? 0,

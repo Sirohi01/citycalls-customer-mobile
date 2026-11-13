@@ -782,8 +782,9 @@ class _ServiceCard extends ConsumerWidget {
                             children: [
                               const TextSpan(text: 'Starts at '),
                               TextSpan(
-                                text:
-                                    '₹${service.pricing.basePrice.toStringAsFixed(0)}',
+                                text: service.pricing.mode == 'ESTIMATE'
+                                    ? 'After inspection'
+                                    : '₹${(service.pricing.mode == 'HOURLY' ? service.pricing.hourlyRate : service.pricing.basePrice).toStringAsFixed(0)}${service.pricing.mode == 'HOURLY' ? '/hr/helper' : ''}',
                                 style: TextStyle(
                                     color: themeColor,
                                     fontSize: 15,

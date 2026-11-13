@@ -56,6 +56,7 @@ android {
 
     buildTypes {
         release {
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             // Signed with the real upload key when android/key.properties
             // exists (see key.properties.example). Without it the build falls
             // back to the debug key so `flutter run --release` still works on

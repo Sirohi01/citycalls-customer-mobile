@@ -1205,7 +1205,9 @@ class _ServiceGridCard extends ConsumerWidget {
                                     ),
                                   ),
                                   Text(
-                                    '₹${service.pricing.basePrice.toStringAsFixed(0)}',
+                                    service.pricing.mode == 'ESTIMATE'
+                                        ? 'After inspection'
+                                        : '₹${(service.pricing.mode == 'HOURLY' ? service.pricing.hourlyRate : service.pricing.basePrice).toStringAsFixed(0)}${service.pricing.mode == 'HOURLY' ? '/hr/helper' : ''}',
                                     style: const TextStyle(
                                       fontSize: 13.5,
                                       height: 1.2,

@@ -8,7 +8,11 @@ class CustomerProductSummary {
   final String productTypeLabel;
   final String? modelNumber;
 
-  CustomerProductSummary({required this.id, required this.brandLabel, required this.productTypeLabel, this.modelNumber});
+  CustomerProductSummary(
+      {required this.id,
+      required this.brandLabel,
+      required this.productTypeLabel,
+      this.modelNumber});
 
   factory CustomerProductSummary.fromJson(Map<String, dynamic> json) {
     final brand = json['brandId'] as Map<String, dynamic>?;
@@ -31,7 +35,14 @@ class AddressDraft {
   final String state;
   final String pinCode;
 
-  AddressDraft({this.label, required this.line1, this.line2, this.landmark, required this.city, required this.state, required this.pinCode});
+  AddressDraft(
+      {this.label,
+      required this.line1,
+      this.line2,
+      this.landmark,
+      required this.city,
+      required this.state,
+      required this.pinCode});
 
   Map<String, dynamic> toAddressSnapshotJson() => {
         'line1': line1,
@@ -60,6 +71,21 @@ class AddressDraft {
 // Riverpod state — this flow is strictly linear, so navigation args are
 // simpler to reason about than provider lifecycle.
 class BookingDraft {
+  final String pricingMode;
+  final double unitPrice;
+  final double visitingCharge;
+  final double inspectionCharge;
+  final int hours;
+  final int helpers;
+  double get total =>
+      (((pricingMode == 'ESTIMATE'
+                      ? inspectionCharge
+                      : unitPrice *
+                          (pricingMode == 'HOURLY' ? hours * helpers : 1)) +
+                  visitingCharge) *
+              100)
+          .roundToDouble() /
+      100;
   final String serviceId;
   final String serviceName;
   final String pinCode;
@@ -84,6 +110,12 @@ class BookingDraft {
   final bool preferCurrentLocation;
 
   BookingDraft({
+    this.pricingMode = 'FIXED',
+    this.unitPrice = 0,
+    this.visitingCharge = 0,
+    this.inspectionCharge = 0,
+    this.hours = 1,
+    this.helpers = 1,
     required this.serviceId,
     required this.serviceName,
     required this.pinCode,
@@ -100,6 +132,8 @@ class BookingDraft {
   });
 
   BookingDraft copyWith({
+    int? hours,
+    int? helpers,
     String? customerProductId,
     AddressDraft? address,
     List<String>? symptoms,
@@ -109,6 +143,12 @@ class BookingDraft {
     String? scheduledSlot,
   }) {
     return BookingDraft(
+      pricingMode: pricingMode,
+      unitPrice: unitPrice,
+      visitingCharge: visitingCharge,
+      inspectionCharge: inspectionCharge,
+      hours: hours ?? this.hours,
+      helpers: helpers ?? this.helpers,
       serviceId: serviceId,
       serviceName: serviceName,
       pinCode: pinCode,

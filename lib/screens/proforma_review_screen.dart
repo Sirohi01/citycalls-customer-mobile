@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/finance_providers.dart';
@@ -43,7 +44,7 @@ class _ProformaReviewScreenState extends ConsumerState<ProformaReviewScreen> {
     final proforma = ref.watch(proformaForRequestProvider(widget.requestId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Review Bill')),
+      appBar: AppBar(title: const Text('Review Bill'), actions: [IconButton(tooltip: 'Download PDF', icon: const Icon(Icons.download_outlined), onPressed: proforma.asData?.value == null ? null : () async { try { final url = await ref.read(financeRepositoryProvider).documentUrl('PROFORMA_INVOICE', proforma.asData!.value!.id); await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication); } catch (e) { if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not download PDF: $e'))); } })]),
       body: proforma.when(
         data: (p) {
           if (p == null) {

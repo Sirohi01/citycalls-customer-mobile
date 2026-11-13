@@ -18,37 +18,50 @@ class BookingRepository {
 
   Future<List<CustomerProductSummary>> listProducts(String customerId) async {
     final res = await _client.dio.get('/customers/me/products');
-    return (res.data['data'] as List).map((p) => CustomerProductSummary.fromJson(p as Map<String, dynamic>)).toList();
+    return (res.data['data'] as List)
+        .map((p) => CustomerProductSummary.fromJson(p as Map<String, dynamic>))
+        .toList();
   }
 
   // Returns the new appliance's id so the booking flow can select it straight
   // away; null if the response doesn't carry one.
-  Future<String?> addProduct(String customerId, {required String brandId, required String productTypeId, String? modelNumber}) async {
+  Future<String?> addProduct(String customerId,
+      {required String brandId,
+      required String productTypeId,
+      String? modelNumber}) async {
     final res = await _client.dio.post('/customers/me/products', data: {
       'brandId': brandId,
       'productTypeId': productTypeId,
-      if (modelNumber != null && modelNumber.isNotEmpty) 'modelNumber': modelNumber,
+      if (modelNumber != null && modelNumber.isNotEmpty)
+        'modelNumber': modelNumber,
     });
     final data = res.data is Map ? (res.data as Map)['data'] : null;
     return data is Map ? data['_id'] as String? : null;
   }
 
   Future<List<ServiceCategory>> listMasters(String masterType) async {
-    final res = await _client.dio.get('/masters/$masterType', queryParameters: {'active': true, 'limit': 100});
-    return (res.data['data'] as List).map((m) => ServiceCategory.fromJson(m as Map<String, dynamic>)).toList();
+    final res = await _client.dio.get('/masters/$masterType',
+        queryParameters: {'active': true, 'limit': 100});
+    return (res.data['data'] as List)
+        .map((m) => ServiceCategory.fromJson(m as Map<String, dynamic>))
+        .toList();
   }
 
   // Only the symptoms actually linked to this service (Service.symptomIds) —
   // not the full global SYMPTOM master list, which mixes in every other
   // appliance's issues too.
   Future<List<ServiceCategory>> listServiceSymptoms(String serviceId) async {
-    final res = await _catalogClient.dio.get('/services/$serviceId/diagnostics');
+    final res =
+        await _catalogClient.dio.get('/services/$serviceId/diagnostics');
     final symptoms = res.data['data']['symptoms'] as List;
-    return symptoms.map((m) => ServiceCategory.fromJson(m as Map<String, dynamic>)).toList();
+    return symptoms
+        .map((m) => ServiceCategory.fromJson(m as Map<String, dynamic>))
+        .toList();
   }
 
   Future<void> addAddress(String customerId, AddressDraft address) async {
-    await _client.dio.post('/customers/me/addresses', data: address.toAddAddressJson());
+    await _client.dio
+        .post('/customers/me/addresses', data: address.toAddAddressJson());
   }
 
   // Uploaded against entityType 'CUSTOMER' since the ServiceRequest doesn't
@@ -73,7 +86,9 @@ class BookingRepository {
       });
       // Deliberately a bare Dio(), not _client.dio — Cloudinary must not
       // receive our API's Authorization/Bearer header.
-      final cloudinaryRes = await Dio().post('https://api.cloudinary.com/v1_1/${signed['cloudName']}/auto/upload', data: form);
+      final cloudinaryRes = await Dio().post(
+          'https://api.cloudinary.com/v1_1/${signed['cloudName']}/auto/upload',
+          data: form);
       final confirmRes = await _client.dio.post('/files/confirm', data: {
         'category': 'ISSUE_IMAGE',
         'entityType': 'CUSTOMER',
@@ -96,28 +111,45 @@ class BookingRepository {
     return res.data['data']['url'] as String;
   }
 
-  Future<AppointmentSlotsResult> getAppointmentSlots(String branchId, DateTime date) async {
+  Future<AppointmentSlotsResult> getAppointmentSlots(
+      String branchId, DateTime date) async {
     final res = await _client.dio.get('/appointment-slots', queryParameters: {
       'branchId': branchId,
       // Date-only on the wire — the backend buckets by calendar day, sending
       // a full local timestamp risks the UTC-converted date landing on the
       // wrong side of midnight for the branch's day boundary.
-      'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+      'date':
+          '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
     });
-    return AppointmentSlotsResult.fromJson(res.data['data'] as Map<String, dynamic>);
+    return AppointmentSlotsResult.fromJson(
+        res.data['data'] as Map<String, dynamic>);
   }
 
-  Future<Map<String, dynamic>> createServiceRequest(BookingDraft draft, String customerId) async {
+  Future<Map<String, dynamic>> quote(BookingDraft draft) async {
+    final res = await _catalogClient.dio.post(
+        '/services/${draft.serviceId}/quote',
+        data: {'hours': draft.hours, 'helpers': draft.helpers});
+    return Map<String, dynamic>.from(res.data['data'] as Map);
+  }
+
+  Future<Map<String, dynamic>> createServiceRequest(
+      BookingDraft draft, String customerId,
+      {double? expectedTotal}) async {
     final res = await _client.dio.post('/service-requests', data: {
+      'hours': draft.hours,
+      'helpers': draft.helpers,
+      'expectedTotal': expectedTotal ?? draft.total,
       'customerId': customerId,
-      if (draft.customerProductId != null) 'customerProductId': draft.customerProductId,
+      if (draft.customerProductId != null)
+        'customerProductId': draft.customerProductId,
       'addressSnapshot': draft.address!.toAddressSnapshotJson(),
       'serviceId': draft.serviceId,
       'symptoms': draft.symptoms,
       if (draft.notes != null && draft.notes!.isNotEmpty) 'notes': draft.notes,
       'images': draft.imageUrls,
       'source': 'CUSTOMER_APP',
-      if (draft.scheduledDate != null) 'scheduledDate': draft.scheduledDate!.toIso8601String(),
+      if (draft.scheduledDate != null)
+        'scheduledDate': '${draft.scheduledDate!.toIso8601String()}+05:30',
       if (draft.scheduledSlot != null) 'scheduledSlot': draft.scheduledSlot,
     });
     return res.data['data'] as Map<String, dynamic>;

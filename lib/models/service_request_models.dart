@@ -54,11 +54,22 @@ String customerStatusLabel(String status) =>
 // PAID, FOLLOW_UP_PENDING, CLOSED, REOPENED) would let the customer tap a
 // button that's guaranteed to fail server-side with a transition error.
 const _cancellableStatuses = {
-  'NEW', 'NEEDS_MANUAL_BRANCH_ASSIGNMENT', 'ASSIGNED_TO_BRANCH', 'ASSIGNED_TO_SUB_BRANCH', 'ASSIGNED_TO_TEAM',
-  'ASSIGNED_TO_EMPLOYEE', 'ASSIGNED_TO_VENDOR', 'OUTSOURCED', 'REASSIGNMENT_REQUIRED', 'ACCEPTED',
-  'APPOINTMENT_SCHEDULED', 'RESCHEDULED', 'CUSTOMER_UNAVAILABLE',
+  'NEW',
+  'NEEDS_MANUAL_BRANCH_ASSIGNMENT',
+  'ASSIGNED_TO_BRANCH',
+  'ASSIGNED_TO_SUB_BRANCH',
+  'ASSIGNED_TO_TEAM',
+  'ASSIGNED_TO_EMPLOYEE',
+  'ASSIGNED_TO_VENDOR',
+  'OUTSOURCED',
+  'REASSIGNMENT_REQUIRED',
+  'ACCEPTED',
+  'APPOINTMENT_SCHEDULED',
+  'RESCHEDULED',
+  'CUSTOMER_UNAVAILABLE',
 };
-bool isCancellableStatus(String status) => _cancellableStatuses.contains(status);
+bool isCancellableStatus(String status) =>
+    _cancellableStatuses.contains(status);
 
 class ServiceRequestSummary {
   final String id;
@@ -98,11 +109,13 @@ class ServiceRequestAssignee {
   ServiceRequestAssignee({required this.type, this.name});
 
   factory ServiceRequestAssignee.fromJson(Map<String, dynamic> json) {
-    return ServiceRequestAssignee(type: json['type'] as String, name: json['name'] as String?);
+    return ServiceRequestAssignee(
+        type: json['type'] as String, name: json['name'] as String?);
   }
 }
 
 class ServiceRequestDetail {
+  final Map<String, dynamic>? bookingPrice;
   final String id;
   final String number;
   final String status;
@@ -118,6 +131,7 @@ class ServiceRequestDetail {
   final String? branchId;
 
   ServiceRequestDetail({
+    this.bookingPrice,
     required this.id,
     required this.number,
     required this.status,
@@ -137,11 +151,16 @@ class ServiceRequestDetail {
 
   factory ServiceRequestDetail.fromJson(Map<String, dynamic> json) {
     final address = json['addressSnapshot'] as Map<String, dynamic>?;
-    final addressParts = [address?['line1'], address?['line2'], address?['city'], address?['state'], address?['pinCode']]
-        .where((s) => s != null && (s as String).isNotEmpty)
-        .join(', ');
+    final addressParts = [
+      address?['line1'],
+      address?['line2'],
+      address?['city'],
+      address?['state'],
+      address?['pinCode']
+    ].where((s) => s != null && (s as String).isNotEmpty).join(', ');
     final assigneeJson = json['assignee'] as Map<String, dynamic>?;
     return ServiceRequestDetail(
+      bookingPrice: json['bookingPrice'] as Map<String, dynamic>?,
       id: json['_id'] as String,
       number: json['number'] as String,
       status: json['status'] as String,
@@ -149,11 +168,14 @@ class ServiceRequestDetail {
       createdAt: json['createdAt'] as String,
       completedAt: json['completedAt'] as String?,
       cancelReason: json['cancelReason'] as String?,
-      serviceName: (json['service'] as Map<String, dynamic>?)?['name'] as String?,
+      serviceName:
+          (json['service'] as Map<String, dynamic>?)?['name'] as String?,
       symptoms: (json['symptoms'] as List? ?? []).cast<String>(),
       notes: json['notes'] as String?,
       addressLine: addressParts,
-      assignee: assigneeJson == null ? null : ServiceRequestAssignee.fromJson(assigneeJson),
+      assignee: assigneeJson == null
+          ? null
+          : ServiceRequestAssignee.fromJson(assigneeJson),
       branchId: json['branchId'] as String?,
     );
   }

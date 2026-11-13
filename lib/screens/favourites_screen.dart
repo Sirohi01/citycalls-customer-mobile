@@ -158,7 +158,9 @@ class _FavouriteTile extends ConsumerWidget {
                 Row(
                   children: [
                     Text(
-                      '₹${s.pricing.basePrice.toStringAsFixed(0)}',
+                      s.pricing.mode == 'ESTIMATE'
+                          ? 'After inspection'
+                          : '₹${(s.pricing.mode == 'HOURLY' ? s.pricing.hourlyRate : s.pricing.basePrice).toStringAsFixed(0)}${s.pricing.mode == 'HOURLY' ? '/hr/helper' : ''}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -247,9 +249,8 @@ class _EmptyFavourites extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               // push, not pushReplacement, so back returns here.
-              onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const ServiceBrowseScreen())),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const ServiceBrowseScreen())),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _kGreen,
                 foregroundColor: Colors.white,

@@ -1,8 +1,9 @@
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/finance_models.dart';
 import '../providers/finance_providers.dart';
-import '../providers/service_request_providers.dart';
 import '../theme/app_theme.dart';
 import '../widgets/state_views.dart';
 import '../widgets/status_badge.dart';
@@ -12,12 +13,60 @@ import '../widgets/status_badge.dart';
 // into one screen since they all revolve around the same Invoice document.
 // Gateway-based in-app payment is stubbed per docs/manish/08 §6 — only manual
 // methods are wired.
-class InvoiceViewScreen extends ConsumerWidget {
+class InvoiceViewScreen extends ConsumerStatefulWidget {
   final String requestId;
   const InvoiceViewScreen({super.key, required this.requestId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InvoiceViewScreen> createState() => _InvoiceViewScreenState();
+}
+
+class _InvoiceViewScreenState extends ConsumerState<InvoiceViewScreen> with WidgetsBindingObserver {
+  String get requestId => widget.requestId;
+  Razorpay? _checkout;
+  String? _payingInvoiceId;
+  bool _busy = false;
+  @override
+  void initState() { super.initState(); WidgetsBinding.instance.addObserver(this); }
+  @override
+  void dispose() { WidgetsBinding.instance.removeObserver(this); _checkout?.clear(); super.dispose(); }
+  void _reload(String id) { ref.invalidate(invoiceForRequestProvider(requestId)); ref.invalidate(paymentsForInvoiceProvider(id)); }
+  void _message(String text) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text))); }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) { if (state == AppLifecycleState.resumed && _payingInvoiceId != null) { _refreshPayment(_payingInvoiceId!); } }
+  Future<void> _refreshPayment(String id) async {
+    try { await ref.read(financeRepositoryProvider).refreshCheckout(id); if (mounted) _reload(id); }
+    catch (e) { _message('Could not refresh payment status. $e'); }
+  }
+  Future<void> _pay(Invoice invoice) async {
+    setState(() => _busy = true);
+    _payingInvoiceId = invoice.id;
+    try {
+      final order = await ref.read(financeRepositoryProvider).createCheckout(invoice.id);
+      if (!mounted) return;
+      _checkout?.clear();
+      _checkout = Razorpay();
+      _checkout!.on(Razorpay.EVENT_PAYMENT_SUCCESS, (PaymentSuccessResponse response) async {
+        try {
+          final result = await ref.read(financeRepositoryProvider).confirmCheckout(invoice.id, orderId: response.orderId ?? '', paymentId: response.paymentId ?? '', signature: response.signature ?? '');
+          if (!mounted) return;
+          _reload(invoice.id);
+          _message(result['status'] == 'PAID' ? 'Payment verified. Your receipt is ready.' : result['message'] as String? ?? 'Payment is being confirmed. Please refresh; do not pay again.');
+        } catch (e) { _message('Payment confirmation is pending. Refresh payment status before trying again. $e'); }
+        finally { if (mounted) setState(() => _busy = false); }
+      });
+      _checkout!.on(Razorpay.EVENT_PAYMENT_ERROR, (PaymentFailureResponse response) { if (mounted) setState(() => _busy = false); _message(response.message ?? 'Payment cancelled or unsuccessful.'); });
+      _checkout!.on(Razorpay.EVENT_EXTERNAL_WALLET, (ExternalWalletResponse response) { if (mounted) setState(() => _busy = false); _message('Complete payment in the selected wallet, then refresh payment status.'); });
+      _checkout!.open({'key': order['keyId'], 'order_id': order['orderId'], 'amount': order['amount'], 'currency': 'INR', 'name': 'CityCalls', 'description': order['description']});
+    } catch (e) { if (mounted) setState(() => _busy = false); _message('Could not open online payment. $e'); }
+  }
+  Future<void> _download(String type, String id) async {
+    try { final url = await ref.read(financeRepositoryProvider).documentUrl(type, id); if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) _message('Could not open the document.'); }
+    catch (e) { _message('Could not download the document. $e'); }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final invoice = ref.watch(invoiceForRequestProvider(requestId));
 
     return Scaffold(
@@ -28,11 +77,13 @@ class InvoiceViewScreen extends ConsumerWidget {
             return const AppEmptyView(
               icon: Icons.receipt_long_outlined,
               title: 'No invoice yet',
-              subtitle: 'Your bill appears here once the work is done and the invoice is raised.',
+              subtitle:
+                  'Your bill appears here once the work is done and the invoice is raised.',
             );
           }
           final payments = ref.watch(paymentsForInvoiceProvider(inv.id));
-          final notes = ref.watch(invoiceNotesProvider(inv.id)).valueOrNull ?? const <InvoiceNote>[];
+          final notes = ref.watch(invoiceNotesProvider(inv.id)).valueOrNull ??
+              const <InvoiceNote>[];
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(invoiceForRequestProvider(requestId));
@@ -53,11 +104,20 @@ class InvoiceViewScreen extends ConsumerWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                        child: Icon(Icons.receipt_outlined, color: Theme.of(context).colorScheme.primary),
+                        decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12)),
+                        child: Icon(Icons.receipt_outlined,
+                            color: Theme.of(context).colorScheme.primary),
                       ),
                       const SizedBox(width: 12),
-                      Expanded(child: Text(inv.number, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+                      Expanded(
+                          child: Text(inv.number,
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold))),
                       StatusBadge(status: inv.status),
                     ],
                   ),
@@ -73,9 +133,12 @@ class InvoiceViewScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       _row('Total Amount', '₹${inv.total.toStringAsFixed(0)}'),
-                      _row('Amount Paid', '₹${inv.amountPaid.toStringAsFixed(0)}'),
+                      _row('Amount Paid',
+                          '₹${inv.amountPaid.toStringAsFixed(0)}'),
                       const Divider(color: AppColors.neutral200),
-                      _row('Outstanding', '₹${inv.outstanding.toStringAsFixed(0)}', bold: true),
+                      _row('Outstanding',
+                          '₹${inv.outstanding.toStringAsFixed(0)}',
+                          bold: true),
                     ],
                   ),
                 ),
@@ -94,7 +157,9 @@ class InvoiceViewScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Adjustments', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        const Text('Adjustments',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15)),
                         const SizedBox(height: 10),
                         for (final note in notes) _noteRow(note),
                       ],
@@ -103,26 +168,32 @@ class InvoiceViewScreen extends ConsumerWidget {
                 ],
                 if (inv.outstanding > 0 && inv.status != 'CANCELLED') ...[
                   const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: () => _showPaymentSheet(context, ref, inv),
-                    icon: const Icon(Icons.payment),
-                    label: const Text('Make a Payment'),
-                  ),
+                  FilledButton.icon(onPressed: _busy ? null : () => _pay(inv), icon: const Icon(Icons.payment), label: Text(_busy ? 'Confirming payment…' : 'Pay Online')),
+                  TextButton(onPressed: () => _refreshPayment(inv.id), child: const Text('Refresh Online Payment Status')),
+                  const Text('You can also pay the assigned service professional. Do not pay twice while an online payment is being confirmed.'),
                 ],
+                OutlinedButton.icon(onPressed: () => _download('INVOICE', inv.id), icon: const Icon(Icons.download_outlined), label: const Text('Download Invoice PDF')),
                 const SizedBox(height: 24),
-                const Text('Payment History', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                const Text('Payment History',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 const SizedBox(height: 12),
                 payments.when(
                   data: (items) => items.isEmpty
                       ? Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(14)),
+                          decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(14)),
                           child: const Column(
                             children: [
-                              Icon(Icons.receipt_long_outlined, color: AppColors.neutral200, size: 32),
+                              Icon(Icons.receipt_long_outlined,
+                                  color: AppColors.neutral200, size: 32),
                               SizedBox(height: 8),
-                              Text('No payments recorded yet.', style: TextStyle(color: AppColors.neutral500)),
+                              Text('No payments recorded yet.',
+                                  style:
+                                      TextStyle(color: AppColors.neutral500)),
                             ],
                           ),
                         )
@@ -134,39 +205,58 @@ class InvoiceViewScreen extends ConsumerWidget {
                                     decoration: BoxDecoration(
                                       color: AppColors.white,
                                       borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                      border: Border.all(
+                                          color: const Color(0xFFE2E8F0)),
                                     ),
                                     child: Row(
                                       children: [
                                         Container(
                                           padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                                          child: const Icon(Icons.check_circle_outline, color: Colors.green, size: 18),
+                                          decoration: BoxDecoration(
+                                              color: Colors.green
+                                                  .withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                          child: const Icon(
+                                              Icons.check_circle_outline,
+                                              color: Colors.green,
+                                              size: 18),
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              Text(p.number, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                              Text(p.number,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600)),
                                               Text(
                                                 '${p.method.replaceAll('_', ' ')}${p.reference != null ? ' · ${p.reference}' : ''}',
-                                                style: const TextStyle(color: AppColors.neutral500, fontSize: 12),
+                                                style: const TextStyle(
+                                                    color: AppColors.neutral500,
+                                                    fontSize: 12),
                                               ),
                                             ],
                                           ),
                                         ),
-                                        Text('₹${p.amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        IconButton(tooltip: 'Download receipt PDF', onPressed: () => _download('PAYMENT_RECEIPT', p.id), icon: const Icon(Icons.download_outlined)),
+                                        Text('₹${p.amount.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                   ))
                               .toList(),
                         ),
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (err, __) => AppErrorView(
                     error: err,
                     compact: true,
-                    onRetry: () => ref.invalidate(paymentsForInvoiceProvider(inv.id)),
+                    onRetry: () =>
+                        ref.invalidate(paymentsForInvoiceProvider(inv.id)),
                   ),
                 ),
               ],
@@ -175,7 +265,10 @@ class InvoiceViewScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(
-          child: AppErrorView(error: err, onRetry: () => ref.invalidate(invoiceForRequestProvider(requestId))),
+          child: AppErrorView(
+              error: err,
+              onRetry: () =>
+                  ref.invalidate(invoiceForRequestProvider(requestId))),
         ),
       ),
     );
@@ -184,14 +277,17 @@ class InvoiceViewScreen extends ConsumerWidget {
   // A credit note reduces what the customer owes, a debit note increases it —
   // signed and coloured accordingly so the direction is unmistakable.
   Widget _noteRow(InvoiceNote note) {
-    final color = note.isCredit ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+    final color =
+        note.isCredit ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            note.isCredit ? Icons.trending_down_rounded : Icons.trending_up_rounded,
+            note.isCredit
+                ? Icons.trending_down_rounded
+                : Icons.trending_up_rounded,
             size: 18,
             color: color,
           ),
@@ -201,15 +297,21 @@ class InvoiceViewScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  note.isCredit ? 'Credit note ${note.number}' : 'Debit note ${note.number}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  note.isCredit
+                      ? 'Credit note ${note.number}'
+                      : 'Debit note ${note.number}',
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w600),
                 ),
                 if (note.reason.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       note.reason,
-                      style: const TextStyle(fontSize: 12, color: AppColors.neutral500, height: 1.35),
+                      style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.neutral500,
+                          height: 1.35),
                     ),
                   ),
               ],
@@ -218,7 +320,8 @@ class InvoiceViewScreen extends ConsumerWidget {
           const SizedBox(width: 10),
           Text(
             '${note.isCredit ? '-' : '+'}₹${note.amount.toStringAsFixed(0)}',
-            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: color),
+            style: TextStyle(
+                fontSize: 13.5, fontWeight: FontWeight.w700, color: color),
           ),
         ],
       ),
@@ -232,109 +335,9 @@ class InvoiceViewScreen extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: AppColors.neutral500)),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: bold ? 17 : 14)),
-        ],
-      ),
-    );
-  }
-
-  void _showPaymentSheet(BuildContext context, WidgetRef ref, Invoice invoice) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => _PaymentSheet(invoice: invoice, requestId: requestId),
-    );
-  }
-}
-
-class _PaymentSheet extends ConsumerStatefulWidget {
-  final Invoice invoice;
-  final String requestId;
-  const _PaymentSheet({required this.invoice, required this.requestId});
-
-  @override
-  ConsumerState<_PaymentSheet> createState() => _PaymentSheetState();
-}
-
-class _PaymentSheetState extends ConsumerState<_PaymentSheet> {
-  final _amountController = TextEditingController();
-  final _referenceController = TextEditingController();
-  String _method = kPaymentMethods.first;
-  bool _saving = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _amountController.text = widget.invoice.outstanding.toStringAsFixed(0);
-  }
-
-  @override
-  void dispose() {
-    _amountController.dispose();
-    _referenceController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final amount = double.tryParse(_amountController.text.trim());
-    if (amount == null || amount <= 0) {
-      setState(() => _error = 'Enter a valid amount.');
-      return;
-    }
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    try {
-      await ref.read(financeRepositoryProvider).recordPayment(
-            widget.invoice.id,
-            amount: amount,
-            method: _method,
-            reference: _referenceController.text.trim(),
-          );
-      ref.invalidate(invoiceForRequestProvider(widget.requestId));
-      ref.invalidate(paymentsForInvoiceProvider(widget.invoice.id));
-      ref.invalidate(serviceRequestDetailProvider(widget.requestId));
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      setState(() => _error = 'Failed to record payment: $e');
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Make a Payment', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _amountController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Amount (₹)'),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _method,
-            decoration: const InputDecoration(labelText: 'Payment Method'),
-            items: kPaymentMethods.map((m) => DropdownMenuItem(value: m, child: Text(m.replaceAll('_', ' ')))).toList(),
-            onChanged: (v) => setState(() => _method = v ?? _method),
-          ),
-          const SizedBox(height: 12),
-          TextField(controller: _referenceController, decoration: const InputDecoration(labelText: 'Reference / Transaction ID (optional)')),
-          if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: Colors.red))),
-          const SizedBox(height: 16),
-          FilledButton(
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)),
-            onPressed: _saving ? null : _submit,
-            child: _saving ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Submit Payment'),
-          ),
+          Text(value,
+              style: TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: bold ? 17 : 14)),
         ],
       ),
     );
