@@ -12,7 +12,6 @@ import '../models/catalog_models.dart';
 import '../models/customer_models.dart';
 import '../widgets/media_gallery.dart';
 import '../models/media_models.dart';
-import 'home_screen.dart' show formatServiceDuration;
 import '../models/booking_models.dart';
 import 'booking/address_select_screen.dart';
 import 'booking/product_select_screen.dart';
@@ -177,8 +176,10 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
                         ),
                         const SizedBox(height: 18),
                         _buildHeader(s),
-                        const SizedBox(height: 16),
-                        _buildStats(s),
+                        if (_buildStats(s) case final stats?) ...[
+                          const SizedBox(height: 16),
+                          stats,
+                        ],
                         if (s.description != null &&
                             s.description!.trim().isNotEmpty) ...[
                           const SizedBox(height: 20),
@@ -293,14 +294,8 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
     );
   }
 
-  Widget _buildStats(Service s) {
+  Widget? _buildStats(Service s) {
     final tiles = <Widget>[
-      _StatTile(
-        icon: Icons.schedule_rounded,
-        color: const Color(0xFF2563EB),
-        value: formatServiceDuration(s.expectedDurationMinutes),
-        label: 'Duration',
-      ),
       if (s.pricing.visitingCharge > 0)
         _StatTile(
           icon: Icons.directions_car_rounded,
@@ -316,6 +311,7 @@ class _ServiceDetailScreenState extends ConsumerState<ServiceDetailScreen> {
           label: 'Inspection',
         ),
     ];
+    if (tiles.isEmpty) return null;
     return Row(
       children: [
         for (int i = 0; i < tiles.length; i++) ...[

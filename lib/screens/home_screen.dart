@@ -513,7 +513,9 @@ class _HeroBannerState extends State<_HeroBanner> {
               ),
               const Spacer(),
               Material(
-                color: light ? accent : Colors.white,
+                color: light
+                    ? accent
+                    : (accent == _kHeroLime ? Colors.white : accent),
                 shape: const StadiumBorder(),
                 child: InkWell(
                   customBorder: const StadiumBorder(),
@@ -528,8 +530,15 @@ class _HeroBannerState extends State<_HeroBanner> {
                         Text(
                           slide.button,
                           style: TextStyle(
-                            color:
-                                light ? Colors.white : const Color(0xFF0F172A),
+                            color: light
+                                ? (accent.computeLuminance() > 0.4
+                                    ? const Color(0xFF0F172A)
+                                    : Colors.white)
+                                : (accent == _kHeroLime
+                                    ? const Color(0xFF0F172A)
+                                    : (accent.computeLuminance() > 0.4
+                                        ? const Color(0xFF0E1A0E)
+                                        : Colors.white)),
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                           ),
@@ -537,8 +546,15 @@ class _HeroBannerState extends State<_HeroBanner> {
                         const SizedBox(width: 6),
                         Icon(Icons.chevron_right_rounded,
                             size: 18,
-                            color:
-                                light ? Colors.white : const Color(0xFF0F172A)),
+                            color: light
+                                ? (accent.computeLuminance() > 0.4
+                                    ? const Color(0xFF0F172A)
+                                    : Colors.white)
+                                : (accent == _kHeroLime
+                                    ? const Color(0xFF0F172A)
+                                    : (accent.computeLuminance() > 0.4
+                                        ? const Color(0xFF0E1A0E)
+                                        : Colors.white))),
                       ],
                     ),
                   ),
@@ -1221,12 +1237,15 @@ class _ServiceGridCard extends ConsumerWidget {
                             Container(
                               width: 24,
                               height: 24,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF16A34A),
+                              decoration: BoxDecoration(
+                                color: accent,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.arrow_forward_rounded,
-                                  color: Colors.white, size: 14),
+                              child: Icon(Icons.arrow_forward_rounded,
+                                  color: accent.computeLuminance() > 0.4
+                                      ? const Color(0xFF0E1A0E)
+                                      : Colors.white,
+                                  size: 14),
                             ),
                           ],
                         ),
@@ -1258,42 +1277,41 @@ class SalonHomeScreen extends StatelessWidget {
       keywords: ['salon', 'saloon', 'bliss', 'beauty'],
       title: 'Salon Services',
       bannerPath: '/public/customer-app/salon-banners',
-      // Soft blush theme: very light pink page and header, deep-rose text,
-      // and a light banner card that blends into the banner photos' light
-      // pink left side.
-      accent: Color(0xFFDB2777),
-      pageColor: Color(0xFFFFF0F6),
-      headerColor: Color(0xFFF9D3E4),
-      headerForeground: Color(0xFF831843),
-      cardColor: Color(0xFFF7C6DB),
-      lightCard: true,
+      // Luxury Dark Olive & Gold theme matching salon.citycalls.in
+      accent: Color(0xFFD4AF37),
+      pageColor: Color(0xFF0E1A0E),
+      headerColor: Color(0xFF0E1A0E),
+      headerForeground: Colors.white,
+      cardColor: Color(0xFF152415),
+      textColor: Color(0xFFF2EDE8),
+      lightCard: false,
       slides: [
         (
-          tag: 'Salon at Home',
-          title1: 'Beauty & Grooming',
-          title2: 'At Your Doorstep',
-          subtitle: 'Trained beauticians with\nhygienic, branded products.',
-          image: null,
-          icon: Icons.spa_rounded,
-          button: 'Book a Service',
-        ),
-        (
-          tag: 'Trending',
-          title1: 'Haircut & Styling',
-          title2: 'By Top Experts',
-          subtitle: 'Fresh looks without\nstepping out of home.',
+          tag: 'PREMIUM BEAUTY',
+          title1: 'The Art of Hair',
+          title2: '& Styling',
+          subtitle: 'Expert stylists at your doorstep.\nPrecision cuts, color & bespoke care.',
           image: null,
           icon: Icons.content_cut_rounded,
-          button: 'Book a Service',
+          button: 'Explore Services',
         ),
         (
-          tag: 'Pamper Yourself',
-          title1: 'Facial & Glow',
-          title2: 'Relax at Home',
-          subtitle: 'Skin care and spa rituals\nbooked in a few taps.',
+          tag: 'REJUVENATION',
+          title1: 'Glow From Within',
+          title2: 'Luxury Facials',
+          subtitle: 'Therapies designed to refresh,\nrestore, and reveal your natural radiance.',
           image: null,
           icon: Icons.face_retouching_natural_rounded,
-          button: 'Book a Service',
+          button: 'Explore Rituals',
+        ),
+        (
+          tag: 'BRIDAL & ARTISTRY',
+          title1: 'Flawless Beauty',
+          title2: '& Perfection',
+          subtitle: 'Exquisite bridal & bespoke artistry\nin the comfort of your home.',
+          image: null,
+          icon: Icons.spa_rounded,
+          button: 'Book Artist',
         ),
       ],
     );
@@ -1309,41 +1327,41 @@ class HelpNowHomeScreen extends StatelessWidget {
       keywords: ['help'],
       title: 'HelpNow Services',
       bannerPath: '/public/customer-app/helpnow-banners',
-      // Yellow header (HelpNow's uniform colour) with dark text, and the
-      // light banner card — the banner photos are white on the left.
-      accent: Color(0xFFF5A623),
+      // HelpNow Amber header #FCC423 with dark text and warm amber card
+      accent: Color(0xFFFCC423),
       pageColor: Color(0xFFFFF7E8),
-      headerColor: Color(0xFFF5A623),
-      headerForeground: Color(0xFF2B1A03),
+      headerColor: Color(0xFFFCC423),
+      headerForeground: Color(0xFF111827),
       cardColor: Color(0xFFFFE0A3),
+      textColor: Color(0xFF0F172A),
       lightCard: true,
       slides: [
         (
-          tag: 'Daily Help',
-          title1: 'Home Helper',
-          title2: 'At Your Door',
-          subtitle: 'Dishwashing, cleaning,\nlaundry and daily chores.',
+          tag: 'PREMIUM MAID SERVICES',
+          title1: 'Your Home,',
+          title2: 'Our Priority.',
+          subtitle: 'Expert, background-checked maids.\nDedicated home care for daily comfort.',
           image: null,
           icon: Icons.cleaning_services_rounded,
-          button: 'Book a Service',
+          button: 'Book Service Now',
         ),
         (
-          tag: 'Kitchen Support',
-          title1: 'Cooking & Meal',
-          title2: 'Prep Help',
-          subtitle: 'Chopping, dough prep,\nbasic cooking and cleanup.',
+          tag: 'SAME-DAY HOURLY BOOKING',
+          title1: 'Book in Minutes,',
+          title2: 'Relax for Hours.',
+          subtitle: 'Flexible hourly booking — choose your slot,\nand we handle the rest with perfection.',
           image: null,
-          icon: Icons.restaurant_rounded,
-          button: 'Book a Service',
+          icon: Icons.schedule_rounded,
+          button: 'Book Service Now',
         ),
         (
-          tag: 'On Demand',
-          title1: 'Laundry &',
-          title2: 'Ironing Help',
-          subtitle: 'Wash, dry, fold and\nregular clothes ironing.',
+          tag: '100% SATISFACTION',
+          title1: 'Expert Maids,',
+          title2: 'Spotless Homes.',
+          subtitle: 'Background-verified maids arrive on time.\nTransparent pricing with zero hidden fees.',
           image: null,
-          icon: Icons.local_laundry_service_rounded,
-          button: 'Book a Service',
+          icon: Icons.verified_rounded,
+          button: 'Book Service Now',
         ),
       ],
     );
@@ -1360,6 +1378,7 @@ class _CategoryLanding extends ConsumerWidget {
   final Color headerForeground;
   final Color cardColor;
   final bool lightCard;
+  final Color? textColor;
   // Bundled slides — shown until the API answers, and if it fails or has no
   // active banners.
   final List<_HeroSlide> slides;
@@ -1375,6 +1394,7 @@ class _CategoryLanding extends ConsumerWidget {
     this.headerForeground = Colors.white,
     required this.cardColor,
     this.lightCard = false,
+    this.textColor,
     required this.slides,
     this.bannerPath,
   });
@@ -1473,9 +1493,12 @@ class _CategoryLanding extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
-                              color: headerForeground == Colors.white
-                                  ? const Color(0xFF0F172A)
-                                  : headerForeground,
+                              color: textColor ??
+                                  (pageColor.computeLuminance() < 0.2
+                                      ? const Color(0xFFF2EDE8)
+                                      : (headerForeground == Colors.white
+                                          ? const Color(0xFF0F172A)
+                                          : headerForeground)),
                               letterSpacing: -0.2,
                             ),
                           ),
@@ -1486,9 +1509,13 @@ class _CategoryLanding extends ConsumerWidget {
                     if (categories.isLoading && category == null)
                       _landingLoader(accent)
                     else if (category == null)
-                      _landingEmpty(accent, '$title coming soon')
+                      _landingEmpty(accent, '$title coming soon', textColor)
                     else
-                      _CategoryServicesGrid(category: category, accent: accent),
+                      _CategoryServicesGrid(
+                        category: category,
+                        accent: accent,
+                        textColor: textColor,
+                      ),
                   ],
                 ),
               ),
@@ -1503,14 +1530,19 @@ class _CategoryLanding extends ConsumerWidget {
 class _CategoryServicesGrid extends ConsumerWidget {
   final ServiceCategory category;
   final Color accent;
-  const _CategoryServicesGrid({required this.category, required this.accent});
+  final Color? textColor;
+  const _CategoryServicesGrid({
+    required this.category,
+    required this.accent,
+    this.textColor,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ref.watch(servicesByCategoryProvider(category.id)).when(
           data: (items) {
             if (items.isEmpty) {
-              return _landingEmpty(accent, 'Services coming soon');
+              return _landingEmpty(accent, 'Services coming soon', textColor);
             }
             final cardWidth = (MediaQuery.of(context).size.width - 32 - 12) / 2;
             return Padding(
@@ -1550,7 +1582,7 @@ Widget _landingLoader(Color accent) => Padding(
       ),
     );
 
-Widget _landingEmpty(Color accent, String text) => Padding(
+Widget _landingEmpty(Color accent, String text, [Color? textColor]) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Column(
         children: [
@@ -1565,10 +1597,10 @@ Widget _landingEmpty(Color accent, String text) => Padding(
           const SizedBox(height: 12),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF64748B),
+              color: textColor ?? const Color(0xFF64748B),
             ),
           ),
         ],

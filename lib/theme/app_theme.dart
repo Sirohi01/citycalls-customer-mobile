@@ -28,10 +28,10 @@ class AppColors {
   static const red500 = Color(0xFFEF4444);
   static const red400 = Color(0xFFF87171);
 
-  // Beauty & Salon vertical accent — approximates oklch(0.65 0.24 5) etc.
-  static const beautyPrimary = Color(0xFFF0426B);
-  static const beautyAccent = Color(0xFFFDF0F2);
-  static const beautyAccentForeground = Color(0xFFB23A56);
+  // Beauty & Salon vertical accent — luxury gold theme matching salon.citycalls.in
+  static const beautyPrimary = Color(0xFFD4AF37);
+  static const beautyAccent = Color(0xFF152415);
+  static const beautyAccentForeground = Color(0xFFD4AF37);
 }
 
 // Overrides Android's Material 3 default (ZoomPageTransitionsBuilder, which

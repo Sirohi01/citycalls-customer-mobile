@@ -647,6 +647,9 @@ IconData _getCategoryIcon(String label) {
   if (l.contains('wash')) {
     return Icons.local_laundry_service_rounded;
   }
+  if (l.contains('help')) {
+    return Icons.bolt_rounded;
+  }
   return Icons.handyman_rounded;
 }
 
@@ -665,7 +668,10 @@ Color _getCategoryColor(String label) {
     return const Color(0xFFF97316);
   }
   if (l.contains('salon') || l.contains('beauty')) {
-    return const Color(0xFFDB2777);
+    return const Color(0xFFD4AF37);
+  }
+  if (l.contains('help')) {
+    return const Color(0xFFFCC423);
   }
   return const Color(0xFF0F766E);
 }

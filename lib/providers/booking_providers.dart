@@ -39,10 +39,10 @@ final serviceSymptomsProvider = FutureProvider.family<List<ServiceCategory>, Str
 // serviceRequests.service.ts's resolveBranch() does at submit time, so the
 // slots shown here are for the same branch that will actually get the
 // request.
-final bookingBranchProvider = FutureProvider.family<CoverageResult, ({String serviceId, String pinCode})>((ref, args) {
+final bookingBranchProvider = FutureProvider.autoDispose.family<CoverageResult, ({String serviceId, String pinCode})>((ref, args) {
   return ref.watch(catalogRepositoryProvider).checkCoverage(args.serviceId, args.pinCode);
 });
 
-final appointmentSlotsProvider = FutureProvider.family<AppointmentSlotsResult, ({String branchId, DateTime date})>((ref, args) {
+final appointmentSlotsProvider = FutureProvider.autoDispose.family<AppointmentSlotsResult, ({String branchId, DateTime date})>((ref, args) {
   return ref.watch(bookingRepositoryProvider).getAppointmentSlots(args.branchId, args.date);
 });
